@@ -50,21 +50,29 @@ namespace GladiatusOffline
             int eHP = monster.MaxHP;
             int turn = 1;
 
+            int pStr = player.GetTotalStrength();
             int pDex = player.GetTotalDexterity();
             int pAgi = player.GetTotalAgility();
             int pCha = player.GetTotalCharisma();
+            int pInt = player.GetTotalIntelligence();
             int pArmor = player.GetTotalArmor();
+
+            int mStr = monster.Level * 3;
+            int mDex = monster.Dexterity;
+            int mAgi = monster.Agility;
+            int mCha = monster.Level * 2;
+            int mInt = monster.Level * 2;
 
             bool hasShield = player.Equipment.ContainsKey("Shield") && player.Equipment["Shield"] != null;
 
             while (pHP > 0 && eHP > 0 && turn <= 25)
             {
                 // Player turn
-                ExecuteTurn(turn, player.Name, monster.Name, pDex, monster.Agility, pCha, player.GetMinDamage(), player.GetMaxDamage(), monster.Armor, false, ref eHP, ref pHP, true, result.Turns);
+                ExecuteTurn(turn, player.Name, monster.Name, pStr, pDex, pAgi, pCha, pInt, mStr, mDex, mAgi, mCha, mInt, player.GetMinDamage(), player.GetMaxDamage(), monster.Armor, false, ref eHP, ref pHP, true, result.Turns);
                 if (eHP <= 0) break;
 
                 // Monster turn
-                ExecuteTurn(turn, monster.Name, player.Name, monster.Dexterity, pAgi, 5, monster.MinDamage, monster.MaxDamage, pArmor, hasShield, ref pHP, ref eHP, false, result.Turns);
+                ExecuteTurn(turn, monster.Name, player.Name, mStr, mDex, mAgi, mCha, mInt, pStr, pDex, pAgi, pCha, pInt, monster.MinDamage, monster.MaxDamage, pArmor, hasShield, ref pHP, ref eHP, false, result.Turns);
                 if (pHP <= 0) break;
 
                 turn++;
@@ -132,19 +140,27 @@ namespace GladiatusOffline
             int eHP = opponent.MaxHP;
             int turn = 1;
 
+            int pStr = player.GetTotalStrength();
             int pDex = player.GetTotalDexterity();
             int pAgi = player.GetTotalAgility();
             int pCha = player.GetTotalCharisma();
+            int pInt = player.GetTotalIntelligence();
             int pArmor = player.GetTotalArmor();
+
+            int oStr = opponent.Strength;
+            int oDex = opponent.Dexterity;
+            int oAgi = opponent.Agility;
+            int oCha = opponent.Level * 3;
+            int oInt = opponent.Level * 3;
 
             bool hasShield = player.Equipment.ContainsKey("Shield") && player.Equipment["Shield"] != null;
 
             while (pHP > 0 && eHP > 0 && turn <= 25)
             {
-                ExecuteTurn(turn, player.Name, opponent.Name, pDex, opponent.Agility, pCha, player.GetMinDamage(), player.GetMaxDamage(), opponent.Armor, false, ref eHP, ref pHP, true, result.Turns);
+                ExecuteTurn(turn, player.Name, opponent.Name, pStr, pDex, pAgi, pCha, pInt, oStr, oDex, oAgi, oCha, oInt, player.GetMinDamage(), player.GetMaxDamage(), opponent.Armor, false, ref eHP, ref pHP, true, result.Turns);
                 if (eHP <= 0) break;
 
-                ExecuteTurn(turn, opponent.Name, player.Name, opponent.Dexterity, pAgi, 8, opponent.MinDamage, opponent.MaxDamage, pArmor, hasShield, ref pHP, ref eHP, false, result.Turns);
+                ExecuteTurn(turn, opponent.Name, player.Name, oStr, oDex, oAgi, oCha, oInt, pStr, pDex, pAgi, pCha, pInt, opponent.MinDamage, opponent.MaxDamage, pArmor, hasShield, ref pHP, ref eHP, false, result.Turns);
                 if (pHP <= 0) break;
 
                 turn++;
@@ -185,10 +201,11 @@ namespace GladiatusOffline
             return result;
         }
 
-        private static void ExecuteTurn(int turnNum, string attackerName, string defenderName, int attDex, int defAgi, int attCha, int minDmg, int maxDmg, int defArmor, bool defHasShield, ref int defenderHP, ref int attackerHP, bool attIsPlayer, List<CombatTurn> turns)
+        private static void ExecuteTurn(int turnNum, string attackerName, string defenderName, int attStr, int attDex, int attAgi, int attCha, int attInt, int defStr, int defDex, int defAgi, int defCha, int defInt, int minDmg, int maxDmg, int defArmor, bool defHasShield, ref int defenderHP, ref int attackerHP, bool attIsPlayer, List<CombatTurn> turns)
         {
-            double hitChance = 0.75 + ((attDex - defAgi) * 0.015);
-            hitChance = Math.Max(0.20, Math.Min(0.95, hitChance));
+            // 1. Hit Chance (Gladiatus Dexterity vs Agility)
+            double hitChance = ((double)attDex / Math.Max(1, attDex + defAgi)) * 1.15;
+            hitChance = Math.Max(0.15, Math.Min(0.95, hitChance));
 
             if (rand.NextDouble() > hitChance)
             {
@@ -201,13 +218,17 @@ namespace GladiatusOffline
                     Damage = 0,
                     AttackerHP = attackerHP,
                     DefenderHP = defenderHP,
-                    Message = string.Format("{0} swings at {1} but misses completely!", attackerName, defenderName),
+                    Message = string.Format("{0} swings at {1} but misses completely! (Hit Chance: {2}%)", attackerName, defenderName, (int)(hitChance * 100)),
                     AttackerIsPlayer = attIsPlayer
                 });
                 return;
             }
 
-            if (defHasShield && rand.NextDouble() < (defAgi * 0.008))
+            // 2. Block/Parry Chance (Gladiatus Agility & Strength)
+            double blockChance = (defAgi * 0.005) + (defStr * 0.003) + (defHasShield ? 0.08 : 0.0);
+            blockChance = Math.Min(0.30, blockChance);
+
+            if (rand.NextDouble() < blockChance)
             {
                 turns.Add(new CombatTurn
                 {
@@ -218,17 +239,26 @@ namespace GladiatusOffline
                     Damage = 0,
                     AttackerHP = attackerHP,
                     DefenderHP = defenderHP,
-                    Message = string.Format("{0} blocks {1}'s attack with a heavy shield!", defenderName, attackerName),
+                    Message = string.Format("{0} parries and blocks {1}'s strike!", defenderName, attackerName),
                     AttackerIsPlayer = attIsPlayer
                 });
                 return;
             }
 
+            // 3. Critical Hit (Dexterity & Intelligence)
             int baseDmg = rand.Next(minDmg, maxDmg + 1);
-            bool isCrit = rand.NextDouble() < (0.05 + attCha * 0.006);
-            if (isCrit) baseDmg = (int)(baseDmg * 1.65);
+            double critChance = 0.05 + (((double)attDex / Math.Max(1, attDex + defAgi)) * 0.12) + (attInt * 0.003);
+            critChance = Math.Min(0.40, critChance);
 
-            double mitigation = 100.0 / (100.0 + (defArmor * 0.45));
+            bool isCrit = rand.NextDouble() < critChance;
+            if (isCrit)
+            {
+                double critMult = 1.50 + (attInt * 0.015);
+                baseDmg = (int)(baseDmg * critMult);
+            }
+
+            double effectiveArmor = Math.Max(0, defArmor - (attStr * 0.5));
+            double mitigation = 100.0 / (100.0 + (effectiveArmor * 0.45));
             int finalDmg = Math.Max(1, (int)(baseDmg * mitigation));
 
             defenderHP -= finalDmg;
@@ -249,6 +279,28 @@ namespace GladiatusOffline
                 Message = msg,
                 AttackerIsPlayer = attIsPlayer
             });
+
+            // 4. Double Hit (Gladiatus Charisma)
+            double doubleHitChance = ((double)attCha / Math.Max(1, attCha + defCha)) * 0.22;
+            doubleHitChance = Math.Max(0.02, Math.Min(0.30, doubleHitChance));
+
+            if (defenderHP > 0 && rand.NextDouble() < doubleHitChance)
+            {
+                int extraDmg = Math.Max(1, (int)(rand.Next(minDmg, maxDmg + 1) * mitigation));
+                defenderHP -= extraDmg;
+                turns.Add(new CombatTurn
+                {
+                    TurnNumber = turnNum,
+                    AttackerName = attackerName,
+                    DefenderName = defenderName,
+                    ActionType = "DoubleStrike",
+                    Damage = extraDmg,
+                    AttackerHP = attackerHP,
+                    DefenderHP = Math.Max(0, defenderHP),
+                    Message = string.Format("⚡ {0}'s high Charisma triggers a DOUBLE STRIKE dealing {1} extra damage!", attackerName, extraDmg),
+                    AttackerIsPlayer = attIsPlayer
+                });
+            }
         }
 
         public static Item GenerateRandomItem(int level)
