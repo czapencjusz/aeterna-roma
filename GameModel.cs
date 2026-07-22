@@ -3,20 +3,11 @@ using System.Collections.Generic;
 
 namespace GladiatusOffline
 {
-    public enum ItemRarity
-    {
-        Common = 0,
-        Uncommon = 1,
-        Rare = 2,
-        Epic = 3,
-        Legendary = 4
-    }
-
     public enum ItemType
     {
-        Helmet,
-        Armor,
         Weapon,
+        Armor,
+        Helmet,
         Shield,
         Ring,
         Amulet,
@@ -26,13 +17,25 @@ namespace GladiatusOffline
         Material
     }
 
+    public enum ItemRarity
+    {
+        Common,
+        Uncommon,
+        Rare,
+        Epic,
+        Legendary
+    }
+
     public class Item
     {
         public string Id { get; set; }
         public string Name { get; set; }
+        public string Prefix { get; set; }
+        public string Suffix { get; set; }
         public ItemType Type { get; set; }
         public ItemRarity Rarity { get; set; }
         public int LevelRequirement { get; set; }
+        public int Price { get; set; }
         public int MinDamage { get; set; }
         public int MaxDamage { get; set; }
         public int Armor { get; set; }
@@ -44,10 +47,7 @@ namespace GladiatusOffline
         public int Intelligence { get; set; }
         public int HealAmount { get; set; }
         public int EnergyAmount { get; set; }
-        public int Price { get; set; }
         public string IconSvg { get; set; }
-        public string Prefix { get; set; }
-        public string Suffix { get; set; }
         public int SmeltIron { get; set; }
         public int SmeltBronze { get; set; }
         public int SmeltRuby { get; set; }
@@ -55,33 +55,31 @@ namespace GladiatusOffline
 
         public Item()
         {
-            Id = Guid.NewGuid().ToString("N");
+            Id = Guid.NewGuid().ToString();
         }
 
         public string GetDisplayName()
         {
-            string name = Name;
-            if (!string.IsNullOrEmpty(Prefix)) name = Prefix + " " + name;
-            if (!string.IsNullOrEmpty(Suffix)) name = name + " " + Suffix;
-            return name;
+            string fullName = "";
+            if (!string.IsNullOrEmpty(Prefix)) fullName += Prefix + " ";
+            fullName += Name;
+            if (!string.IsNullOrEmpty(Suffix)) fullName += " " + Suffix;
+            return fullName;
         }
     }
 
     public class Gladiator
     {
         public string Name { get; set; }
-        public string Title { get; set; }
         public int Level { get; set; }
         public int XP { get; set; }
         public int MaxXP { get; set; }
         public int Gold { get; set; }
         public int Rubies { get; set; }
-        public int CurrentHP { get; set; }
-        public int MaxHP { get; set; }
-        public int CurrentEnergy { get; set; }
-        public int MaxEnergy { get; set; }
+        public int Honor { get; set; }
+        public int ArenaRank { get; set; }
 
-        // Base attributes
+        // Base Attributes (trained)
         public int BaseStrength { get; set; }
         public int BaseDexterity { get; set; }
         public int BaseAgility { get; set; }
@@ -89,34 +87,28 @@ namespace GladiatusOffline
         public int BaseCharisma { get; set; }
         public int BaseIntelligence { get; set; }
 
-        // Equipped items by slot key: Head, Chest, Weapon, Shield, Ring, Amulet, Gloves, Shoes
-        public Dictionary<string, Item> Equipment { get; set; }
+        // Derived Stats
+        public int CurrentHP { get; set; }
+        public int MaxHP { get; set; }
+        public int CurrentEnergy { get; set; }
+        public int MaxEnergy { get; set; }
 
-        // Inventory grid
+        // Equipment (Slot Name -> Item)
+        public Dictionary<string, Item> Equipment { get; set; }
         public List<Item> Inventory { get; set; }
         public int InventoryCapacity { get; set; }
 
-        // Arena & Stats
-        public int Honor { get; set; }
-        public int ArenaRank { get; set; }
-        public int ArenaWins { get; set; }
-        public int ArenaLosses { get; set; }
-
-        // Avatar customizer settings
-        public int HelmetStyle { get; set; }
-        public int ArmorStyle { get; set; }
-        public int HairStyle { get; set; }
-        public string SkinColor { get; set; }
-
         public Gladiator()
         {
-            Name = "Maximus";
-            Title = "Novice Gladiator";
+            Name = "Flavius";
             Level = 1;
             XP = 0;
             MaxXP = 100;
             Gold = 250;
-            Rubies = 15;
+            Rubies = 10;
+            Honor = 50;
+            ArenaRank = 10;
+
             BaseStrength = 5;
             BaseDexterity = 5;
             BaseAgility = 5;
@@ -124,41 +116,72 @@ namespace GladiatusOffline
             BaseCharisma = 5;
             BaseIntelligence = 5;
 
-            Equipment = new Dictionary<string, Item>();
-            Inventory = new List<Item>();
+            MaxEnergy = 24;
+            CurrentEnergy = 24;
             InventoryCapacity = 24;
 
-            Honor = 100;
-            ArenaRank = 20;
-            ArenaWins = 0;
-            ArenaLosses = 0;
+            Equipment = new Dictionary<string, Item>
+            {
+                { "Head", null },
+                { "Chest", null },
+                { "Gloves", null },
+                { "Shoes", null },
+                { "Weapon", null },
+                { "Shield", null },
+                { "Ring", null },
+                { "Amulet", null }
+            };
 
-            HelmetStyle = 1;
-            ArmorStyle = 1;
-            HairStyle = 1;
-            SkinColor = "#e0ac69";
-
+            Inventory = new List<Item>();
             RecalculateStats();
             CurrentHP = MaxHP;
-            CurrentEnergy = MaxEnergy;
         }
 
         public void RecalculateStats()
         {
-            MaxHP = 100 + (GetTotalConstitution() * 15) + (Level * 20);
-            MaxEnergy = 20 + (Level * 2);
+            int totalCon = GetTotalConstitution();
+            MaxHP = 100 + (totalCon * 35);
             if (CurrentHP > MaxHP) CurrentHP = MaxHP;
-            if (CurrentEnergy > MaxEnergy) CurrentEnergy = MaxEnergy;
         }
 
-        public int GetTotalStrength() { return BaseStrength + GetBonus("Strength"); }
-        public int GetTotalDexterity() { return BaseDexterity + GetBonus("Dexterity"); }
-        public int GetTotalAgility() { return BaseAgility + GetBonus("Agility"); }
-        public int GetTotalConstitution() { return BaseConstitution + GetBonus("Constitution"); }
-        public int GetTotalCharisma() { return BaseCharisma + GetBonus("Charisma"); }
-        public int GetTotalIntelligence() { return BaseIntelligence + GetBonus("Intelligence"); }
+        public double GetHPRegenPerMinute()
+        {
+            int totalCon = GetTotalConstitution();
+            return 2.0 + (totalCon * 0.5);
+        }
 
-        public int GetBonus(string stat)
+        public double GetIntHealMultiplier()
+        {
+            int totalInt = GetTotalIntelligence();
+            return 1.0 + (totalInt * 0.02);
+        }
+
+        public void CheckLevelUp()
+        {
+            while (XP >= MaxXP)
+            {
+                XP -= MaxXP;
+                Level++;
+                MaxXP = (int)(MaxXP * 1.5);
+                MaxEnergy += 2;
+                CurrentEnergy = MaxEnergy;
+                BaseStrength += 1;
+                BaseDexterity += 1;
+                BaseAgility += 1;
+                BaseConstitution += 1;
+                RecalculateStats();
+                CurrentHP = MaxHP;
+            }
+        }
+
+        public int GetTotalStrength() { return BaseStrength + GetEquipmentBonus("Strength"); }
+        public int GetTotalDexterity() { return BaseDexterity + GetEquipmentBonus("Dexterity"); }
+        public int GetTotalAgility() { return BaseAgility + GetEquipmentBonus("Agility"); }
+        public int GetTotalConstitution() { return BaseConstitution + GetEquipmentBonus("Constitution"); }
+        public int GetTotalCharisma() { return BaseCharisma + GetEquipmentBonus("Charisma"); }
+        public int GetTotalIntelligence() { return BaseIntelligence + GetEquipmentBonus("Intelligence"); }
+
+        private int GetEquipmentBonus(string stat)
         {
             int bonus = 0;
             if (Equipment == null) return 0;
@@ -190,7 +213,7 @@ namespace GladiatusOffline
 
         public int GetMinDamage()
         {
-            int baseDmg = 3 + (GetTotalStrength() / 2);
+            int baseDmg = 2 + (GetTotalStrength() / 2);
             if (Equipment != null && Equipment.ContainsKey("Weapon") && Equipment["Weapon"] != null)
             {
                 baseDmg += Equipment["Weapon"].MinDamage;
@@ -200,7 +223,7 @@ namespace GladiatusOffline
 
         public int GetMaxDamage()
         {
-            int baseDmg = 6 + (GetTotalStrength() / 2) + (GetTotalDexterity() / 3);
+            int baseDmg = 5 + (GetTotalStrength() / 2) + (GetTotalDexterity() / 3);
             if (Equipment != null && Equipment.ContainsKey("Weapon") && Equipment["Weapon"] != null)
             {
                 baseDmg += Equipment["Weapon"].MaxDamage;
@@ -394,6 +417,7 @@ namespace GladiatusOffline
         public int LeatherStash { get; set; }
         public List<ForgeRecipe> Recipes { get; set; }
         public DateTime LastEnergyRegen { get; set; }
+        public DateTime LastHPRegen { get; set; }
         public UserSettings Settings { get; set; }
 
         public GameState()
@@ -407,6 +431,7 @@ namespace GladiatusOffline
             PlayerGuild = new Guild();
             Recipes = new List<ForgeRecipe>();
             LastEnergyRegen = DateTime.Now;
+            LastHPRegen = DateTime.Now;
             Settings = new UserSettings();
         }
     }
