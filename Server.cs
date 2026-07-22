@@ -1,284 +1,276 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net;
 using System.Text;
 using System.Threading;
 using System.Web.Script.Serialization;
-using System.Collections.Generic;
 
 namespace GladiatusOffline
 {
     public class Server
     {
         private HttpListener listener;
+        private int port;
         private GameState state;
-        private JavaScriptSerializer serializer;
-        private bool isRunning;
-
-        public int BoundPort { get; private set; }
+        private JavaScriptSerializer jsonSerializer;
+        public EventWaitHandle ServerStartedEvent = new ManualResetEvent(false);
         public string BoundUrl { get; private set; }
-        public ManualResetEvent ServerStartedEvent { get; private set; }
 
-        public Server(int initialPort = 8080)
+        public Server(int port = 8080)
         {
-            BoundPort = initialPort;
-            ServerStartedEvent = new ManualResetEvent(false);
-            state = SaveManager.LoadOrCreate();
-            serializer = new JavaScriptSerializer();
+            this.port = port;
+            this.jsonSerializer = new JavaScriptSerializer();
+            this.state = SaveManager.LoadOrCreate();
+            // Initialize dynamic scaling if missing
+            state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
         }
 
         public void Start()
         {
-            int startPort = 8080;
-            bool bound = false;
-
-            for (int p = startPort; p < startPort + 50; p++)
+            try
             {
-                try
-                {
-                    listener = new HttpListener();
-                    listener.Prefixes.Add(string.Format("http://127.0.0.1:{0}/", p));
-                    listener.Prefixes.Add(string.Format("http://localhost:{0}/", p));
-                    listener.Start();
-                    BoundPort = p;
-                    BoundUrl = string.Format("http://127.0.0.1:{0}/", p);
-                    bound = true;
-                    break;
-                }
-                catch
-                {
-                    try { if (listener != null) listener.Close(); } catch { }
-                }
-            }
-
-            if (bound)
-            {
-                isRunning = true;
+                listener = new HttpListener();
+                string prefix = string.Format("http://127.0.0.1:{0}/", port);
+                listener.Prefixes.Add(prefix);
+                listener.Start();
+                BoundUrl = prefix;
                 ServerStartedEvent.Set();
-                // Server is running silently (no console in winexe mode)
-                Listen();
-            }
-            else
-            {
-                // Could not bind to any port - server failed to start
-            }
-        }
+                Console.WriteLine("Server listening at {0}", prefix);
 
-        private void Listen()
-        {
-            while (isRunning)
+                while (listener.IsListening)
+                {
+                    try
+                    {
+                        HttpListenerContext ctx = listener.GetContext();
+                        ThreadPool.QueueUserWorkItem((_) => ProcessRequest(ctx));
+                    }
+                    catch (HttpListenerException) { break; }
+                    catch (Exception ex) { Console.WriteLine("Listener context exception: {0}", ex.Message); }
+                }
+            }
+            catch (Exception ex)
             {
+                Console.WriteLine("Failed to bind port {0}: {1}", port, ex.Message);
+                // Fallback port
                 try
                 {
-                    HttpListenerContext context = listener.GetContext();
-                    ProcessRequest(context);
+                    port = 8085;
+                    listener = new HttpListener();
+                    string prefix = string.Format("http://127.0.0.1:{0}/", port);
+                    listener.Prefixes.Add(prefix);
+                    listener.Start();
+                    BoundUrl = prefix;
+                    ServerStartedEvent.Set();
+
+                    while (listener.IsListening)
+                    {
+                        try
+                        {
+                            HttpListenerContext ctx = listener.GetContext();
+                            ThreadPool.QueueUserWorkItem((_) => ProcessRequest(ctx));
+                        }
+                        catch (HttpListenerException) { break; }
+                        catch (Exception ex) { Console.WriteLine("Listener context exception: {0}", ex.Message); }
+                    }
                 }
-                catch (Exception ex)
+                catch (Exception e2)
                 {
-                    if (!isRunning) break;
-                    // Listener exception occurred - continue silently
+                    Console.WriteLine("Fallback port failed: {0}", e2.Message);
+                    ServerStartedEvent.Set();
                 }
             }
         }
 
-        private void ProcessRequest(HttpListenerContext context)
+        public void Stop()
         {
-            HttpListenerRequest req = context.Request;
-            HttpListenerResponse res = context.Response;
+            if (listener != null && listener.IsListening)
+            {
+                listener.Stop();
+                listener.Close();
+            }
+        }
 
-            res.Headers.Add("Access-Control-Allow-Origin", "*");
-            res.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
-            res.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
+        private void ProcessRequest(HttpListenerContext ctx)
+        {
+            HttpListenerRequest req = ctx.Request;
+            HttpListenerResponse resp = ctx.Response;
+
+            resp.Headers.Add("Access-Control-Allow-Origin", "*");
+            resp.Headers.Add("Access-Control-Allow-Methods", "GET, POST, OPTIONS");
+            resp.Headers.Add("Access-Control-Allow-Headers", "Content-Type");
 
             if (req.HttpMethod == "OPTIONS")
             {
-                res.StatusCode = 200;
-                res.Close();
+                resp.StatusCode = 200;
+                resp.Close();
                 return;
             }
 
-            string rawUrl = req.Url.AbsolutePath;
-
-            if (rawUrl == "/" || rawUrl == "/index.html")
+            try
             {
-                byte[] buffer = Encoding.UTF8.GetBytes(WebAssets.IndexHtml);
-                res.ContentType = "text/html; charset=utf-8";
-                res.ContentLength64 = buffer.Length;
-                res.OutputStream.Write(buffer, 0, buffer.Length);
-                res.Close();
-                return;
-            }
+                RegenerateStats();
 
-            if (rawUrl.StartsWith("/api/"))
-            {
-                string jsonBody = "";
-                if (req.HasEntityBody)
+                string path = req.Url.AbsolutePath;
+
+                if (path == "/" || path == "/index.html")
                 {
-                    using (StreamReader reader = new StreamReader(req.InputStream, req.ContentEncoding))
-                    {
-                        jsonBody = reader.ReadToEnd();
-                    }
+                    byte[] htmlBytes = Encoding.UTF8.GetBytes(WebAssets.IndexHtml);
+                    resp.ContentType = "text/html; charset=utf-8";
+                    resp.ContentLength64 = htmlBytes.Length;
+                    resp.OutputStream.Write(htmlBytes, 0, htmlBytes.Length);
+                    resp.Close();
+                    return;
                 }
 
-                object responseObj = HandleApiCall(rawUrl, jsonBody);
-                string jsonResp = serializer.Serialize(responseObj);
-                byte[] buffer = Encoding.UTF8.GetBytes(jsonResp);
-                res.ContentType = "application/json; charset=utf-8";
-                res.ContentLength64 = buffer.Length;
-                res.OutputStream.Write(buffer, 0, buffer.Length);
-                res.Close();
-                return;
+                if (path.StartsWith("/api/"))
+                {
+                    object responseData = HandleApi(path, req);
+                    string json = jsonSerializer.Serialize(responseData);
+                    byte[] jsonBytes = Encoding.UTF8.GetBytes(json);
+
+                    resp.ContentType = "application/json; charset=utf-8";
+                    resp.ContentLength64 = jsonBytes.Length;
+                    resp.OutputStream.Write(jsonBytes, 0, jsonBytes.Length);
+                    resp.Close();
+                    return;
+                }
+
+                resp.StatusCode = 404;
+                resp.Close();
             }
-
-            res.StatusCode = 404;
-            res.Close();
-        }
-
-        private object HandleApiCall(string path, string jsonBody)
-        {
-            Dictionary<string, object> args = new Dictionary<string, object>();
-            if (!string.IsNullOrEmpty(jsonBody))
+            catch (Exception ex)
             {
+                Console.WriteLine("API Error [{0}]: {1}\n{2}", req.Url.AbsolutePath, ex.Message, ex.StackTrace);
                 try
                 {
-                    args = serializer.Deserialize<Dictionary<string, object>>(jsonBody);
+                    resp.StatusCode = 500;
+                    byte[] errBytes = Encoding.UTF8.GetBytes(jsonSerializer.Serialize(new { error = ex.Message }));
+                    resp.ContentType = "application/json";
+                    resp.ContentLength64 = errBytes.Length;
+                    resp.OutputStream.Write(errBytes, 0, errBytes.Length);
+                    resp.Close();
                 }
                 catch { }
             }
+        }
 
-            switch (path)
+        private object HandleApi(string path, HttpListenerRequest req)
+        {
+            Dictionary<string, object> args = new Dictionary<string, object>();
+            if (req.HttpMethod == "POST" && req.HasEntityBody)
             {
-                case "/api/state":
-                    state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
-                    return state;
-
-                case "/api/train":
-                    if (args.ContainsKey("attribute"))
+                using (var reader = new StreamReader(req.InputStream, req.ContentEncoding))
+                {
+                    string body = reader.ReadToEnd();
+                    if (!string.IsNullOrEmpty(body))
                     {
-                        string attr = args["attribute"].ToString();
-                        TrainAttribute(attr);
+                        args = jsonSerializer.Deserialize<Dictionary<string, object>>(body) ?? new Dictionary<string, object>();
                     }
-                    state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
-                    SaveManager.Save(state);
-                    return state;
+                }
+            }
 
-                case "/api/expedition":
-                    int locId = Convert.ToInt32(args["locationId"]);
-                    string monsterId = args["monsterId"].ToString();
-                    CombatResult expResult = RunExpedition(locId, monsterId);
-                    state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
-                    SaveManager.Save(state);
-                    return new { state = state, result = expResult };
+            lock (state)
+            {
+                switch (path)
+                {
+                    case "/api/state":
+                        state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
+                        return state;
 
-                case "/api/arena":
-                    string oppId = args["opponentId"].ToString();
-                    CombatResult arenaResult = RunArena(oppId);
-                    state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
-                    SaveManager.Save(state);
-                    return new { state = state, result = arenaResult };
+                    case "/api/save":
+                        SaveManager.Save(state);
+                        return new { status = "ok" };
 
-                case "/api/dungeon":
-                    int dungId = Convert.ToInt32(args["dungeonId"]);
-                    CombatResult dungResult = RunDungeon(dungId);
-                    SaveManager.Save(state);
-                    return new { state = state, result = dungResult };
-
-                case "/api/buy":
-                    string vendorType = args["vendorType"].ToString();
-                    int buyIdx = Convert.ToInt32(args["itemIndex"]);
-                    BuyVendorItem(vendorType, buyIdx);
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/sell":
-                    int sellIdx = Convert.ToInt32(args["inventoryIndex"]);
-                    SellInventoryItem(sellIdx);
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/equip":
-                    int eqIdx = Convert.ToInt32(args["inventoryIndex"]);
-                    EquipItem(eqIdx);
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/unequip":
-                    string slot = args["slot"].ToString();
-                    UnequipSlot(slot);
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/forge/smelt":
-                    int smeltIdx = Convert.ToInt32(args["inventoryIndex"]);
-                    SmeltItem(smeltIdx);
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/forge/craft":
-                    string recipeId = args["recipeId"].ToString();
-                    CraftRecipe(recipeId);
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/work/start":
-                    int hours = Convert.ToInt32(args["hours"]);
-                    DoWork(hours);
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/guild/create":
-                    string name = args["name"].ToString();
-                    string tag = args["tag"].ToString();
-                    CreateGuild(name, tag);
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/save":
-                    SaveManager.Save(state);
-                    return new { success = true };
-
-                case "/api/settings/fullscreen":
-                    if (state.Settings == null) state.Settings = new UserSettings();
-                    state.Settings.Fullscreen = !state.Settings.Fullscreen;
-                    if (Program.ToggleFullscreenAction != null)
-                    {
-                        Program.ToggleFullscreenAction();
-                    }
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/settings/update":
-                    if (state.Settings == null) state.Settings = new UserSettings();
-                    if (args.ContainsKey("masterVolume")) state.Settings.MasterVolume = Convert.ToInt32(args["masterVolume"]);
-                    if (args.ContainsKey("sfxVolume")) state.Settings.SFXVolume = Convert.ToInt32(args["sfxVolume"]);
-                    if (args.ContainsKey("musicVolume")) state.Settings.MusicVolume = Convert.ToInt32(args["musicVolume"]);
-                    if (args.ContainsKey("combatSpeed")) state.Settings.CombatSpeed = args["combatSpeed"].ToString();
-                    if (args.ContainsKey("highGlowEffects")) state.Settings.HighGlowEffects = Convert.ToBoolean(args["highGlowEffects"]);
-                    if (args.ContainsKey("themeMode")) state.Settings.ThemeMode = args["themeMode"].ToString();
-                    SaveManager.Save(state);
-                    return state;
-
-                case "/api/settings/import":
-                    if (args.ContainsKey("json"))
-                    {
-                        string importJson = args["json"].ToString();
-                        GameState imported = serializer.Deserialize<GameState>(importJson);
-                        if (imported != null && imported.Player != null)
+                    case "/api/train":
+                        if (args.ContainsKey("attribute"))
                         {
-                            SaveManager.EnsureDefaultData(imported);
-                            state = imported;
-                            SaveManager.Save(state);
+                            string attr = args["attribute"].ToString();
+                            TrainAttribute(attr);
                         }
-                    }
-                    return state;
+                        state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
+                        SaveManager.Save(state);
+                        return state;
 
-                case "/api/reset":
-                    SaveManager.ResetSave();
-                    state = SaveManager.CreateInitialGameState();
-                    return state;
+                    case "/api/expedition":
+                        int locId = Convert.ToInt32(args["locationId"]);
+                        string monsterId = args["monsterId"].ToString();
+                        CombatResult expResult = RunExpedition(locId, monsterId);
+                        state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
+                        SaveManager.Save(state);
+                        return new { state = state, result = expResult };
 
-                default:
-                    return state;
+                    case "/api/arena":
+                        string oppId = args["opponentId"].ToString();
+                        CombatResult arenaResult = RunArena(oppId);
+                        state.ArenaLadder = CombatEngine.GetScaledArenaLadder(state.Player, state.ArenaLadder);
+                        SaveManager.Save(state);
+                        return new { state = state, result = arenaResult };
+
+                    case "/api/dungeon":
+                        int dungId = Convert.ToInt32(args["dungeonId"]);
+                        CombatResult dungResult = RunDungeon(dungId);
+                        SaveManager.Save(state);
+                        return new { state = state, result = dungResult };
+
+                    case "/api/buy":
+                        string vendorType = args["vendorType"].ToString();
+                        int buyIdx = Convert.ToInt32(args["itemIndex"]);
+                        BuyVendorItem(vendorType, buyIdx);
+                        SaveManager.Save(state);
+                        return state;
+
+                    case "/api/sell":
+                        int sellIdx = Convert.ToInt32(args["inventoryIndex"]);
+                        SellInventoryItem(sellIdx);
+                        SaveManager.Save(state);
+                        return state;
+
+                    case "/api/equip":
+                        int equipIdx = Convert.ToInt32(args["inventoryIndex"]);
+                        EquipItem(equipIdx);
+                        SaveManager.Save(state);
+                        return state;
+
+                    case "/api/unequip":
+                        string slot = args["slot"].ToString();
+                        UnequipSlot(slot);
+                        SaveManager.Save(state);
+                        return state;
+
+                    case "/api/smelt":
+                        int smeltIdx = Convert.ToInt32(args["inventoryIndex"]);
+                        SmeltItem(smeltIdx);
+                        SaveManager.Save(state);
+                        return state;
+
+                    case "/api/craft":
+                        string recipeId = args["recipeId"].ToString();
+                        CraftRecipe(recipeId);
+                        SaveManager.Save(state);
+                        return state;
+
+                    case "/api/work":
+                        int hours = Convert.ToInt32(args["hours"]);
+                        DoWork(hours);
+                        SaveManager.Save(state);
+                        return state;
+
+                    case "/api/guild/create":
+                        string name = args["name"].ToString();
+                        string tag = args["tag"].ToString();
+                        CreateGuild(name, tag);
+                        SaveManager.Save(state);
+                        return state;
+
+                    case "/api/reset":
+                        state = SaveManager.CreateDefaultState();
+                        SaveManager.Save(state);
+                        return state;
+
+                    default:
+                        return new { error = "Unknown Endpoint" };
+                }
             }
         }
 
@@ -303,6 +295,7 @@ namespace GladiatusOffline
                 else if (attr == "Constitution") p.BaseConstitution++;
                 else if (attr == "Charisma") p.BaseCharisma++;
                 else if (attr == "Intelligence") p.BaseIntelligence++;
+
                 p.RecalculateStats();
             }
         }
@@ -360,12 +353,75 @@ namespace GladiatusOffline
             return res;
         }
 
+        private void RegenerateStats()
+        {
+            if (state == null || state.Player == null) return;
+            DateTime now = DateTime.Now;
+
+            // HP Regeneration driven by Constitution (2 + Constitution * 0.5 per min)
+            if (state.LastHPRegen == default(DateTime))
+            {
+                state.LastHPRegen = now;
+            }
+            else
+            {
+                double hpElapsedMin = (now - state.LastHPRegen).TotalMinutes;
+                if (hpElapsedMin >= 0.05)
+                {
+                    double hpRate = state.Player.GetHPRegenPerMinute();
+                    int hpGained = (int)(hpElapsedMin * hpRate);
+                    if (hpGained > 0)
+                    {
+                        state.Player.CurrentHP = Math.Min(state.Player.MaxHP, state.Player.CurrentHP + hpGained);
+                        state.LastHPRegen = now;
+                    }
+                }
+            }
+
+            // Energy Regeneration
+            if (state.LastEnergyRegen == default(DateTime))
+            {
+                state.LastEnergyRegen = now;
+            }
+            else
+            {
+                double energyElapsedMin = (now - state.LastEnergyRegen).TotalMinutes;
+                if (energyElapsedMin >= 0.5)
+                {
+                    int energyGained = (int)(energyElapsedMin * 2);
+                    if (energyGained > 0)
+                    {
+                        state.Player.CurrentEnergy = Math.Min(state.Player.MaxEnergy, state.Player.CurrentEnergy + energyGained);
+                        state.LastEnergyRegen = now;
+                    }
+                }
+            }
+        }
+
         private void EquipItem(int invIdx)
         {
             Gladiator p = state.Player;
             if (invIdx < 0 || invIdx >= p.Inventory.Count) return;
 
             Item item = p.Inventory[invIdx];
+
+            // Potion / Consumable handling with Intelligence healing multiplier
+            if (item.Type == ItemType.Potion)
+            {
+                p.Inventory.RemoveAt(invIdx);
+                if (item.HealAmount > 0)
+                {
+                    double intMult = p.GetIntHealMultiplier();
+                    int effectiveHeal = (int)(item.HealAmount * intMult);
+                    p.CurrentHP = Math.Min(p.MaxHP, p.CurrentHP + effectiveHeal);
+                }
+                if (item.EnergyAmount > 0)
+                {
+                    p.CurrentEnergy = Math.Min(p.MaxEnergy, p.CurrentEnergy + item.EnergyAmount);
+                }
+                return;
+            }
+
             string slot = item.Type.ToString();
             if (slot == "Helmet") slot = "Head";
             if (slot == "Armor") slot = "Chest";
@@ -471,7 +527,6 @@ namespace GladiatusOffline
                         state.Player.Gold -= item.Price;
                         vendor.Items.RemoveAt(itemIndex);
                         state.Player.Inventory.Add(item);
-                        // Replenish vendor with a new random item matching player level
                         vendor.Items.Add(CombatEngine.GenerateRandomItem(state.Player.Level));
                     }
                 }
