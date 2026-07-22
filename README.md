@@ -1,5 +1,5 @@
 # Czapo presents, a steaming bowl of "It should probably maybe work?". It's a single player "clone" of Gladiatus, the browser game. It's in a proof of concept stage and the code is indeed written with the help of an AI agent.
-
+# WARNING! THE GAME LAUNCHES AN API SERVER THAT RUNS IN THE BACKGROUDN EVEN IF YOU CLOSE THE "GAME". YOU CAN FIND THE ICON IN THE TRAY 
 # Aeterna Roma - Hero of Rome
 
 An offline, single-player ancient Roman RPG engine built with C# .NET Framework and a modern web interface.
