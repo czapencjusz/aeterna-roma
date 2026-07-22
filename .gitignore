@@ -1,0 +1,13 @@
+# Binaries & Executables
+*.exe
+*.dll
+*.pdb
+
+# Local Save Data
+savegame.json
+aeterna_roma_save.json
+
+# VS / IDE files
+.vs/
+*.user
+*.suo
