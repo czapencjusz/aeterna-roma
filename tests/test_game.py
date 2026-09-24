@@ -1,0 +1,557 @@
+"""Tests for the game rules. Run with:  python -m unittest discover -s tests"""
+
+import copy
+import json
+import os
+import tempfile
+import unittest
+
+from aeterna import data, util
+from aeterna.api import Api
+from aeterna.data import DUNGEONS, LOCATIONS, PREFIXES, RECIPES, SLOTS, SUFFIXES
+from aeterna.engine import Game
+from aeterna.items import display_name, generate_item, make_potion, sell_price
+from aeterna.rules import max_damage, min_damage, total_armor, training_cost, work_pay, xp_multiplier, hp_regen_per_min
+from aeterna.state import build_ladder, new_game_state, normalize_state
+from aeterna.storage import SaveStore
+from aeterna.view import build_view
+
+START = 1_700_000_000_000  # fixed "now" for tests (ms)
+
+
+class Clock:
+    def __init__(self, now=START):
+        self.now = now
+
+    def __call__(self):
+        return self.now
+
+
+def make_game(seed=1):
+    util.rng.seed(seed)
+    clock = Clock()
+    return Game(clock=clock), clock
+
+
+def make_strong(game):
+    """Makes the player strong enough to win any fight."""
+    p = game.player
+    p['BaseStrength'] = p['BaseDexterity'] = p['BaseConstitution'] = 400
+    from aeterna.rules import recalc_stats
+    recalc_stats(p)
+    p['CurrentHP'] = p['MaxHP']
+
+
+def unique_ranks(state):
+    return len({o['Rank'] for o in state['ArenaLadder']} | {state['Player']['ArenaRank']})
+
+
+class NewGameTests(unittest.TestCase):
+    def test_new_game(self):
+        game, _ = make_game()
+        p = game.player
+        self.assertEqual(p['Name'], 'Flavius')
+        self.assertEqual((min_damage(p), max_damage(p)), (8, 16))
+        self.assertEqual(p['MaxHP'], 275)
+        self.assertEqual(len(game.state['ArenaLadder']), 20)
+        self.assertEqual(unique_ranks(game.state), 21)
+        self.assertTrue(all(slot['Quest'] for slot in game.state['QuestSlots']))
+
+    def test_vendors_stock_their_own_types(self):
+        game, _ = make_game()
+        vendors = game.state['Vendors']
+        self.assertTrue(all(i['Type'] in ('Weapon', 'Shield') for i in vendors['Weaponsmith']['Items']))
+        self.assertTrue(all(i['Type'] in ('Armor', 'Helmet', 'Gloves', 'Shoes') for i in vendors['Armorer']['Items']))
+        self.assertTrue(all(i['Type'] in ('Ring', 'Amulet') for i in vendors['General']['Items']))
+        self.assertEqual(len(vendors['Alchemist']['Items']), 3)
+
+    def test_state_is_json_serializable(self):
+        game, _ = make_game()
+        json.dumps(game.state)
+        json.dumps(build_view(game))
+
+
+class ItemTests(unittest.TestCase):
+    def test_affixes_grant_their_stats(self):
+        util.rng.seed(2)
+        with_affix = 0
+        for _ in range(2000):
+            item = generate_item(util.rand_int(1, 20))
+            affixes = [a for a in PREFIXES if a['Name'] == item['Prefix']] + [a for a in SUFFIXES if a['Name'] == item['Suffix']]
+            with_affix += bool(affixes)
+            for affix in affixes:
+                for stat, weight in affix['Stats'].items():
+                    self.assertGreaterEqual(item[stat], weight)
+        self.assertGreater(with_affix, 1000)
+
+    def test_icons_match_item_names(self):
+        util.rng.seed(3)
+        for _ in range(300):
+            item = generate_item(3, 'Weapon')
+            if item['Name'] == 'Trident':
+                self.assertEqual(item['IconSvg'], 'weapon_4')
+            if item['Name'] == 'Halberd':
+                self.assertEqual(item['IconSvg'], 'weapon_5')
+
+    def test_display_name_and_sell_price(self):
+        item = make_potion({'Name': 'Test', 'Price': 21})
+        self.assertEqual(display_name(item), 'Test')
+        self.assertEqual(sell_price(item), 10)
+        item.update(Prefix='Titan', Suffix='of Mars', Upgrade=2)
+        self.assertEqual(display_name(item), 'Titan Test of Mars +2')
+
+
+class FightTests(unittest.TestCase):
+    def test_expedition_costs_energy_and_returns_report(self):
+        game, _ = make_game()
+        result = game.start_expedition(0, 1)
+        self.assertIsNotNone(result)
+        self.assertEqual(game.player['CurrentEnergy'], 23)
+        self.assertTrue(result['Turns'])
+        for turn in result['Turns']:
+            self.assertGreaterEqual(turn['PHP'], 0)
+            self.assertGreaterEqual(turn['EHP'], 0)
+
+    def test_locked_region_and_dungeon(self):
+        game, _ = make_game()
+        self.assertIsNone(game.start_expedition(1, 0))
+        self.assertIsNone(game.enter_dungeon(0))
+        self.assertEqual(len(game.take_notices()), 2)
+
+    def test_cannot_fight_wounded_or_while_working(self):
+        game, _ = make_game()
+        game.player['CurrentHP'] = 1
+        self.assertIsNone(game.start_expedition(0, 0))
+        game.player['CurrentHP'] = game.player['MaxHP']
+        game.start_work(1)
+        self.assertIsNone(game.start_expedition(0, 0))
+        self.assertEqual(game.player['CurrentEnergy'], 24)
+
+    def test_bad_indices_are_ignored(self):
+        game, _ = make_game()
+        for args in [(-1, 0), (0, 99), ('x', 0), (None, None), (1.9, 0.2)]:
+            game.start_expedition(*args)
+        game.challenge_arena(500)
+        game.enter_dungeon('nope')
+        game.equip(99)
+        game.buy('Nobody', 0)
+        game.enhance(7, 0)
+        json.dumps(game.state)
+
+    def test_arena_win_swaps_ranks_and_sets_cooldown(self):
+        game, clock = make_game()
+        make_strong(game)
+        idx = next(i for i, o in enumerate(game.state['ArenaLadder']) if o['Rank'] == 9)
+        result = game.challenge_arena(idx)
+        self.assertTrue(result['IsVictory'])
+        self.assertEqual(game.player['ArenaRank'], 9)
+        self.assertEqual(game.state['ArenaLadder'][idx]['Rank'], 10)
+        self.assertEqual(unique_ranks(game.state), 21)
+        self.assertEqual(game.state['ArenaCooldownUntil'], clock.now + data.ARENA_COOLDOWN_MS)
+        self.assertIsNone(game.challenge_arena(0))  # still cooling down
+
+    def test_arena_milestones_pay_once(self):
+        game, _ = make_game()
+        make_strong(game)
+        game.state['ArenaLadder'] = build_ladder(6)
+        game.player['ArenaRank'] = 6
+        rubies = game.player['Rubies']
+        game.challenge_arena(next(i for i, o in enumerate(game.state['ArenaLadder']) if o['Rank'] == 5))
+        self.assertEqual(game.player['Rubies'] - rubies, 2)
+        # Drop back and win rank 5 again: no second payout.
+        other = next(o for o in game.state['ArenaLadder'] if o['Rank'] == 6)
+        other['Rank'], game.player['ArenaRank'] = 5, 6
+        game.state['ArenaCooldownUntil'] = 0
+        rubies = game.player['Rubies']
+        game.challenge_arena(game.state['ArenaLadder'].index(other))
+        self.assertEqual(game.player['Rubies'], rubies)
+
+    def test_dungeon_conquest_and_boss_rubies(self):
+        game, _ = make_game()
+        make_strong(game)
+        game.player['Level'] = 20
+        game.player['CurrentEnergy'] = 99
+        progress = game.state['DungeonProgress']['1']
+        rubies = game.player['Rubies']
+        for _ in range(3):
+            game.player['CurrentHP'] = game.player['MaxHP']
+            self.assertTrue(game.enter_dungeon(0)['IsVictory'])
+        self.assertTrue(progress['IsCompleted'])
+        self.assertEqual(progress['Conquests'], 1)
+        self.assertIn(game.player['Rubies'] - rubies, (2, 3))
+        self.assertIsNone(game.enter_dungeon(0))
+        game.restart_dungeon(0)
+        self.assertEqual((progress['CurrentStage'], progress['IsCompleted'], progress['Conquests']), (1, False, 1))
+
+    def test_combat_fuzz(self):
+        game, _ = make_game(5)
+        for n in range(1500):
+            game.player['Level'] = 1 + n % 18
+            game.player['CurrentHP'] = game.player['MaxHP']
+            location = LOCATIONS[n % len(LOCATIONS)]
+            if game.player['Level'] < location['ReqLevel']:
+                continue
+            from aeterna import combat
+            monster = combat.scale_monster(location['Monsters'][n % len(location['Monsters'])], game.player['Level'],
+                                           location['ReqLevel'])
+            result = combat.run_fight(game.state, 't', combat.monster_combatant(monster))
+            self.assertGreaterEqual(game.player['CurrentHP'], 1)
+            self.assertTrue(all(isinstance(t['Damage'], int) for t in result['Turns']))
+
+
+class CharacterTests(unittest.TestCase):
+    def test_potion_heals_with_intelligence_bonus(self):
+        game, _ = make_game()
+        game.player['CurrentHP'] = 1
+        game.use_potion(0)
+        self.assertEqual(game.player['CurrentHP'], 1 + int(50 * 1.1))
+
+    def test_potion_not_wasted(self):
+        game, _ = make_game()
+        game.use_potion(0)
+        self.assertEqual(len(game.player['Inventory']), 1)
+        self.assertTrue(game.take_notices())
+
+    def test_regen_over_time(self):
+        game, clock = make_game()
+        game.player['CurrentHP'] = 10
+        game.state['LastHPRegen'] = clock.now - 180000
+        game.apply_regen(clock.now)
+        self.assertEqual(game.player['CurrentHP'], 23)  # (2 + 5 * 0.5) * 3 minutes
+
+    def test_regen_ignores_clock_going_backwards(self):
+        game, clock = make_game()
+        game.player['CurrentHP'] = 10
+        game.state['LastHPRegen'] = clock.now + 999999
+        game.apply_regen(clock.now)
+        self.assertEqual(game.player['CurrentHP'], 10)
+        self.assertEqual(game.state['LastHPRegen'], clock.now)
+
+    def test_equip_unequip_sell_smelt(self):
+        game, _ = make_game()
+        p = game.player
+        too_high = generate_item(5, 'Helmet')
+        p['Inventory'].append(too_high)
+        game.equip(len(p['Inventory']) - 1)
+        self.assertIsNone(p['Equipment']['Head'])
+        ok = generate_item(1, 'Helmet')
+        p['Inventory'].append(ok)
+        game.equip(len(p['Inventory']) - 1)
+        self.assertIs(p['Equipment']['Head'], ok)
+        armor = total_armor(p)
+        game.unequip('Head')
+        self.assertEqual(total_armor(p), armor - ok['Armor'])
+        gold = p['Gold']
+        game.sell(p['Inventory'].index(ok))
+        self.assertEqual(p['Gold'], gold + ok['Price'] // 2)
+        iron = game.state['IronStash']
+        game.smelt(p['Inventory'].index(too_high))
+        self.assertEqual(game.state['IronStash'], iron + too_high['SmeltIron'])
+
+    def test_buy_sell_round_trip_costs_gold(self):
+        game, _ = make_game()
+        p = game.player
+        p['Gold'] = 10000
+        item = game.state['Vendors']['Weaponsmith']['Items'][0]
+        game.buy('Weaponsmith', 0)
+        game.sell(p['Inventory'].index(item))
+        self.assertEqual(10000 - p['Gold'], item['Price'] - sell_price(item))
+
+    def test_apothecary_never_runs_out(self):
+        game, _ = make_game()
+        game.buy('Alchemist', 0)
+        self.assertEqual(len(game.state['Vendors']['Alchemist']['Items']), 3)
+        self.assertEqual(game.player['Inventory'][-1]['Name'], 'Small Health Potion')
+
+    def test_sell_junk_keeps_rares_and_potions(self):
+        game, _ = make_game()
+        p = game.player
+        p['Inventory'] = [generate_item(1, 'Helmet', 'Common') for _ in range(3)]
+        p['Inventory'] += [generate_item(1, 'Helmet', 'Epic'), make_potion({'Name': 'P', 'HealAmount': 10, 'Price': 10})]
+        expected = sum(sell_price(i) for i in p['Inventory'][:3])
+        gold = p['Gold']
+        game.sell_junk()
+        self.assertEqual([i['Rarity'] + i['Type'] for i in p['Inventory']], ['EpicHelmet', 'CommonPotion'])
+        self.assertEqual(p['Gold'], gold + expected)
+
+    def test_crafting(self):
+        game, _ = make_game()
+        p = game.player
+        count = len(p['Inventory'])
+        game.craft(0)  # needs level 2
+        self.assertEqual(len(p['Inventory']), count)
+        p['Level'] = 2
+        game.craft(0)
+        item = p['Inventory'][-1]
+        self.assertEqual((item['Type'], item['Rarity'], item['Name']), ('Weapon', 'Uncommon', 'Centurion Gladius'))
+        self.assertGreater(item['MaxDamage'], item['MinDamage'])
+        self.assertEqual(item['Armor'], 0)
+
+    def test_craft_with_full_inventory_keeps_materials(self):
+        game, _ = make_game()
+        p = game.player
+        p['Level'] = 2
+        game.state['IronStash'] = 99
+        while len(p['Inventory']) < p['InventoryCapacity']:
+            p['Inventory'].append(generate_item(1))
+        game.craft(0)
+        self.assertEqual(game.state['IronStash'], 99)
+
+    def test_enhancement(self):
+        game, _ = make_game()
+        p = game.player
+        weapon = p['Equipment']['Weapon']
+        before = (weapon['MinDamage'], weapon['MaxDamage'], max_damage(p))
+        p['Gold'] = 100000
+        for key in ('IronStash', 'BronzeStash', 'LeatherStash', 'RubyStash'):
+            game.state[key] = 999
+        for _ in range(6):
+            game.enhance(0, SLOTS.index('Weapon'))
+        self.assertEqual(weapon['Upgrade'], 5)
+        self.assertTrue(display_name(weapon).endswith('+5'))
+        self.assertGreater(weapon['MinDamage'], before[0])
+        self.assertGreater(max_damage(p), before[2])
+        self.assertLessEqual(weapon['MinDamage'], weapon['MaxDamage'])
+        self.assertEqual(999 - game.state['RubyStash'], 6)
+        ring = generate_item(1, 'Ring')
+        p['Inventory'] = [ring]
+        strength = ring['Strength']
+        game.enhance(1, 0)
+        self.assertEqual(ring['Strength'], strength + 1)
+
+    def test_training_and_level_up(self):
+        game, _ = make_game()
+        p = game.player
+        p['Gold'] = 1000
+        cost = training_cost(game.state, p['BaseStrength'])
+        game.train(0)
+        self.assertEqual((p['BaseStrength'], p['Gold']), (6, 1000 - cost))
+        old_id = game.state['Vendors']['Weaponsmith']['Items'][0]['Id']
+        self.assertEqual(game.gain_xp(p['MaxXP']), 1)
+        self.assertEqual(p['Level'], 2)
+        self.assertNotEqual(game.state['Vendors']['Weaponsmith']['Items'][0]['Id'], old_id)
+
+    def test_rename(self):
+        game, _ = make_game()
+        game.rename('  Maximus   Decimus ')
+        self.assertEqual(game.player['Name'], 'Maximus Decimus')
+        game.rename('X')
+        self.assertEqual(game.player['Name'], 'Maximus Decimus')
+
+
+class WorkGuildQuestTests(unittest.TestCase):
+    def test_work_pays_when_done(self):
+        game, clock = make_game()
+        game.start_work(2)
+        gold = game.player['Gold']
+        self.assertEqual(game.tick(), 'none')
+        clock.now += 2 * 3600 * 1000
+        self.assertEqual(game.tick(), 'all')
+        self.assertEqual(game.player['Gold'] - gold, 220)
+        self.assertFalse(game.state['ActiveWork']['IsWorking'])
+
+    def test_guild_and_buildings(self):
+        game, _ = make_game()
+        p = game.player
+        p['Gold'] = 100000
+        game.create_guild('X', 'ROM')  # name too short
+        self.assertFalse(game.state['PlayerGuild']['HasGuild'])
+        game.create_guild('Legio X', 'lx')
+        guild = game.state['PlayerGuild']
+        self.assertEqual((guild['Name'], guild['Tag']), ('Legio X', 'LX'))
+        train_before, work_before, regen_before = training_cost(game.state, 10), work_pay(game.state, 1)[0], hp_regen_per_min(game.state)
+        for _ in range(20):
+            game.donate(2)
+        for key in ('TrainingGrounds', 'Library', 'Villa', 'Library'):
+            game.upgrade_building(key)
+        self.assertEqual(guild['GoldVault'], 20000 - 500 - 500 - 500 - 2000)
+        self.assertEqual(guild['Level'], 2)
+        self.assertEqual(guild['Buildings'], {'TrainingGrounds': 1, 'Library': 2, 'Villa': 1})
+        self.assertEqual(training_cost(game.state, 10), int(train_before * 0.95))
+        self.assertAlmostEqual(xp_multiplier(game.state), 1.1)
+        self.assertEqual(work_pay(game.state, 1)[0], 121)
+        self.assertEqual(work_before, 110)
+        self.assertAlmostEqual(hp_regen_per_min(game.state) / regen_before, 1.1)
+
+    def test_quests(self):
+        game, clock = make_game()
+        make_strong(game)
+        p = game.player
+        slots = game.state['QuestSlots']
+        slots[0]['Quest'] = {'Id': 'q', 'Kind': 'expedition', 'Target': '', 'Goal': 1, 'Progress': 0,
+                             'RewardGold': 77, 'RewardXP': 5, 'RewardRubies': 1}
+        slots[1]['Quest'] = {'Id': 'q2', 'Kind': 'monster', 'Target': 'm3', 'Goal': 1, 'Progress': 0,
+                             'RewardGold': 1, 'RewardXP': 1, 'RewardRubies': 0}
+        game.start_expedition(0, 0)  # Wild Boar: counts for the expedition quest, not the bandit quest
+        self.assertEqual((slots[0]['Quest']['Progress'], slots[1]['Quest']['Progress']), (1, 0))
+        game.start_expedition(0, 2)
+        self.assertEqual(slots[1]['Quest']['Progress'], 1)
+        gold, rubies = p['Gold'], p['Rubies']
+        game.claim_quest(0)
+        self.assertEqual((p['Gold'] - gold, p['Rubies'] - rubies), (77, 1))
+        self.assertNotEqual(slots[0]['Quest']['Id'], 'q')
+        game.abandon_quest(2)
+        self.assertIsNone(slots[2]['Quest'])
+        self.assertEqual(game.tick(), 'none')
+        clock.now = slots[2]['NextAt']
+        self.assertEqual(game.tick(), 'all')
+        self.assertIsNotNone(slots[2]['Quest'])
+
+    def test_ruby_shop(self):
+        game, clock = make_game()
+        p = game.player
+        p['Rubies'], p['CurrentEnergy'] = 3, 0
+        game.ruby_refill_energy()
+        self.assertEqual((p['CurrentEnergy'], p['Rubies']), (p['MaxEnergy'], 1))
+        game.state['ArenaCooldownUntil'] = clock.now + 100000
+        game.ruby_skip_arena()
+        self.assertEqual((game.state['ArenaCooldownUntil'], p['Rubies']), (0, 0))
+        first_id = game.state['Vendors']['Weaponsmith']['Items'][0]['Id']
+        game.ruby_restock('Weaponsmith')
+        self.assertEqual(game.state['Vendors']['Weaponsmith']['Items'][0]['Id'], first_id)  # no rubies left
+        p['Rubies'] = 1
+        game.ruby_restock('Weaponsmith')
+        self.assertNotEqual(game.state['Vendors']['Weaponsmith']['Items'][0]['Id'], first_id)
+
+
+class SaveTests(unittest.TestCase):
+    def test_round_trip_is_lossless(self):
+        game, clock = make_game()
+        make_strong(game)
+        game.start_expedition(0, 0)
+        game.player['Gold'] = 5000
+        game.create_guild('Legio X', 'LX')
+        restored = normalize_state(json.loads(json.dumps(game.state)), clock.now)
+        self.assertEqual(restored, json.loads(json.dumps(game.state)))
+
+    def test_browser_version_save_imports(self):
+        """A save exported from the earlier HTML/JavaScript version (numeric dungeon keys, v2 fields)."""
+        game, clock = make_game()
+        old = copy.deepcopy(game.state)
+        old['Version'] = 2
+        old['DungeonProgress'] = {'1': {'CurrentStage': 2, 'IsCompleted': False, 'Conquests': 0}}
+        old['LastHPRegen'] = clock.now - 60000.5  # the JS version stored fractional timestamps
+        state = normalize_state(old, clock.now)
+        self.assertEqual(state['DungeonProgress']['1']['CurrentStage'], 2)
+        self.assertEqual(state['DungeonProgress']['3']['CurrentStage'], 1)
+        self.assertEqual(state['LastHPRegen'], clock.now - 60000.5)
+
+    def test_csharp_server_save_imports(self):
+        legacy = {
+            'Player': {'Name': 'Maximus', 'Level': 3, 'XP': 10, 'MaxXP': 225, 'Gold': 999, 'ArenaRank': 7,
+                       'BaseStrength': 8, 'CurrentHP': 50, 'MaxEnergy': 28, 'CurrentEnergy': 5,
+                       'Equipment': {'Chest': {'Name': 'Tunic', 'Type': 1, 'Rarity': 0, 'Armor': 10},
+                                     'Weapon': {'Name': 'Gladius', 'Type': 0, 'Rarity': 3, 'MinDamage': 9, 'MaxDamage': 15},
+                                     'Head': {'Name': 'Misplaced', 'Type': 4}},
+                       'Inventory': [{'Name': 'Health Potion', 'Type': 8, 'HealAmount': 50, 'Price': 20},
+                                     {'Name': '<b>x</b>', 'Type': 2, 'Rarity': 4, 'Armor': 5},
+                                     {'Name': 'Bad', 'Type': 99, 'Rarity': True}]},
+            'ArenaLadder': [{'Id': 'arena_%d' % (i + 1), 'Rank': i + 1, 'Name': 'Flavius' if i == 4 else 'N'} for i in range(20)],
+            'Dungeons': [{'Id': 1, 'CurrentStage': 2, 'IsCompleted': False}],
+            'PlayerGuild': {'HasGuild': True, 'Name': 'Old', 'TrainingGroundLevel': 1, 'LibraryLevel': 3},
+            'LastHPRegen': '/Date(1700000000000)/',
+            'IronStash': 3,
+        }
+        state = normalize_state(legacy, START)
+        p = state['Player']
+        self.assertEqual((p['Equipment']['Weapon']['Type'], p['Equipment']['Weapon']['Rarity']), ('Weapon', 'Epic'))
+        self.assertEqual([i['Type'] for i in p['Inventory']], ['Ring', 'Potion', 'Helmet', 'Material'])  # misplaced ring moved to bag
+        self.assertEqual(unique_ranks(state), 21)
+        self.assertEqual(next(o for o in state['ArenaLadder'] if o['Id'] == 'arena_5')['Name'], 'Priscus')
+        self.assertEqual(state['DungeonProgress']['1']['CurrentStage'], 2)
+        self.assertEqual(state['PlayerGuild']['Buildings'], {'TrainingGrounds': 0, 'Library': 2, 'Villa': 0})
+        self.assertEqual(state['LastHPRegen'], START)
+        self.assertEqual(state['IronStash'], 3)
+
+    def test_garbage_saves_start_a_new_game(self):
+        for raw in (None, [], 'x', {'Player': 5}, {'Player': {'Level': 'abc', 'Equipment': 'nope', 'Inventory': {}}}):
+            state = normalize_state(raw, START)
+            json.dumps(state)
+            self.assertGreaterEqual(state['Player']['Level'], 1)
+
+    def test_store_writes_atomically_and_backs_up_corrupt_saves(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            store = SaveStore(tmp)
+            self.assertEqual(store.load(), (None, None))
+            game, _ = make_game()
+            store.save(game.state)
+            raw, warning = store.load()
+            self.assertEqual(raw['Player']['Name'], 'Flavius')
+            self.assertIsNone(warning)
+            with open(store.path, 'w') as f:
+                f.write('{broken')
+            raw, warning = store.load()
+            self.assertIsNone(raw)
+            self.assertIn('could not be read', warning)
+            backups = [n for n in os.listdir(tmp) if n.startswith('save.corrupt-')]
+            self.assertEqual(len(backups), 1)
+            with open(os.path.join(tmp, backups[0])) as f:
+                self.assertEqual(f.read(), '{broken')
+
+    def test_single_instance_lock(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            first, second = SaveStore(tmp), SaveStore(tmp)
+            self.assertTrue(first.acquire_lock())
+            self.assertFalse(second.acquire_lock())
+            first._lock_file.close()
+
+
+class ApiTests(unittest.TestCase):
+    def test_actions_save_and_return_view(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            util.rng.seed(4)
+            store = SaveStore(tmp)
+            api = Api(Game(clock=Clock()), store)
+            response = api.start_expedition(0, 1)
+            self.assertIn('view', response)
+            self.assertIsNotNone(response['result'])
+            with open(store.path) as f:
+                self.assertEqual(json.load(f)['Player']['CurrentEnergy'], 23)
+            second = api.get_view()
+            self.assertGreater(second['view']['seq'], response['view']['seq'])
+            json.dumps(second)
+
+    def test_errors_become_notices(self):
+        api = Api(Game(clock=Clock()))
+        api._game.start_expedition = lambda *a: 1 / 0
+        response = api.start_expedition(0, 0)
+        self.assertTrue(any('Something went wrong' in n for n in response['notices']))
+
+    def test_export_and_import(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            api = Api(Game(clock=Clock()))
+            api._game.player['Gold'] = 4242
+            path = os.path.join(tmp, 'out.json')
+            api._run(api._export_to, path)
+            api._game.reset()
+            self.assertEqual(api._game.player['Gold'], 250)
+            response = api._run(api._import_from, path)
+            self.assertEqual(response['view']['state']['Player']['Gold'], 4242)
+            with open(os.path.join(tmp, 'bad.json'), 'w', encoding='utf-8') as f:
+                f.write('﻿{"not": "a save"}')
+            response = api._run(api._import_from, os.path.join(tmp, 'bad.json'))
+            self.assertIn('That file is not an Aeterna Roma save.', response['notices'])
+
+    def test_tick_only_sends_view_on_change(self):
+        clock = Clock()
+        api = Api(Game(clock=clock))
+        self.assertEqual(api.tick(), {'change': 'none'})
+        api._game.player['CurrentHP'] = 10
+        clock.now += 120000
+        self.assertEqual(api.tick()['change'], 'sidebar')
+
+
+class ContentTests(unittest.TestCase):
+    def test_every_recipe_and_dungeon_is_reachable(self):
+        for recipe in RECIPES:
+            self.assertIn(recipe['ResultType'], data.SLOT_FOR_TYPE)
+        for dungeon in DUNGEONS:
+            self.assertTrue(dungeon['Stages'][-1]['IsBoss'])
+
+    def test_new_game_state_is_valid_input(self):
+        state = new_game_state(START)
+        self.assertEqual(normalize_state(json.loads(json.dumps(state)), START)['Player'], state['Player'])
+
+
+if __name__ == '__main__':
+    unittest.main()

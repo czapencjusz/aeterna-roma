@@ -1,15 +1,10 @@
 @echo off
-echo Building Aeterna Roma launcher...
-set CSC=C:\Windows\Microsoft.NET\Framework64\v4.0.30319\csc.exe
-if not exist "%CSC%" set CSC=C:\Windows\Microsoft.NET\Framework\v4.0.30319\csc.exe
-if not exist "%CSC%" (
-    echo [ERROR] Could not find the .NET Framework 4 C# compiler ^(csc.exe^).
-    exit /b 1
-)
-"%CSC%" /nologo /target:winexe /out:AeternaRoma.exe /r:System.dll /r:System.Windows.Forms.dll /resource:game.html,AeternaRoma.game.html Program.cs
-if %ERRORLEVEL% EQU 0 (
-    echo [SUCCESS] AeternaRoma.exe compiled successfully!
-) else (
-    echo [ERROR] Compilation failed.
-    exit /b 1
-)
+rem Builds a single AeternaRoma.exe (Python and the game packed together) with PyInstaller.
+rem Players who have Python installed can instead just run:  python aeterna_roma.py
+setlocal
+where python >nul 2>nul || (echo [ERROR] Python 3.9 or newer is needed: https://www.python.org/downloads/ & exit /b 1)
+echo Installing build tools...
+python -m pip install --upgrade -r requirements.txt pyinstaller || (echo [ERROR] Could not install the build tools. & exit /b 1)
+echo Building AeternaRoma.exe...
+python -m PyInstaller --noconfirm --clean --onefile --windowed --name AeternaRoma --add-data "aeterna\ui;aeterna\ui" aeterna_roma.py || (echo [ERROR] Build failed. & exit /b 1)
+echo [SUCCESS] Built dist\AeternaRoma.exe

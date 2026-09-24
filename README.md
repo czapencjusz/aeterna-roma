@@ -1,7 +1,9 @@
 # Czapo presents, a steaming bowl of "It should probably maybe work?". It's a single player "clone" of Gladiatus, the browser game. It's in a proof of concept stage and the code is indeed written with the help of an AI agent.
 # Aeterna Roma - Hero of Rome
 
-An offline, single-player ancient Roman RPG that runs entirely on your computer. The whole game is one self-contained web page (`game.html`): no server, no background process, no open network ports.
+An offline, single-player ancient Roman RPG written in Python. The game runs entirely on your computer in its own window: no web server, no background process, no open network ports.
+
+![Expeditions screen](docs/screenshot-expeditions.png)
 
 ## Features
 
@@ -21,26 +23,57 @@ An offline, single-player ancient Roman RPG that runs entirely on your computer.
 - **Gear with character**: item prefixes and suffixes (e.g. *Titan* or *of Mars*) add attribute bonuses, and rarity makes them stronger.
 - **Rubies**: earned from dungeon bosses (mostly on the first conquest), Pantheon tasks, and arena milestones. Spend them to refill energy, skip the arena cooldown, or bring in new merchant wares.
 - **Animated combat reports**: fights play out line by line with live HP bars (Instant, Fast, or Normal speed).
+- **Hand-drawn vector art**: icons for every kind of gear, portraits for all 25 monsters and the 4 gladiator styles, scene banners for every region and dungeon, and a player figure that changes with the gear you equip.
 - **5 Custom Visual Themes**: Dark Imperial, Roman Parchment, Colosseum Crimson, Legion Emerald, and Tyrian Purple.
-- **Hand-drawn vector art**: icons for every kind of gear (each matches the item's name), portraits for all 25 monsters and the 4 gladiator styles, scene banners for every region and dungeon, and a player figure that changes with the gear you equip. All the art is drawn as SVG code inside `game.html`, so there are still no image files to ship.
-
-![Expeditions screen](docs/screenshot-expeditions.png)
 
 ## Playing
 
-**Without building anything:** double-click `game.html` to open it in your browser (Edge, Chrome, or Firefox).
-
-**As a Windows app:** run `build.bat` from Command Prompt or PowerShell to compile `AeternaRoma.exe`, then double-click it.
+You need **Python 3.9 or newer** (from [python.org](https://www.python.org/downloads/)).
 
 ```cmd
-build.bat
+python -m pip install -r requirements.txt
+python aeterna_roma.py
 ```
 
-`AeternaRoma.exe` is only a small launcher. `game.html` is embedded inside it. The launcher unpacks the page to `%LOCALAPPDATA%\AeternaRoma\game.html`, opens it in a chromeless Edge (or Chrome) app window, and exits straight away. If neither browser is found, it opens the page in your default browser.
+On Windows you can also double-click `run.bat`, which installs the one dependency the first time and starts the game.
+
+The window is drawn by [pywebview](https://pywebview.flowrl.com/), which uses the web view already built into your system (Edge WebView2 on Windows 10/11, WebKit on macOS, GTK WebKit or Qt on Linux). The interface is loaded straight into the window, so no local web server is involved.
+
+### Building a standalone `AeternaRoma.exe`
+
+Run `build.bat` on Windows. It installs PyInstaller and packs Python, the game and its interface into a single `dist\AeternaRoma.exe` that runs without Python installed.
 
 ## Saving
 
-- Progress is saved automatically in the browser's local storage after every action.
-- Saves belong to the browser that ran the game. The launcher always opens the page from the same location, so your save carries over between launches.
-- Use **Settings → Export Save File** to back up your gladiator or move it to another computer, and **Import Save File** to load it again. Save files from the old server version (`savegame.json`) can be imported too.
-- If a save can't be read, it is kept as a backup copy in local storage, and a new game starts in its place.
+- Progress is saved automatically after every action to `save.json` in your user folder:
+  - Windows: `%APPDATA%\AeternaRoma`
+  - macOS: `~/Library/Application Support/AeternaRoma`
+  - Linux: `~/.local/share/aeterna-roma`
+
+  The exact path is shown under **Settings**. Set the `AETERNA_ROMA_DATA_DIR` environment variable to keep it somewhere else.
+- Saves are written to a temporary file and then swapped in, so a crash can't leave a half-written save. If a save ever can't be read, it is kept as `save.corrupt-<time>.json` and a new game starts.
+- Only one copy of the game can run at a time, so two windows can't overwrite each other's progress.
+- **Settings → Export / Import Save File** backs up your gladiator or moves it to another computer.
+- **Coming from an older version?** Saves exported from the earlier browser version (Settings → Export Save File) import directly, and so do `savegame.json` files from the original C# version.
+
+## Project layout
+
+```
+aeterna_roma.py        Launcher: opens the game window (python aeterna_roma.py --check tests a build without a window)
+aeterna/
+  data.py              Game content and tuning numbers (monsters, regions, recipes, ...)
+  items.py             Item generation, names, prices, save-file cleanup for items
+  rules.py             Gladiator stat formulas and guild bonuses
+  combat.py            Combat formulas and the fight loop
+  state.py             New games, Pantheon quests, loading any save format
+  engine.py            The Game class: every player action and the timers
+  view.py              Builds the numbers the interface draws
+  storage.py           Save files, save location, single-instance lock
+  api.py               Bridge between the window and the game
+  ui/index.html        The interface: layout, styles, SVG art, and a thin script that draws what Python sends
+tests/
+  test_game.py         Rule tests:       python -m unittest discover -s tests
+  e2e/ui_test.js       Interface test (needs Node.js + Playwright):   node tests/e2e/ui_test.js
+```
+
+All game rules live in Python. The page never changes the game itself: it shows what Python sends back and passes your clicks to Python.

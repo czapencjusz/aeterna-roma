@@ -1,13 +1,27 @@
-# Binaries & Executables
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+
+# Build output (PyInstaller)
+build/
+dist/
+*.spec
+
+# Old C# build output
 *.exe
 *.dll
 *.pdb
 
-# Local Save Data
+# Local save data
 savegame.json
+save.json
 aeterna_roma_save.json
 
-# VS / IDE files
+# IDE files
 .vs/
+.vscode/
+.idea/
 *.user
 *.suo
