@@ -6,17 +6,21 @@ An offline, single-player ancient Roman RPG that runs entirely on your computer.
 ## Features
 
 - **Dynamic Level Scaling**: Colosseum Arena ladder opponents and Expedition/Dungeon monsters scale their stats, HP, damage, and rewards to match the player's level.
-- **10 Interactive Tabs**:
-  - Overview / Character Sheet (with hidden combat stats)
+- **11 Interactive Tabs**:
+  - Overview / Character Sheet: attributes, inventory with gear comparison, hidden combat stats, and a Chronicle of lifetime statistics
   - Attribute Training
-  - Expeditions
-  - Colosseum Arena (21-place ranking ladder, 5-minute cooldown between bouts)
-  - Dungeons
-  - Roman Forum Merchants (Weaponsmith, Armorer, General Merchant, Apothecary)
-  - The Forge (Smelting & Crafting)
-  - Patrician Villa Work (timed shifts that pay out even while the game is closed)
-  - Gladiator Guild
-  - Game Settings & Theme Customization
+  - Expeditions: 6 regions, from the Suburbs of Rome to the Dacian Frontier
+  - Colosseum Arena: 21-place ranking ladder, titles, ruby rewards for reaching the top 5, 3 and 1, and a 5-minute cooldown between bouts
+  - Dungeons: 3 multi-floor dungeons with bosses, replayable after you conquer them
+  - Pantheon: 3 divine tasks at a time (win expeditions, hunt a specific monster, win arena bouts, clear dungeon floors) for gold, XP and rubies
+  - Roman Forum Merchants (Weaponsmith, Armorer, General Merchant, Apothecary): they buy your items back for half their value
+  - The Forge: smelting, 10 crafting recipes, and gear enhancement up to +5
+  - Patrician Villa Work: timed shifts that pay out even while the game is closed
+  - Gladiator Guild: a shared gold vault plus Training Grounds, Library, and Villa buildings with real bonuses
+  - Game Settings: theme, combat report speed, renaming, and save import/export
+- **Gear with character**: item prefixes and suffixes (e.g. *Titan* or *of Mars*) add attribute bonuses, and rarity makes them stronger.
+- **Rubies**: earned from dungeon bosses (mostly on the first conquest), Pantheon tasks, and arena milestones. Spend them to refill energy, skip the arena cooldown, or bring in new merchant wares.
+- **Animated combat reports**: fights play out line by line with live HP bars (Instant, Fast, or Normal speed).
 - **5 Custom Visual Themes**: Dark Imperial, Roman Parchment, Colosseum Crimson, Legion Emerald, and Tyrian Purple.
 
 ## Playing

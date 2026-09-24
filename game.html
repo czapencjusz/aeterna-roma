@@ -597,6 +597,45 @@
             gap: 20px;
         }
 
+        /* COMBAT HP BARS */
+        .fighter-bars {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .fighter-bars .stat-bar-label span:first-child { font-weight: bold; }
+        .fill-enemy { background: linear-gradient(90deg, #7f0000, #e53935); }
+        .banner-pending { background: rgba(255,255,255,0.05); color: var(--text-accent); border: 1px solid var(--border-gold); }
+
+        /* SMALL INLINE BUTTONS (ruby shop etc.) */
+        .btn-mini {
+            background: rgba(0,0,0,0.45);
+            border: 1px solid #ff5252;
+            color: #ff8a80;
+            font-size: 11px;
+            padding: 2px 8px;
+            border-radius: 10px;
+            cursor: pointer;
+            font-family: inherit;
+            font-weight: bold;
+        }
+        .btn-mini:hover { background: rgba(255, 82, 82, 0.2); }
+        .btn-mini:disabled { opacity: 0.4; cursor: not-allowed; }
+
+        .gladiator-title {
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+            color: var(--text-primary);
+            opacity: 0.85;
+        }
+
+        /* QUESTS */
+        .quest-card .progress-text { font-size: 12px; color: var(--text-accent); }
+        .quest-card.done { border-color: var(--text-gold); box-shadow: 0 0 10px rgba(255, 215, 0, 0.25); }
+
+        .stat-diff-up { color: #66bb6a; }
+        .stat-diff-down { color: #ef5350; }
+
         /* TOAST NOTIFICATIONS */
         .toast-container {
             position: fixed;
@@ -649,6 +688,7 @@
                 <div id="avatarContainer"></div>
                 <div class="gladiator-name" id="gladName">Gladiator</div>
                 <div class="gladiator-level" id="gladLevel">LVL 1</div>
+                <div class="gladiator-title" id="gladTitle"></div>
                 <div class="status-note" id="sidebarStatus"></div>
             </div>
 
@@ -659,7 +699,7 @@
             </div>
 
             <div class="stat-bar-container">
-                <div class="stat-bar-label"><span>Energy</span><span id="textEnergy">24/24</span></div>
+                <div class="stat-bar-label"><span>Energy <button class="btn-mini" id="btnRefillEnergy" onclick="rubyRefillEnergy()" title="Refill energy">💎 2 Refill</button></span><span id="textEnergy">24/24</span></div>
                 <div class="stat-bar"><div class="stat-fill fill-energy" id="fillEnergy" style="width:100%"></div></div>
             </div>
 
@@ -697,6 +737,7 @@
                 <button class="nav-tab" data-tab="expeditions" onclick="switchTab('expeditions')">🗺️ Expeditions</button>
                 <button class="nav-tab" data-tab="arena" onclick="switchTab('arena')">⚔️ Colosseum</button>
                 <button class="nav-tab" data-tab="dungeons" onclick="switchTab('dungeons')">🗝️ Dungeons</button>
+                <button class="nav-tab" data-tab="quests" onclick="switchTab('quests')">🏺 Pantheon</button>
                 <button class="nav-tab" data-tab="merchants" onclick="switchTab('merchants')">⚖️ Merchants</button>
                 <button class="nav-tab" data-tab="forge" onclick="switchTab('forge')">🔥 The Forge</button>
                 <button class="nav-tab" data-tab="work" onclick="switchTab('work')">🌾 Villa Work</button>
@@ -710,6 +751,7 @@
                     <div class="overview-subtabs">
                         <button class="subtab-btn active" id="ovSubtabBtnBase" onclick="switchOverviewSubtab('base')">Base Attributes</button>
                         <button class="subtab-btn" id="ovSubtabBtnHidden" onclick="switchOverviewSubtab('hidden')">Hidden &amp; Combat Stats</button>
+                        <button class="subtab-btn" id="ovSubtabBtnChronicle" onclick="switchOverviewSubtab('chronicle')">Chronicle</button>
                     </div>
 
                     <div id="ovSubtab-base">
@@ -736,7 +778,10 @@
                             </div>
                         </div>
 
-                        <h3 style="font-family:'Cinzel',serif; color:var(--text-gold); margin-top:25px;">Inventory Items <span class="muted" id="invCount"></span></h3>
+                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px; gap:10px; flex-wrap:wrap;">
+                            <h3 style="font-family:'Cinzel',serif; color:var(--text-gold);">Inventory Items <span class="muted" id="invCount"></span></h3>
+                            <button class="btn-roman" onclick="sellJunk()">🪙 Sell Common Gear</button>
+                        </div>
                         <div class="inventory-grid" id="inventoryContainer"></div>
                         <div id="selectedItemPanel" class="info-box" style="margin-top:15px; display:none;"></div>
                     </div>
@@ -745,6 +790,12 @@
                         <h2 class="tab-title">Hidden &amp; Combat Formulae</h2>
                         <p class="muted">Chances that depend on the enemy are shown against an opponent with the same stats as you.</p>
                         <div class="monster-list" id="hiddenStatsGrid"></div>
+                    </div>
+
+                    <div id="ovSubtab-chronicle" style="display:none;">
+                        <h2 class="tab-title">Chronicle of Deeds</h2>
+                        <p class="muted">A lifetime record of your gladiator's career.</p>
+                        <div class="monster-list" id="chronicleGrid"></div>
                     </div>
                 </div>
 
@@ -764,7 +815,10 @@
                 <!-- ARENA TAB -->
                 <div id="tab-arena" class="tab-content">
                     <h2 class="tab-title">The Colosseum Arena</h2>
-                    <div class="info-box" id="arenaStatus"></div>
+                    <div class="info-box">
+                        <span id="arenaStatusText"></span>
+                        <button class="btn-mini" id="btnSkipArena" onclick="rubySkipArena()" style="margin-left:8px; display:none;">💎 1 Skip wait</button>
+                    </div>
                     <div class="monster-list" id="arenaContainer"></div>
                 </div>
 
@@ -774,11 +828,21 @@
                     <div class="exp-grid" id="dungeonContainer"></div>
                 </div>
 
+                <!-- PANTHEON (QUESTS) TAB -->
+                <div id="tab-quests" class="tab-content">
+                    <h2 class="tab-title">The Pantheon - Divine Tasks</h2>
+                    <p style="font-size:13px; margin-bottom:15px;">The priests of Rome relay the wishes of the gods. Complete their tasks for gold, experience, and sometimes rubies. Abandoned tasks are replaced after a short wait.</p>
+                    <div class="exp-grid" id="questContainer"></div>
+                </div>
+
                 <!-- MERCHANTS TAB -->
                 <div id="tab-merchants" class="tab-content">
                     <h2 class="tab-title">Forum Boarium - Merchants</h2>
                     <div class="btn-row" style="margin-bottom:15px;" id="vendorButtons"></div>
-                    <div class="info-box" id="vendorInfo"></div>
+                    <div class="info-box" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                        <span id="vendorInfo"></span>
+                        <button class="btn-mini" id="btnRestock" onclick="rubyRestockVendor()">💎 1 New wares</button>
+                    </div>
                     <div class="merchant-grid" id="merchantContainer"></div>
                 </div>
 
@@ -786,7 +850,11 @@
                 <div id="tab-forge" class="tab-content">
                     <h2 class="tab-title">Vulcan's Forge</h2>
                     <div id="forgeStashInfo" class="info-box"></div>
+                    <h3 style="font-family:'Cinzel',serif; color:var(--text-gold); margin-bottom:10px;">Forge Recipes</h3>
                     <div class="exp-grid" id="forgeRecipeContainer"></div>
+                    <h3 style="font-family:'Cinzel',serif; color:var(--text-gold); margin:25px 0 6px;">Enhance Gear</h3>
+                    <p class="muted" style="margin-bottom:10px;">Each enhancement (up to +5) raises an item's damage, armor, or attribute bonuses by about 10%.</p>
+                    <div class="monster-list" id="enhanceContainer"></div>
                 </div>
 
                 <!-- WORK TAB -->
@@ -810,6 +878,11 @@
                             <span style="font-family:'Cinzel',serif; color:var(--text-accent);">Visual Theme</span>
                             <select class="roman-select" id="themeSelect" onchange="setTheme(this.value)"></select>
                         </label>
+                        <label style="display:flex; flex-direction:column; gap:6px;">
+                            <span style="font-family:'Cinzel',serif; color:var(--text-accent);">Combat Report Speed</span>
+                            <select class="roman-select" id="combatSpeedSelect" onchange="setCombatSpeed(this.value)"></select>
+                        </label>
+                        <button class="btn-roman btn-gold" onclick="renameGladiator()">✏️ Rename Gladiator</button>
                         <button class="btn-roman btn-gold" onclick="toggleFullscreen()">📺 Fullscreen</button>
                         <button class="btn-roman btn-gold" onclick="manualSave()">💾 Quick Save</button>
                         <button class="btn-roman" onclick="exportSave()">📥 Export Save File</button>
@@ -830,7 +903,10 @@
         <div class="combat-modal">
             <div class="modal-header">
                 <span id="modalCombatTitle">COMBAT REPORT</span>
-                <button style="background:none; border:none; color:#ffd700; font-size:24px; cursor:pointer;" onclick="closeCombatModal()">✕</button>
+                <span>
+                    <button class="btn-mini" id="btnSkipCombat" onclick="finishCombatAnimation()" style="display:none;">⏭ Skip</button>
+                    <button style="background:none; border:none; color:#ffd700; font-size:24px; cursor:pointer; margin-left:8px;" onclick="closeCombatModal()">✕</button>
+                </span>
             </div>
             <div class="modal-body">
                 <div class="combat-result-banner" id="modalCombatResultBanner">VICTORY!</div>
@@ -838,6 +914,16 @@
                     <span id="modalFighter1Name" style="color:#2196f3;">Player</span>
                     <span style="color:#888;">VS</span>
                     <span id="modalFighter2Name" style="color:#f44336;">Enemy</span>
+                </div>
+                <div class="fighter-bars">
+                    <div class="stat-bar-container">
+                        <div class="stat-bar-label"><span style="color:#2196f3;">HP</span><span id="modalHp1"></span></div>
+                        <div class="stat-bar"><div class="stat-fill fill-hp" id="modalHpFill1"></div></div>
+                    </div>
+                    <div class="stat-bar-container">
+                        <div class="stat-bar-label"><span style="color:#f44336;">HP</span><span id="modalHp2"></span></div>
+                        <div class="stat-bar"><div class="stat-fill fill-enemy" id="modalHpFill2"></div></div>
+                    </div>
                 </div>
                 <div class="reward-box" id="modalRewards"></div>
                 <div class="combat-log" id="modalCombatLog"></div>
@@ -878,6 +964,44 @@
         const WORK_XP_PER_HOUR = 25;
         const WORK_OPTIONS = [1, 2, 4, 8];
         const LADDER_SIZE = 21; // 20 rival gladiators + the player
+        const SELL_RATIO = 0.5; // merchants pay half an item's value
+        const MAX_ENHANCE = 5;
+        const QUEST_SLOTS = 3;
+        const QUEST_ABANDON_WAIT_MS = 5 * 60 * 1000;
+        const RUBY_COST = { refillEnergy: 2, skipArena: 1, restock: 1 };
+        const ARENA_MILESTONES = [ // first time reaching these ranks pays rubies
+            { Rank: 5, Rubies: 2 },
+            { Rank: 3, Rubies: 3 },
+            { Rank: 1, Rubies: 5 }
+        ];
+        const COMBAT_SPEEDS = { Instant: 0, Fast: 60, Normal: 220 }; // ms per combat log line
+
+        const GUILD_BUILDINGS = {
+            TrainingGrounds: { Name: 'Training Grounds', Icon: '🏋️', Effect: lvl => `Attribute training costs ${lvl * 5}% less` },
+            Library: { Name: 'Library of Minerva', Icon: '📜', Effect: lvl => `+${lvl * 5}% experience from fights and quests` },
+            Villa: { Name: 'Guild Villa', Icon: '🏛️', Effect: lvl => `+${lvl * 10}% villa work pay and HP regeneration` }
+        };
+        const GUILD_BUILDING_MAX = 5;
+        const GUILD_DONATIONS = [100, 500, 1000];
+        function guildBuildingCost(level) { return 500 * (level + 1) * (level + 1); } // cost to go from level -> level + 1
+
+        // Prefixes/suffixes grant real attribute bonuses (amount scales with item level and rarity).
+        const PREFIXES = [
+            { Name: 'Praetorian', Stats: { Constitution: 1 } },
+            { Name: 'Centurion', Stats: { Strength: 1 } },
+            { Name: 'Imperial', Stats: { Charisma: 1 } },
+            { Name: 'Olympian', Stats: { Intelligence: 1 } },
+            { Name: 'Invictus', Stats: { Agility: 1 } },
+            { Name: 'Titan', Stats: { Strength: 1, Constitution: 1 } }
+        ];
+        const SUFFIXES = [
+            { Name: 'of Valor', Stats: { Dexterity: 1 } },
+            { Name: 'of Jupiter', Stats: { Intelligence: 1, Charisma: 1 } },
+            { Name: 'of Mars', Stats: { Strength: 1, Dexterity: 1 } },
+            { Name: 'of Blood', Stats: { Strength: 2 } },
+            { Name: 'of Victory', Stats: { Agility: 1, Charisma: 1 } }
+        ];
+        const AFFIX_CHANCE = 0.5;
 
         const THEMES = {
             DarkImperial: 'Dark Imperial',
@@ -935,6 +1059,24 @@
                     { Id: 'm10', Name: 'Barbarian Berserker', Level: 9, MaxHP: 360, MinDamage: 28, MaxDamage: 45, Armor: 18, Dexterity: 24, Agility: 22, XPReward: 220, MinGold: 200, MaxGold: 350 },
                     { Id: 'm11', Name: 'Warlord Chieftain', Level: 10, MaxHP: 480, MinDamage: 35, MaxDamage: 58, Armor: 25, Dexterity: 28, Agility: 24, XPReward: 300, MinGold: 300, MaxGold: 500 }
                 ]
+            },
+            {
+                Id: 5, Name: 'Sands of Aegyptus', ReqLevel: 12, EnergyCost: 3,
+                Description: 'Scorching dunes along the Nile where giant scorpions lurk and ancient tombs guard their secrets.',
+                Monsters: [
+                    { Id: 'm12', Name: 'Giant Scorpion', Level: 12, MaxHP: 520, MinDamage: 38, MaxDamage: 60, Armor: 28, Dexterity: 30, Agility: 24, XPReward: 380, MinGold: 380, MaxGold: 600 },
+                    { Id: 'm13', Name: 'Tomb Guardian', Level: 13, MaxHP: 600, MinDamage: 42, MaxDamage: 66, Armor: 36, Dexterity: 26, Agility: 20, XPReward: 450, MinGold: 450, MaxGold: 700 },
+                    { Id: 'm14', Name: 'Riddling Sphinx', Level: 14, MaxHP: 700, MinDamage: 48, MaxDamage: 74, Armor: 32, Dexterity: 34, Agility: 28, XPReward: 540, MinGold: 520, MaxGold: 820 }
+                ]
+            },
+            {
+                Id: 6, Name: 'Dacian Frontier', ReqLevel: 16, EnergyCost: 4,
+                Description: 'Wild mountain borderlands where King Decebalus\' warriors and wolf-cult priests defy the legions.',
+                Monsters: [
+                    { Id: 'm15', Name: 'Dacian Falxman', Level: 16, MaxHP: 840, MinDamage: 56, MaxDamage: 86, Armor: 40, Dexterity: 38, Agility: 30, XPReward: 700, MinGold: 650, MaxGold: 1000 },
+                    { Id: 'm16', Name: 'Wolf Priest', Level: 17, MaxHP: 920, MinDamage: 60, MaxDamage: 92, Armor: 38, Dexterity: 42, Agility: 34, XPReward: 800, MinGold: 720, MaxGold: 1100 },
+                    { Id: 'm17', Name: 'Champion of Decebalus', Level: 18, MaxHP: 1080, MinDamage: 66, MaxDamage: 102, Armor: 48, Dexterity: 44, Agility: 32, XPReward: 950, MinGold: 850, MaxGold: 1300 }
+                ]
             }
         ];
 
@@ -955,6 +1097,15 @@
                     { Name: 'Maze Entrance', IsBoss: false, Monster: { Name: 'Gorgon Sentinel', Level: 8, MaxHP: 260, MinDamage: 22, MaxDamage: 36, Armor: 16, Dexterity: 22, Agility: 20, XPReward: 160, MinGold: 150, MaxGold: 250 } },
                     { Name: 'Labyrinth Center', IsBoss: true, Monster: { Name: 'Minotaur Emperor', Level: 10, MaxHP: 500, MinDamage: 38, MaxDamage: 60, Armor: 28, Dexterity: 25, Agility: 22, XPReward: 400, MinGold: 500, MaxGold: 900 } }
                 ]
+            },
+            {
+                Id: 3, Name: 'Forge of Vulcan', ReqLevel: 13,
+                Description: 'Beneath Mount Etna, the smith-god\'s servants guard the fires where the weapons of the gods are made.',
+                Stages: [
+                    { Name: 'Lava Tunnels', IsBoss: false, Monster: { Name: 'Fire Salamander', Level: 13, MaxHP: 560, MinDamage: 42, MaxDamage: 64, Armor: 30, Dexterity: 32, Agility: 26, XPReward: 420, MinGold: 420, MaxGold: 650 } },
+                    { Name: 'Cyclops Smithy', IsBoss: false, Monster: { Name: 'Cyclops Smith', Level: 14, MaxHP: 720, MinDamage: 50, MaxDamage: 78, Armor: 40, Dexterity: 26, Agility: 18, XPReward: 520, MinGold: 500, MaxGold: 800 } },
+                    { Name: 'Heart of the Mountain', IsBoss: true, Monster: { Name: 'Avatar of Vulcan', Level: 16, MaxHP: 1000, MinDamage: 58, MaxDamage: 90, Armor: 46, Dexterity: 36, Agility: 28, XPReward: 900, MinGold: 1000, MaxGold: 1600 } }
+                ]
             }
         ];
 
@@ -962,7 +1113,20 @@
             { Id: 'r1', Name: 'Centurion Gladius', ResultType: 'Weapon', ResultRarity: 'Uncommon', ReqIron: 5, ReqBronze: 2, ReqRuby: 0, ReqLeather: 2, ReqLevel: 2, IconSvg: 'weapon_1' },
             { Id: 'r2', Name: 'Imperial Lorica Segmentata', ResultType: 'Armor', ResultRarity: 'Rare', ReqIron: 8, ReqBronze: 5, ReqRuby: 1, ReqLeather: 5, ReqLevel: 4, IconSvg: 'armor_1' },
             { Id: 'r3', Name: 'Scutum of Mars', ResultType: 'Shield', ResultRarity: 'Epic', ReqIron: 10, ReqBronze: 8, ReqRuby: 3, ReqLeather: 4, ReqLevel: 6, IconSvg: 'shield_1' },
-            { Id: 'r4', Name: 'Golden Galea Helmet', ResultType: 'Helmet', ResultRarity: 'Legendary', ReqIron: 15, ReqBronze: 12, ReqRuby: 5, ReqLeather: 8, ReqLevel: 8, IconSvg: 'helmet_1' }
+            { Id: 'r4', Name: 'Golden Galea Helmet', ResultType: 'Helmet', ResultRarity: 'Legendary', ReqIron: 15, ReqBronze: 12, ReqRuby: 5, ReqLeather: 8, ReqLevel: 8, IconSvg: 'helmet_1' },
+            { Id: 'r5', Name: 'Signet of Minerva', ResultType: 'Ring', ResultRarity: 'Rare', ReqIron: 2, ReqBronze: 6, ReqRuby: 1, ReqLeather: 0, ReqLevel: 3, IconSvg: 'ring_1' },
+            { Id: 'r6', Name: 'Gauntlets of Hercules', ResultType: 'Gloves', ResultRarity: 'Rare', ReqIron: 4, ReqBronze: 3, ReqRuby: 1, ReqLeather: 6, ReqLevel: 5, IconSvg: 'gloves_1' },
+            { Id: 'r7', Name: 'Sandals of Mercury', ResultType: 'Shoes', ResultRarity: 'Rare', ReqIron: 3, ReqBronze: 3, ReqRuby: 1, ReqLeather: 7, ReqLevel: 5, IconSvg: 'shoes_1' },
+            { Id: 'r8', Name: 'Amulet of Apollo', ResultType: 'Amulet', ResultRarity: 'Epic', ReqIron: 3, ReqBronze: 10, ReqRuby: 3, ReqLeather: 2, ReqLevel: 7, IconSvg: 'amulet_1' },
+            { Id: 'r9', Name: 'Spatha of Victory', ResultType: 'Weapon', ResultRarity: 'Epic', ReqIron: 14, ReqBronze: 8, ReqRuby: 3, ReqLeather: 4, ReqLevel: 10, IconSvg: 'weapon_2' },
+            { Id: 'r10', Name: 'Aegis of Minerva', ResultType: 'Shield', ResultRarity: 'Legendary', ReqIron: 20, ReqBronze: 16, ReqRuby: 6, ReqLeather: 10, ReqLevel: 14, IconSvg: 'shield_2' }
+        ];
+
+        const ARENA_TITLES = [
+            { MaxRank: 1, Title: 'Champion of Rome' },
+            { MaxRank: 3, Title: 'Hero of the Colosseum' },
+            { MaxRank: 10, Title: 'Veteran Gladiator' },
+            { MaxRank: LADDER_SIZE, Title: 'Tiro (Recruit)' }
         ];
 
         const ARENA_NAMES = [
@@ -1003,7 +1167,7 @@
             Id: '', Name: '', Prefix: '', Suffix: '', Type: 'Material', Rarity: 'Common',
             LevelRequirement: 1, Price: 0, MinDamage: 0, MaxDamage: 0, Armor: 0,
             Strength: 0, Dexterity: 0, Agility: 0, Constitution: 0, Charisma: 0, Intelligence: 0,
-            HealAmount: 0, EnergyAmount: 0, IconSvg: '',
+            HealAmount: 0, EnergyAmount: 0, IconSvg: '', Upgrade: 0,
             SmeltIron: 0, SmeltBronze: 0, SmeltRuby: 0, SmeltLeather: 0
         };
         const ITEM_NUMERIC_FIELDS = Object.keys(ITEM_TEMPLATE).filter(k => typeof ITEM_TEMPLATE[k] === 'number');
@@ -1015,7 +1179,16 @@
         }
 
         function displayName(item) {
-            return [item.Prefix, item.Name, item.Suffix].filter(Boolean).join(' ');
+            return [item.Prefix, item.Name, item.Suffix].filter(Boolean).join(' ') + (item.Upgrade ? ` +${item.Upgrade}` : '');
+        }
+
+        function sellPrice(item) { return Math.max(1, Math.floor(item.Price * SELL_RATIO)); }
+
+        function isEquipment(item) { return !!SLOT_FOR_TYPE[item.Type]; }
+
+        function applyAffix(item, affix, level, mult) {
+            const amount = 1 + Math.floor(level / 4) + (mult - 1);
+            Object.keys(affix.Stats).forEach(stat => item[stat] += affix.Stats[stat] * amount);
         }
 
         function rollRarity() {
@@ -1087,8 +1260,16 @@
             }
 
             item.Name = baseName;
-            item.Prefix = pick(['', 'Praetorian', 'Centurion', 'Imperial', 'Olympian', 'Invictus', 'Titan']);
-            item.Suffix = pick(['', 'of Valor', 'of Jupiter', 'of Mars', 'of Blood', 'of Victory']);
+            if (Math.random() < AFFIX_CHANCE) {
+                const prefix = pick(PREFIXES);
+                item.Prefix = prefix.Name;
+                applyAffix(item, prefix, level, mult);
+            }
+            if (Math.random() < AFFIX_CHANCE) {
+                const suffix = pick(SUFFIXES);
+                item.Suffix = suffix.Name;
+                applyAffix(item, suffix, level, mult);
+            }
 
             item.Price = (level * 25 + 20) * mult;
             item.SmeltIron = randInt(1, 3) * mult;
@@ -1133,9 +1314,26 @@
             return 5 + Math.floor(totalStat(p, 'Strength') / 2) + Math.floor(totalStat(p, 'Dexterity') / 3) + (w ? w.MaxDamage : 0);
         }
 
-        function hpRegenPerMin(p) { return 2 + totalStat(p, 'Constitution') * 0.5; }
+        // Guild building level (0 when the player has no guild).
+        function guildBonusLevel(key) {
+            const g = state && state.PlayerGuild;
+            return g && g.HasGuild ? g.Buildings[key] : 0;
+        }
+        function xpMultiplier() { return 1 + guildBonusLevel('Library') * 0.05; }
+        function workPay(hours) {
+            return {
+                gold: Math.floor(hours * WORK_GOLD_PER_HOUR * (1 + guildBonusLevel('Villa') * 0.10)),
+                xp: hours * WORK_XP_PER_HOUR
+            };
+        }
+
+        function hpRegenPerMin(p) { return (2 + totalStat(p, 'Constitution') * 0.5) * (1 + guildBonusLevel('Villa') * 0.10); }
         function healMultiplier(p) { return 1 + totalStat(p, 'Intelligence') * 0.02; }
-        function trainingCost(base) { return Math.floor(base * base * 2.5) + 15; }
+        function trainingCost(base) {
+            return Math.floor((Math.floor(base * base * 2.5) + 15) * (1 - guildBonusLevel('TrainingGrounds') * 0.05));
+        }
+
+        function arenaTitle(rank) { return ARENA_TITLES.find(t => rank <= t.MaxRank).Title; }
         function minFightHP(p) { return Math.ceil(p.MaxHP * MIN_FIGHT_HP_RATIO); }
 
         function recalcStats(p) {
@@ -1175,7 +1373,34 @@
         let storageWarningShown = false;
 
         function newGuild() {
-            return { HasGuild: false, Name: '', Tag: '', Level: 0, GoldVault: 0, Log: [] };
+            const buildings = {};
+            Object.keys(GUILD_BUILDINGS).forEach(k => buildings[k] = 0);
+            return { HasGuild: false, Name: '', Tag: '', Level: 0, GoldVault: 0, Buildings: buildings, Log: [] };
+        }
+
+        function guildLevelFromBuildings(buildings) {
+            return 1 + Math.floor(Object.keys(buildings).reduce((sum, k) => sum + buildings[k], 0) / 3);
+        }
+
+        function addGuildLog(msg) {
+            const log = state.PlayerGuild.Log;
+            log.push(msg);
+            if (log.length > 50) log.splice(0, log.length - 50);
+        }
+
+        const STAT_KEYS = ['FightsWon', 'FightsLost', 'MonstersSlain', 'ArenaWins', 'ArenaLosses', 'DungeonFloorsCleared',
+            'DungeonsConquered', 'GoldEarned', 'ItemsLooted', 'ItemsCrafted', 'ItemsEnhanced', 'QuestsCompleted', 'RubiesEarned'];
+        function newStats() {
+            const st = {};
+            STAT_KEYS.forEach(k => st[k] = 0);
+            st.BestArenaRank = LADDER_SIZE;
+            return st;
+        }
+
+        function newQuestSlots() {
+            const slots = [];
+            for (let i = 0; i < QUEST_SLOTS; i++) slots.push({ Quest: null, NextAt: 0 });
+            return slots;
         }
 
         function idleWork() {
@@ -1206,7 +1431,7 @@
 
         function stockVendor(key, level) {
             const def = VENDOR_DEFS[key];
-            if (!def.Stock) return ALCHEMIST_ITEMS.map(makePotion);
+            if (!def.Stock) return ALCHEMIST_ITEMS.map((it, i) => makePotion(Object.assign({ Id: 'alchemist_' + i }, it)));
             const items = [];
             for (let i = 0; i < VENDOR_STOCK_SIZE; i++) items.push(generateItem(level, pick(def.Stock)));
             return items;
@@ -1234,7 +1459,7 @@
 
             const now = Date.now();
             const s = {
-                Version: 1,
+                Version: 2,
                 Player: p,
                 Vendors: {},
                 ArenaLadder: buildLadder(p.ArenaRank),
@@ -1245,10 +1470,15 @@
                 LastHPRegen: now,
                 LastEnergyRegen: now,
                 ArenaCooldownUntil: 0,
-                Settings: { ThemeMode: 'DarkImperial', AudioMuted: false }
+                ArenaMilestonesClaimed: [],
+                QuestSlots: newQuestSlots(),
+                Stats: newStats(),
+                Settings: { ThemeMode: 'DarkImperial', AudioMuted: false, CombatSpeed: 'Fast' }
             };
             Object.keys(VENDOR_DEFS).forEach(key => s.Vendors[key] = { Items: stockVendor(key, p.Level) });
-            DUNGEONS.forEach(d => s.DungeonProgress[d.Id] = { CurrentStage: 1, IsCompleted: false });
+            DUNGEONS.forEach(d => s.DungeonProgress[d.Id] = { CurrentStage: 1, IsCompleted: false, Conquests: 0 });
+            s.QuestSlots.forEach(slot => slot.Quest = generateQuest(p));
+            s.Stats.BestArenaRank = p.ArenaRank;
             return s;
         }
 
@@ -1265,6 +1495,7 @@
             item.Rarity = typeof raw.Rarity === 'number' ? RARITIES[raw.Rarity] : raw.Rarity;
             if (!RARITIES.includes(item.Rarity)) item.Rarity = 'Common';
             item.LevelRequirement = Math.max(1, item.LevelRequirement);
+            item.Upgrade = clamp(item.Upgrade, 0, MAX_ENHANCE);
             if (!item.Name) item.Name = 'Unknown Item';
             return item;
         }
@@ -1331,9 +1562,11 @@
                 let rd = raw.DungeonProgress && raw.DungeonProgress[d.Id];
                 if (!rd && Array.isArray(raw.Dungeons)) rd = raw.Dungeons.find(x => x && toInt(x.Id, -1) === d.Id);
                 if (rd) {
+                    const completed = rd.IsCompleted === true;
                     s.DungeonProgress[d.Id] = {
                         CurrentStage: clamp(toInt(rd.CurrentStage, 1), 1, d.Stages.length),
-                        IsCompleted: rd.IsCompleted === true
+                        IsCompleted: completed,
+                        Conquests: Math.max(completed ? 1 : 0, toInt(rd.Conquests, 0))
                     };
                 }
             });
@@ -1342,23 +1575,32 @@
             const rw = raw.ActiveWork;
             if (rw && rw.IsWorking === true && WORK_OPTIONS.includes(toInt(rw.DurationHours, 0)) && typeof rw.StartTime === 'number') {
                 const hours = toInt(rw.DurationHours, 0);
+                const maxGold = Math.floor(hours * WORK_GOLD_PER_HOUR * (1 + GUILD_BUILDING_MAX * 0.10));
                 s.ActiveWork = {
                     IsWorking: true, DurationHours: hours, StartTime: Math.min(rw.StartTime, now),
-                    ExpectedGold: hours * WORK_GOLD_PER_HOUR, ExpectedXP: hours * WORK_XP_PER_HOUR
+                    ExpectedGold: clamp(toInt(rw.ExpectedGold, 0), hours * WORK_GOLD_PER_HOUR, maxGold),
+                    ExpectedXP: hours * WORK_XP_PER_HOUR
                 };
             }
 
             // Guild
             const rg = raw.PlayerGuild;
             if (rg && rg.HasGuild === true) {
-                s.PlayerGuild = {
-                    HasGuild: true,
-                    Name: typeof rg.Name === 'string' ? rg.Name.slice(0, 24) : 'Guild',
-                    Tag: typeof rg.Tag === 'string' ? rg.Tag.slice(0, 5) : '',
-                    Level: Math.max(1, toInt(rg.Level, 1)),
-                    GoldVault: Math.max(0, toInt(rg.GoldVault, 0)),
-                    Log: Array.isArray(rg.Log) ? rg.Log.filter(l => typeof l === 'string').map(l => l.slice(0, 200)).slice(-50) : []
-                };
+                const g = newGuild();
+                g.HasGuild = true;
+                g.Name = typeof rg.Name === 'string' && rg.Name ? rg.Name.slice(0, 24) : 'Guild';
+                g.Tag = typeof rg.Tag === 'string' ? rg.Tag.slice(0, 5) : '';
+                g.GoldVault = Math.max(0, toInt(rg.GoldVault, 0));
+                Object.keys(g.Buildings).forEach(k => {
+                    // Old server saves stored building levels as TrainingGroundLevel / LibraryLevel / VillaLevel.
+                    const legacy = { TrainingGrounds: rg.TrainingGroundLevel, Library: rg.LibraryLevel, Villa: rg.VillaLevel }[k];
+                    const raw = rg.Buildings && rg.Buildings[k] !== undefined ? rg.Buildings[k] : legacy;
+                    // Old saves started buildings at level 1 with no effect; the new scale starts at 0.
+                    g.Buildings[k] = clamp(toInt(raw, 0) - (rg.Buildings ? 0 : 1), 0, GUILD_BUILDING_MAX);
+                });
+                g.Level = guildLevelFromBuildings(g.Buildings);
+                g.Log = Array.isArray(rg.Log) ? rg.Log.filter(l => typeof l === 'string').map(l => l.slice(0, 200)).slice(-50) : [];
+                s.PlayerGuild = g;
             }
 
             ['IronStash', 'BronzeStash', 'RubyStash', 'LeatherStash'].forEach(k => s[k] = Math.max(0, toInt(raw[k], s[k])));
@@ -1372,7 +1614,31 @@
             if (raw.Settings && typeof raw.Settings === 'object') {
                 if (THEMES[raw.Settings.ThemeMode]) s.Settings.ThemeMode = raw.Settings.ThemeMode;
                 s.Settings.AudioMuted = raw.Settings.AudioMuted === true;
+                if (Object.prototype.hasOwnProperty.call(COMBAT_SPEEDS, raw.Settings.CombatSpeed)) s.Settings.CombatSpeed = raw.Settings.CombatSpeed;
             }
+
+            // Lifetime statistics
+            if (raw.Stats && typeof raw.Stats === 'object') {
+                STAT_KEYS.forEach(k => s.Stats[k] = Math.max(0, toInt(raw.Stats[k], 0)));
+                s.Stats.BestArenaRank = clamp(toInt(raw.Stats.BestArenaRank, p.ArenaRank), 1, LADDER_SIZE);
+            }
+            s.Stats.BestArenaRank = Math.min(s.Stats.BestArenaRank, p.ArenaRank);
+
+            if (Array.isArray(raw.ArenaMilestonesClaimed)) {
+                s.ArenaMilestonesClaimed = ARENA_MILESTONES.map(m => m.Rank).filter(r => raw.ArenaMilestonesClaimed.includes(r));
+            }
+
+            // Quest slots: keep valid quests, replace anything unrecognised with a fresh one
+            s.QuestSlots = newQuestSlots().map((slot, i) => {
+                const rs = Array.isArray(raw.QuestSlots) ? raw.QuestSlots[i] : null;
+                if (!rs || typeof rs !== 'object') return { Quest: generateQuest(p), NextAt: 0 };
+                const q = normalizeQuest(rs.Quest);
+                if (q) return { Quest: q, NextAt: 0 };
+                const nextAt = toInt(rs.NextAt, 0);
+                return rs.Quest === null && nextAt > now
+                    ? { Quest: null, NextAt: Math.min(nextAt, now + QUEST_ABANDON_WAIT_MS) }
+                    : { Quest: generateQuest(p), NextAt: 0 };
+            });
             return s;
         }
 
@@ -1406,6 +1672,13 @@
         function commit() {
             saveGame();
             renderUI();
+        }
+
+        // Saves a fight's outcome straight away, but only refreshes the screen once the combat
+        // report has finished playing, so the sidebar doesn't give away the result.
+        function finishFight(result) {
+            saveGame();
+            showCombatModal(result);
         }
 
         // =====================================================================
@@ -1455,6 +1728,7 @@
             const w = state.ActiveWork;
             if (!w.IsWorking || now < workEndTime()) return false;
             state.Player.Gold += w.ExpectedGold;
+            state.Stats.GoldEarned += w.ExpectedGold;
             const levels = gainXP(w.ExpectedXP);
             notify(`🌾 Villa work finished: +${w.ExpectedGold} gold, +${w.ExpectedXP} XP` + (levels ? ` — you reached level ${state.Player.Level}!` : ''));
             state.ActiveWork = idleWork();
@@ -1471,10 +1745,14 @@
                 commit();
                 return;
             }
+            if (refreshQuestSlots(now)) {
+                commit();
+                return;
+            }
             const cooling = arenaCooldownLeft(now) > 0;
             if (arenaWasCooling && !cooling) renderArena();
             arenaWasCooling = cooling;
-            if (regenChanged) renderSidebar();
+            if (regenChanged && !combatAnim) renderSidebar();
             renderTimers(now);
         }
 
@@ -1549,15 +1827,19 @@
         }
 
         function executeTurn(turnNum, att, def, turns) {
+            const player = att.isPlayer ? att : def;
+            const enemy = att.isPlayer ? def : att;
             const base = { Turn: turnNum, AttackerIsPlayer: att.isPlayer };
+            // Every log line records both fighters' HP so the report can animate the health bars.
+            const snap = () => ({ PHP: Math.max(0, player.hp), EHP: Math.max(0, enemy.hp) });
 
             if (Math.random() > Formulas.hitChance(att.dex, def.agi)) {
-                turns.push(Object.assign(base, { Type: 'Miss', Damage: 0, Message: `💨 ${att.name} attacks ${def.name} but MISSES!` }));
+                turns.push(Object.assign(base, snap(), { Type: 'Miss', Damage: 0, Message: `💨 ${att.name} attacks ${def.name} but MISSES!` }));
                 return;
             }
 
             if (Math.random() < Formulas.blockChance(def.agi, def.str, def.shieldBonus)) {
-                turns.push(Object.assign(base, { Type: 'Block', Damage: 0, Message: `🛡️ ${def.name} BLOCKS ${att.name}'s strike completely!` }));
+                turns.push(Object.assign(base, snap(), { Type: 'Block', Damage: 0, Message: `🛡️ ${def.name} BLOCKS ${att.name}'s strike completely!` }));
                 return;
             }
 
@@ -1570,7 +1852,7 @@
             const finalDmg = Math.max(1, Math.floor(dmg * mitigation));
             def.hp -= finalDmg;
 
-            turns.push(Object.assign(base, {
+            turns.push(Object.assign(base, snap(), {
                 Type: isCrit ? 'Critical' : 'Hit',
                 Damage: finalDmg,
                 Message: isCrit
@@ -1582,7 +1864,7 @@
                 const extra = Math.max(1, Math.floor(randInt(att.minDmg, att.maxDmg) * mitigation));
                 def.hp -= extra;
                 turns.push({
-                    Turn: turnNum, AttackerIsPlayer: att.isPlayer, Type: 'DoubleStrike', Damage: extra,
+                    Turn: turnNum, AttackerIsPlayer: att.isPlayer, Type: 'DoubleStrike', Damage: extra, PHP: snap().PHP, EHP: snap().EHP,
                     Message: `⚡ ${att.name}'s high Charisma triggers a DOUBLE STRIKE dealing ${extra} extra damage!`
                 });
             }
@@ -1593,7 +1875,8 @@
             const pc = playerCombatant(p);
             const result = {
                 Title: title, PlayerName: p.Name, EnemyName: enemy.name, Turns: [],
-                IsVictory: false, XPGained: 0, GoldGained: 0, Loot: [], LevelsGained: 0, Notes: []
+                PlayerMaxHP: p.MaxHP, PlayerStartHP: pc.hp, EnemyMaxHP: enemy.hp,
+                IsVictory: false, XPGained: 0, GoldGained: 0, RubiesGained: 0, Loot: [], LevelsGained: 0, Notes: []
             };
 
             let turn = 1;
@@ -1609,14 +1892,37 @@
                 result.Notes.push(`After ${MAX_TURNS} rounds the crowd declared ${enemy.name} the winner.`);
             }
             p.CurrentHP = Math.max(1, pc.hp); // defeat leaves you badly hurt, never dead
+            if (result.IsVictory) state.Stats.FightsWon++;
+            else state.Stats.FightsLost++;
             return result;
         }
 
         function grantRewards(result, xp, gold) {
+            xp = Math.floor(xp * xpMultiplier());
             state.Player.Gold += gold;
+            state.Stats.GoldEarned += gold;
             result.GoldGained = gold;
             result.XPGained = xp;
             result.LevelsGained = gainXP(xp);
+        }
+
+        function addRubies(n) {
+            state.Player.Rubies += n;
+            state.Stats.RubiesEarned += n;
+        }
+
+        // Pays rubies the first time the player reaches each milestone rank.
+        function checkArenaMilestones(result) {
+            const p = state.Player;
+            state.Stats.BestArenaRank = Math.min(state.Stats.BestArenaRank, p.ArenaRank);
+            ARENA_MILESTONES.forEach(m => {
+                if (p.ArenaRank <= m.Rank && !state.ArenaMilestonesClaimed.includes(m.Rank)) {
+                    state.ArenaMilestonesClaimed.push(m.Rank);
+                    addRubies(m.Rubies);
+                    result.RubiesGained += m.Rubies;
+                    result.Notes.push(`🏅 Milestone: first time in the top ${m.Rank}! +${m.Rubies} rubies`);
+                }
+            });
         }
 
         function rollLoot(result) {
@@ -1626,6 +1932,7 @@
             if (p.Inventory.length < p.InventoryCapacity) {
                 p.Inventory.push(item);
                 result.Loot.push(item);
+                state.Stats.ItemsLooted++;
             } else {
                 result.Notes.push(`You found ${displayName(item)}, but your inventory is full.`);
             }
@@ -1663,11 +1970,12 @@
             const m = scaleMonster(base, p.Level, loc.ReqLevel);
             const result = runFight('Expedition: ' + m.Name, monsterCombatant(m));
             if (result.IsVictory) {
+                state.Stats.MonstersSlain++;
                 grantRewards(result, m.XPReward, randInt(m.MinGold, m.MaxGold));
                 rollLoot(result);
+                progressQuests('expedition', m.Id, result);
             }
-            commit();
-            showCombatModal(result);
+            finishFight(result);
         }
 
         function challengeArena(ladderIdx) {
@@ -1694,9 +2002,13 @@
                     opp.Rank = old;
                     result.Notes.push(`You climb the ladder to rank #${p.ArenaRank}!`);
                 }
+                state.Stats.ArenaWins++;
+                checkArenaMilestones(result);
+                progressQuests('arena', null, result);
+            } else {
+                state.Stats.ArenaLosses++;
             }
-            commit();
-            showCombatModal(result);
+            finishFight(result);
         }
 
         function enterDungeon(dungIdx) {
@@ -1715,25 +2027,39 @@
             const m = scaleMonster(stage.Monster, p.Level, d.ReqLevel);
             const result = runFight(`${d.Name} — ${stage.Name}`, monsterCombatant(m));
             if (result.IsVictory) {
+                state.Stats.MonstersSlain++;
+                state.Stats.DungeonFloorsCleared++;
                 grantRewards(result, m.XPReward, randInt(m.MinGold, m.MaxGold));
                 rollLoot(result);
+                if (stage.IsBoss) {
+                    // Generous on the first conquest; repeat runs only occasionally drop a ruby.
+                    const rubies = prog.Conquests === 0 ? randInt(2, 3) : (Math.random() < 0.2 ? 1 : 0);
+                    if (rubies) {
+                        addRubies(rubies);
+                        result.RubiesGained += rubies;
+                    }
+                }
                 if (prog.CurrentStage < d.Stages.length) {
                     prog.CurrentStage++;
                     result.Notes.push(`You advance to floor ${prog.CurrentStage} of ${d.Stages.length}.`);
                 } else {
                     prog.IsCompleted = true;
+                    prog.Conquests++;
+                    state.Stats.DungeonsConquered++;
                     result.Notes.push(`🏆 ${d.Name} has been conquered!`);
                 }
+                progressQuests('dungeon', null, result);
             }
-            commit();
-            showCombatModal(result);
+            finishFight(result);
         }
 
         function restartDungeon(dungIdx) {
             const d = DUNGEONS[dungIdx];
             if (!d) return;
             playAudio('click');
-            state.DungeonProgress[d.Id] = { CurrentStage: 1, IsCompleted: false };
+            const prog = state.DungeonProgress[d.Id];
+            prog.CurrentStage = 1;
+            prog.IsCompleted = false;
             commit();
         }
 
@@ -1807,8 +2133,23 @@
             const p = state.Player;
             const item = p.Inventory[idx];
             if (!item) return;
-            p.Gold += item.Price;
+            if (item.Upgrade > 0 && !confirm(`Sell ${displayName(item)}? Its enhancements will be lost.`)) return;
+            p.Gold += sellPrice(item);
             p.Inventory.splice(idx, 1);
+            clearSelection();
+            commit();
+        }
+
+        // Sells every Common, un-enhanced piece of equipment in the inventory.
+        function sellJunk() {
+            playAudio('click');
+            const p = state.Player;
+            const junk = p.Inventory.filter(it => isEquipment(it) && it.Rarity === 'Common' && !it.Upgrade);
+            if (!junk.length) { notify('No common gear to sell.'); return; }
+            const total = junk.reduce((sum, it) => sum + sellPrice(it), 0);
+            if (!confirm(`Sell ${junk.length} common item(s) for ${total} gold?`)) return;
+            p.Inventory = p.Inventory.filter(it => !junk.includes(it));
+            p.Gold += total;
             clearSelection();
             commit();
         }
@@ -1852,6 +2193,7 @@
             item.Suffix = '';
             item.IconSvg = r.IconSvg;
             p.Inventory.push(item);
+            state.Stats.ItemsCrafted++;
             notify(`🔨 Forged ${item.Name}!`);
             commit();
         }
@@ -1890,9 +2232,10 @@
         function startWork(hours) {
             playAudio('click');
             if (!WORK_OPTIONS.includes(hours) || state.ActiveWork.IsWorking) return;
+            const pay = workPay(hours);
             state.ActiveWork = {
                 IsWorking: true, DurationHours: hours, StartTime: Date.now(),
-                ExpectedGold: hours * WORK_GOLD_PER_HOUR, ExpectedXP: hours * WORK_XP_PER_HOUR
+                ExpectedGold: pay.gold, ExpectedXP: pay.xp
             };
             commit();
         }
@@ -1919,10 +2262,39 @@
             if (tag.length < 2 || tag.length > 5) { notify('The guild tag must be 2-5 characters.'); return; }
 
             p.Gold -= GUILD_COST;
-            state.PlayerGuild = {
-                HasGuild: true, Name: name, Tag: tag, Level: 1, GoldVault: 0,
-                Log: [`Guild founded by ${p.Name}.`]
-            };
+            state.PlayerGuild = Object.assign(newGuild(), { HasGuild: true, Name: name, Tag: tag, Level: 1 });
+            addGuildLog(`Guild founded by ${p.Name}.`);
+            commit();
+        }
+
+        function donateToGuild(optionIdx) {
+            playAudio('click');
+            const amount = GUILD_DONATIONS[optionIdx];
+            const p = state.Player;
+            if (!amount || !state.PlayerGuild.HasGuild) return;
+            if (p.Gold < amount) { notify(`You need ${amount} gold to donate that much.`); return; }
+            p.Gold -= amount;
+            state.PlayerGuild.GoldVault += amount;
+            addGuildLog(`${p.Name} donated ${amount} gold to the vault.`);
+            commit();
+        }
+
+        function upgradeGuildBuilding(key) {
+            playAudio('click');
+            const g = state.PlayerGuild;
+            const def = GUILD_BUILDINGS[key];
+            if (!def || !g.HasGuild) return;
+            const lvl = g.Buildings[key];
+            if (lvl >= GUILD_BUILDING_MAX) { notify(`${def.Name} is already at maximum level.`); return; }
+            const cost = guildBuildingCost(lvl);
+            if (g.GoldVault < cost) { notify(`The guild vault needs ${cost} gold for this upgrade.`); return; }
+            g.GoldVault -= cost;
+            g.Buildings[key] = lvl + 1;
+            const oldLevel = g.Level;
+            g.Level = guildLevelFromBuildings(g.Buildings);
+            addGuildLog(`${def.Name} upgraded to level ${lvl + 1}.`);
+            if (g.Level > oldLevel) addGuildLog(`The guild reached level ${g.Level}!`);
+            recalcStats(state.Player);
             commit();
         }
 
@@ -1970,9 +2342,262 @@
             const settings = state.Settings;
             state = newGameState();
             state.Settings = settings;
+            const name = askGladiatorName('Name your new gladiator (3-20 characters):', state.Player.Name);
+            if (name) state.Player.Name = name;
             clearSelection();
             commit();
             notify('Gladiator progress reset.');
+        }
+
+        // Prompts for a gladiator name. Returns the trimmed name, or null if cancelled/invalid.
+        function askGladiatorName(message, current) {
+            const input = prompt(message, current);
+            if (input === null) return null;
+            const name = input.trim().replace(/\s+/g, ' ');
+            if (name.length < 3 || name.length > 20) {
+                notify('A gladiator name must be 3-20 characters.');
+                return null;
+            }
+            return name;
+        }
+
+        function renameGladiator() {
+            playAudio('click');
+            const name = askGladiatorName('Choose a new name for your gladiator (3-20 characters):', state.Player.Name);
+            if (!name || name === state.Player.Name) return;
+            state.Player.Name = name;
+            commit();
+        }
+
+        function setCombatSpeed(key) {
+            if (!Object.prototype.hasOwnProperty.call(COMBAT_SPEEDS, key)) return;
+            state.Settings.CombatSpeed = key;
+            saveGame();
+        }
+
+        // ---------------------------------------------------------------------
+        //  Pantheon quests
+        // ---------------------------------------------------------------------
+
+        const QUEST_KINDS = ['expedition', 'monster', 'arena', 'dungeon'];
+
+        function findMonsterById(id) {
+            for (const loc of LOCATIONS) {
+                const m = loc.Monsters.find(x => x.Id === id);
+                if (m) return m;
+            }
+            return null;
+        }
+
+        function generateQuest(p) {
+            const L = p.Level;
+            const kinds = ['expedition', 'expedition', 'monster', 'monster', 'arena'];
+            if (DUNGEONS.some(d => L >= d.ReqLevel)) kinds.push('dungeon');
+            const kind = pick(kinds);
+            const q = { Id: uid(), Kind: kind, Target: '', Goal: 1, Progress: 0, RewardGold: 0, RewardXP: 0, RewardRubies: 0 };
+            switch (kind) {
+                case 'expedition':
+                    q.Goal = randInt(3, 6);
+                    q.RewardGold = q.Goal * (15 + L * 12);
+                    q.RewardXP = q.Goal * (10 + L * 6);
+                    break;
+                case 'monster': {
+                    const loc = pick(LOCATIONS.filter(l => L >= l.ReqLevel));
+                    q.Target = pick(loc.Monsters).Id;
+                    q.Goal = randInt(2, 4);
+                    q.RewardGold = Math.floor(q.Goal * (15 + L * 12) * 1.3);
+                    q.RewardXP = Math.floor(q.Goal * (10 + L * 6) * 1.3);
+                    break;
+                }
+                case 'arena':
+                    q.Goal = randInt(1, 3);
+                    q.RewardGold = q.Goal * (40 + L * 20);
+                    q.RewardXP = q.Goal * (20 + L * 8);
+                    break;
+                case 'dungeon':
+                    q.Goal = randInt(1, 2);
+                    q.RewardGold = q.Goal * (80 + L * 30);
+                    q.RewardXP = q.Goal * (40 + L * 10);
+                    break;
+            }
+            q.RewardRubies = Math.random() < (kind === 'dungeon' ? 0.5 : 0.25) ? 1 : 0;
+            return q;
+        }
+
+        function normalizeQuest(raw) {
+            if (!raw || typeof raw !== 'object' || !QUEST_KINDS.includes(raw.Kind)) return null;
+            if (raw.Kind === 'monster' && !findMonsterById(raw.Target)) return null;
+            const goal = clamp(toInt(raw.Goal, 1), 1, 20);
+            return {
+                Id: typeof raw.Id === 'string' ? raw.Id.slice(0, 60) : uid(),
+                Kind: raw.Kind,
+                Target: raw.Kind === 'monster' ? raw.Target : '',
+                Goal: goal,
+                Progress: clamp(toInt(raw.Progress, 0), 0, goal),
+                RewardGold: clamp(toInt(raw.RewardGold, 0), 0, 1000000),
+                RewardXP: clamp(toInt(raw.RewardXP, 0), 0, 1000000),
+                RewardRubies: clamp(toInt(raw.RewardRubies, 0), 0, 3)
+            };
+        }
+
+        function questDescription(q) {
+            switch (q.Kind) {
+                case 'expedition': return `Win ${q.Goal} expedition fights`;
+                case 'monster': return `Defeat the ${findMonsterById(q.Target).Name} ${q.Goal} times`;
+                case 'arena': return `Win ${q.Goal} arena bout${q.Goal > 1 ? 's' : ''}`;
+                case 'dungeon': return `Clear ${q.Goal} dungeon floor${q.Goal > 1 ? 's' : ''}`;
+            }
+            return '';
+        }
+
+        // Advances matching quests. `kind` is 'expedition', 'arena' or 'dungeon'; expedition wins also
+        // count towards "defeat monster X" quests when monsterId matches.
+        function progressQuests(kind, monsterId, result) {
+            state.QuestSlots.forEach(slot => {
+                const q = slot.Quest;
+                if (!q || q.Progress >= q.Goal) return;
+                const matches = (q.Kind === kind && kind !== 'monster') ||
+                    (q.Kind === 'monster' && kind === 'expedition' && q.Target === monsterId);
+                if (!matches) return;
+                q.Progress++;
+                if (q.Progress >= q.Goal && result) result.Notes.push(`🏺 Divine task complete: ${questDescription(q)}. Claim it at the Pantheon!`);
+            });
+        }
+
+        function claimQuest(slotIdx) {
+            playAudio('click');
+            const slot = state.QuestSlots[slotIdx];
+            const q = slot && slot.Quest;
+            if (!q || q.Progress < q.Goal) return;
+            const p = state.Player;
+            const xp = Math.floor(q.RewardXP * xpMultiplier());
+            p.Gold += q.RewardGold;
+            state.Stats.GoldEarned += q.RewardGold;
+            const levels = gainXP(xp);
+            if (q.RewardRubies) addRubies(q.RewardRubies);
+            state.Stats.QuestsCompleted++;
+            slot.Quest = generateQuest(p);
+            slot.NextAt = 0;
+            notify(`🏺 The gods are pleased: +${q.RewardGold} gold, +${xp} XP` + (q.RewardRubies ? `, +${q.RewardRubies} ruby` : '') +
+                (levels ? ` — you reached level ${p.Level}!` : ''));
+            commit();
+        }
+
+        function abandonQuest(slotIdx) {
+            playAudio('click');
+            const slot = state.QuestSlots[slotIdx];
+            if (!slot || !slot.Quest) return;
+            if (!confirm('Abandon this task? A new one will be offered in 5 minutes.')) return;
+            slot.Quest = null;
+            slot.NextAt = Date.now() + QUEST_ABANDON_WAIT_MS;
+            commit();
+        }
+
+        // Offers new quests in empty slots whose wait has passed. Returns true if anything changed.
+        function refreshQuestSlots(now) {
+            let changed = false;
+            state.QuestSlots.forEach(slot => {
+                if (!slot.Quest && slot.NextAt <= now) {
+                    slot.Quest = generateQuest(state.Player);
+                    slot.NextAt = 0;
+                    changed = true;
+                }
+            });
+            return changed;
+        }
+
+        // ---------------------------------------------------------------------
+        //  Ruby shop
+        // ---------------------------------------------------------------------
+
+        function spendRubies(cost) {
+            if (state.Player.Rubies < cost) {
+                notify(`You need ${cost} rubies. Earn them from dungeon bosses, divine tasks, and arena milestones.`);
+                return false;
+            }
+            state.Player.Rubies -= cost;
+            return true;
+        }
+
+        function rubyRefillEnergy() {
+            playAudio('click');
+            const p = state.Player;
+            if (p.CurrentEnergy >= p.MaxEnergy) { notify('Your energy is already full.'); return; }
+            if (!spendRubies(RUBY_COST.refillEnergy)) return;
+            p.CurrentEnergy = p.MaxEnergy;
+            commit();
+        }
+
+        function rubySkipArena() {
+            playAudio('click');
+            if (arenaCooldownLeft(Date.now()) <= 0) return;
+            if (!spendRubies(RUBY_COST.skipArena)) return;
+            state.ArenaCooldownUntil = 0;
+            commit();
+        }
+
+        function rubyRestockVendor() {
+            playAudio('click');
+            const def = VENDOR_DEFS[currentVendor];
+            if (!def || !def.Stock) return;
+            if (!spendRubies(RUBY_COST.restock)) return;
+            state.Vendors[currentVendor] = { Items: stockVendor(currentVendor, state.Player.Level) };
+            commit();
+        }
+
+        // ---------------------------------------------------------------------
+        //  Forge enhancement
+        // ---------------------------------------------------------------------
+
+        function enhanceCost(item) {
+            const n = item.Upgrade;
+            return {
+                Gold: (n + 1) * 100 + item.LevelRequirement * 20,
+                Iron: 3 * (n + 1),
+                Bronze: 2 * (n + 1),
+                Leather: n + 1,
+                Ruby: n >= 2 ? n - 1 : 0
+            };
+        }
+
+        // location 0 = equipped slot index (into SLOTS), 1 = inventory index
+        function enhanceTarget(location, key) {
+            const p = state.Player;
+            return location === 0 ? p.Equipment[SLOTS[key]] : p.Inventory[key];
+        }
+
+        function enhanceItem(location, key) {
+            playAudio('click');
+            const item = enhanceTarget(location, key);
+            if (!item || !isEquipment(item)) return;
+            if (item.Upgrade >= MAX_ENHANCE) { notify('This item is already fully enhanced.'); return; }
+            const c = enhanceCost(item);
+            const p = state.Player;
+            if (p.Gold < c.Gold || state.IronStash < c.Iron || state.BronzeStash < c.Bronze ||
+                state.LeatherStash < c.Leather || state.RubyStash < c.Ruby) {
+                notify('Not enough gold or materials for this enhancement.');
+                return;
+            }
+            p.Gold -= c.Gold;
+            state.IronStash -= c.Iron;
+            state.BronzeStash -= c.Bronze;
+            state.LeatherStash -= c.Leather;
+            state.RubyStash -= c.Ruby;
+
+            const grow = v => v > 0 ? v + Math.max(1, Math.ceil(v * 0.1)) : v;
+            item.MinDamage = grow(item.MinDamage);
+            item.MaxDamage = grow(item.MaxDamage);
+            item.Armor = grow(item.Armor);
+            if (!item.MinDamage && !item.Armor) {
+                // Jewellery has no damage or armor: strengthen its attribute bonuses instead.
+                ATTRIBUTES.forEach(a => { if (item[a] > 0) item[a]++; });
+            }
+            item.Price = Math.floor(item.Price * 1.2);
+            item.Upgrade++;
+            state.Stats.ItemsEnhanced++;
+            recalcStats(p);
+            notify(`✨ ${displayName(item)} glows with new strength!`);
+            commit();
         }
 
         // =====================================================================
@@ -2112,8 +2737,12 @@
             document.getElementById('textEnergy').innerText = `${p.CurrentEnergy}/${p.MaxEnergy}`;
             document.getElementById('fillEnergy').style.width = `${clamp(p.CurrentEnergy / p.MaxEnergy * 100, 0, 100)}%`;
 
+            const refill = document.getElementById('btnRefillEnergy');
+            refill.disabled = p.CurrentEnergy >= p.MaxEnergy || p.Rubies < RUBY_COST.refillEnergy;
+
             document.getElementById('gladName').innerText = p.Name;
             document.getElementById('gladLevel').innerText = `LVL ${p.Level}`;
+            document.getElementById('gladTitle').innerText = arenaTitle(p.ArenaRank);
             document.getElementById('statDmg').innerText = `${minDamage(p)} - ${maxDamage(p)}`;
             document.getElementById('statArmor').innerText = totalArmor(p);
             document.getElementById('statRank').innerText = `#${p.ArenaRank}`;
@@ -2150,14 +2779,40 @@
             document.getElementById('ovXpFill').style.width = `${clamp(p.XP / p.MaxXP * 100, 0, 100)}%`;
         }
 
+        const OVERVIEW_SUBTABS = { base: 'Base', hidden: 'Hidden', chronicle: 'Chronicle' };
+
         function switchOverviewSubtab(subId) {
+            if (!OVERVIEW_SUBTABS[subId]) return;
             playAudio('click');
-            const hidden = subId === 'hidden';
-            document.getElementById('ovSubtabBtnBase').classList.toggle('active', !hidden);
-            document.getElementById('ovSubtabBtnHidden').classList.toggle('active', hidden);
-            document.getElementById('ovSubtab-base').style.display = hidden ? 'none' : 'block';
-            document.getElementById('ovSubtab-hidden').style.display = hidden ? 'block' : 'none';
-            if (hidden) renderHiddenStats();
+            Object.keys(OVERVIEW_SUBTABS).forEach(id => {
+                document.getElementById('ovSubtabBtn' + OVERVIEW_SUBTABS[id]).classList.toggle('active', id === subId);
+                document.getElementById('ovSubtab-' + id).style.display = id === subId ? 'block' : 'none';
+            });
+            if (subId === 'hidden') renderHiddenStats();
+            if (subId === 'chronicle') renderChronicle();
+        }
+
+        function isSubtabVisible(id) { return document.getElementById('ovSubtab-' + id).style.display !== 'none'; }
+
+        function renderChronicle() {
+            const st = state.Stats;
+            const total = st.FightsWon + st.FightsLost;
+            const rows = [
+                ['⚔️ Fights won / lost', `${st.FightsWon} / ${st.FightsLost}` + (total ? ` (${Math.round(st.FightsWon / total * 100)}% wins)` : '')],
+                ['🐗 Monsters slain', st.MonstersSlain],
+                ['🏟️ Arena bouts won / lost', `${st.ArenaWins} / ${st.ArenaLosses}`],
+                ['🏅 Best arena rank', `#${st.BestArenaRank} — ${arenaTitle(st.BestArenaRank)}`],
+                ['🗝️ Dungeon floors cleared', st.DungeonFloorsCleared],
+                ['🏆 Dungeons conquered', st.DungeonsConquered],
+                ['🏺 Divine tasks completed', st.QuestsCompleted],
+                ['💰 Gold earned', st.GoldEarned.toLocaleString()],
+                ['💎 Rubies earned', st.RubiesEarned],
+                ['🎁 Items looted', st.ItemsLooted],
+                ['🔨 Items forged', st.ItemsCrafted],
+                ['✨ Enhancements made', st.ItemsEnhanced]
+            ];
+            document.getElementById('chronicleGrid').innerHTML = rows.map(r =>
+                `<div class="monster-row"><span>${esc(r[0])}</span><strong>${esc(r[1])}</strong></div>`).join('');
         }
 
         function renderHiddenStats() {
@@ -2230,15 +2885,29 @@
                 return;
             }
             const i = selectedInventoryIndex;
-            let html = itemDetailsHtml(item);
+            let html = itemDetailsHtml(item) + itemComparisonHtml(item);
             html += `<div class="btn-row" style="margin-top:10px;">`;
             if (item.Type === 'Potion') html += `<button class="btn-roman btn-gold" onclick="usePotion(${i})">Drink Potion</button>`;
-            else if (SLOT_FOR_TYPE[item.Type]) html += `<button class="btn-roman btn-gold" onclick="equipItem(${i})">Equip</button>`;
-            html += `<button class="btn-roman" onclick="sellItem(${i})">Sell (${item.Price} Gold)</button>`;
+            else if (isEquipment(item)) html += `<button class="btn-roman btn-gold" onclick="equipItem(${i})">Equip</button>`;
+            html += `<button class="btn-roman" onclick="sellItem(${i})">Sell (${sellPrice(item)} Gold)</button>`;
             if (item.Type !== 'Potion') html += `<button class="btn-roman" onclick="smeltItem(${i})">Smelt</button>`;
             html += `</div>`;
             panel.innerHTML = html;
             panel.style.display = 'block';
+        }
+
+        // Shows how equipping `item` would change stats compared with what is worn in that slot.
+        function itemComparisonHtml(item) {
+            if (!isEquipment(item)) return '';
+            const worn = state.Player.Equipment[SLOT_FOR_TYPE[item.Type]];
+            if (!worn) return `<div class="muted" style="margin-top:8px;">Your ${SLOT_FOR_TYPE[item.Type]} slot is empty.</div>`;
+            const fields = [['MinDamage', 'Min damage'], ['MaxDamage', 'Max damage'], ['Armor', 'Armor']].concat(ATTRIBUTES.map(a => [a, a]));
+            const diffs = fields
+                .map(([key, label]) => ({ label, d: (item[key] || 0) - (worn[key] || 0) }))
+                .filter(x => x.d !== 0)
+                .map(x => `<span class="${x.d > 0 ? 'stat-diff-up' : 'stat-diff-down'}">${x.d > 0 ? '+' : ''}${x.d} ${esc(x.label)}</span>`);
+            return `<div style="margin-top:8px; font-size:12px;">Compared to <span class="rt-${esc(worn.Rarity)}">${esc(displayName(worn))}</span>: ` +
+                (diffs.length ? diffs.join(', ') : '<span class="muted">no difference</span>') + `</div>`;
         }
 
         function renderTraining() {
@@ -2284,7 +2953,7 @@
             document.getElementById('arenaContainer').innerHTML = rows.map(r => {
                 if (r.player) {
                     return `<div class="monster-row player-row">
-                        <div><span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">#${p.ArenaRank}</span> - <strong>${esc(p.Name)}</strong> <span style="font-size:11px;">(You, LVL ${p.Level})</span></div>
+                        <div><span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">#${p.ArenaRank}</span> - <strong>${esc(p.Name)}</strong> <span style="font-size:11px;">(You, LVL ${p.Level}) · ${esc(arenaTitle(p.ArenaRank))}</span></div>
                     </div>`;
                 }
                 const o = arenaOpponentStats(r.opp, p);
@@ -2308,7 +2977,7 @@
                 const locked = p.Level < d.ReqLevel;
                 let body;
                 if (prog.IsCompleted) {
-                    body = `<div style="color:var(--text-gold);">🏆 Conquered!</div>
+                    body = `<div style="color:var(--text-gold);">🏆 Conquered ${prog.Conquests} time${prog.Conquests === 1 ? '' : 's'}!</div>
                         <button class="btn-roman" onclick="restartDungeon(${di})">Run the Dungeon Again</button>`;
                 } else {
                     const stage = d.Stages[prog.CurrentStage - 1];
@@ -2333,7 +3002,10 @@
 
             const def = VENDOR_DEFS[currentVendor];
             document.getElementById('vendorInfo').innerHTML = `<strong style="color:var(--text-gold);">${esc(def.Name)}</strong>
-                <span class="muted">${def.Stock ? ' · Stock refreshes when you level up' : ' · Always in stock'}</span>`;
+                <span class="muted">${def.Stock ? ' · Stock refreshes when you level up · Buys your items for half their value' : ' · Always in stock'}</span>`;
+            const restock = document.getElementById('btnRestock');
+            restock.style.display = def.Stock ? '' : 'none';
+            restock.disabled = state.Player.Rubies < RUBY_COST.restock;
 
             const p = state.Player;
             const vendor = state.Vendors[currentVendor];
@@ -2357,6 +3029,28 @@
                     <button class="btn-roman btn-gold" onclick="craftRecipe(${i})" ${locked ? 'disabled' : ''}>Craft Gear 🔨</button>
                 </div>`;
             }).join('');
+
+            const targets = [];
+            SLOTS.forEach((slot, si) => { const it = p.Equipment[slot]; if (it) targets.push({ item: it, loc: 0, key: si, where: 'Equipped' }); });
+            p.Inventory.forEach((it, ii) => { if (isEquipment(it)) targets.push({ item: it, loc: 1, key: ii, where: 'Inventory' }); });
+            document.getElementById('enhanceContainer').innerHTML = targets.length ? targets.map(t => {
+                const it = t.item;
+                let action;
+                if (it.Upgrade >= MAX_ENHANCE) {
+                    action = `<span class="muted">Fully enhanced</span>`;
+                } else {
+                    const c = enhanceCost(it);
+                    const affordable = p.Gold >= c.Gold && state.IronStash >= c.Iron && state.BronzeStash >= c.Bronze &&
+                        state.LeatherStash >= c.Leather && state.RubyStash >= c.Ruby;
+                    const cost = `${c.Gold} Gold, ${c.Iron} Iron, ${c.Bronze} Bronze, ${c.Leather} Leather` + (c.Ruby ? `, ${c.Ruby} Ruby` : '');
+                    action = `<button class="btn-roman btn-gold" onclick="enhanceItem(${t.loc}, ${t.key})" ${affordable ? '' : 'disabled'} title="${esc(cost)}">Enhance to +${it.Upgrade + 1}</button>`;
+                    action = `<span class="muted" style="text-align:right;">${esc(cost)}</span>` + action;
+                }
+                return `<div class="monster-row">
+                    <div><span class="rt-${esc(it.Rarity)}" style="font-weight:bold;">${esc(displayName(it))}</span> <span class="muted">(${t.where})</span></div>
+                    <div style="display:flex; gap:10px; align-items:center;">${action}</div>
+                </div>`;
+            }).join('') : `<div class="muted">You have no gear to enhance.</div>`;
         }
 
         function renderWork() {
@@ -2370,9 +3064,11 @@
                     </div>
                     <button class="btn-roman" onclick="cancelWork()">Stop Working</button>`;
             } else {
-                el.innerHTML = `<div class="btn-row">` + WORK_OPTIONS.map(h =>
-                    `<button class="btn-roman btn-gold" onclick="startWork(${h})">Work ${h}h (+${h * WORK_GOLD_PER_HOUR} Gold, +${h * WORK_XP_PER_HOUR} XP)</button>`
-                ).join('') + `</div>`;
+                el.innerHTML = `<div class="btn-row">` + WORK_OPTIONS.map(h => {
+                    const pay = workPay(h);
+                    return `<button class="btn-roman btn-gold" onclick="startWork(${h})">Work ${h}h (+${pay.gold} Gold, +${pay.xp} XP)</button>`;
+                }).join('') + `</div>` +
+                    (guildBonusLevel('Villa') ? `<p class="muted" style="margin-top:8px;">Includes +${guildBonusLevel('Villa') * 10}% from your Guild Villa.</p>` : '');
             }
         }
 
@@ -2387,24 +3083,82 @@
                 </div>`;
                 return;
             }
+            const p = state.Player;
+            const donate = GUILD_DONATIONS.map((amt, i) =>
+                `<button class="btn-roman" onclick="donateToGuild(${i})" ${p.Gold < amt ? 'disabled' : ''}>Donate ${amt}</button>`).join('');
+            const buildings = Object.keys(GUILD_BUILDINGS).map(key => {
+                const def = GUILD_BUILDINGS[key];
+                const lvl = g.Buildings[key];
+                const maxed = lvl >= GUILD_BUILDING_MAX;
+                const cost = guildBuildingCost(lvl);
+                return `<div class="exp-card">
+                    <h4 style="color:var(--text-gold);">${def.Icon} ${esc(def.Name)} <span class="muted">Level ${lvl}/${GUILD_BUILDING_MAX}</span></h4>
+                    <div style="font-size:12px;">${lvl ? esc(def.Effect(lvl)) : 'Not built yet.'}</div>
+                    ${maxed ? '<div class="muted">Fully upgraded</div>' : `<div class="muted">Next: ${esc(def.Effect(lvl + 1))}</div>
+                    <button class="btn-roman btn-gold" onclick="upgradeGuildBuilding('${key}')" ${g.GoldVault < cost ? 'disabled' : ''}>${lvl ? 'Upgrade' : 'Build'} (${cost} from vault)</button>`}
+                </div>`;
+            }).join('');
             container.innerHTML = `<h3>${esc(g.Name)} [${esc(g.Tag)}] - Level ${g.Level}</h3>
-                <div style="margin-top:10px;">Guild Gold Vault: <strong>${g.GoldVault}</strong></div>
-                <div class="monster-list" style="margin-top:15px;">${g.Log.map(l => `<div class="turn-line">${esc(l)}</div>`).join('')}</div>`;
+                <div class="info-box" style="margin-top:10px; display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
+                    <span>Guild Gold Vault: <strong>${g.GoldVault.toLocaleString()}</strong></span>
+                    <span class="btn-row">${donate}</span>
+                </div>
+                <div class="exp-grid">${buildings}</div>
+                <h4 style="color:var(--text-accent); margin-top:20px;">Guild Chronicle</h4>
+                <div class="monster-list">${g.Log.slice().reverse().map(l => `<div class="turn-line">${esc(l)}</div>`).join('')}</div>`;
         }
 
         function renderSettings() {
             const sel = document.getElementById('themeSelect');
             sel.innerHTML = Object.keys(THEMES).map(k => `<option value="${k}">${THEMES[k]}</option>`).join('');
             sel.value = state.Settings.ThemeMode;
+            const speed = document.getElementById('combatSpeedSelect');
+            speed.innerHTML = Object.keys(COMBAT_SPEEDS).map(k => `<option value="${k}">${k}</option>`).join('');
+            speed.value = state.Settings.CombatSpeed;
+        }
+
+        function renderQuests() {
+            const now = Date.now();
+            document.getElementById('questContainer').innerHTML = state.QuestSlots.map((slot, i) => {
+                const q = slot.Quest;
+                if (!q) {
+                    return `<div class="exp-card quest-card">
+                        <h4 style="color:var(--text-accent);">The altar is quiet…</h4>
+                        <div class="muted">A new task will be offered in <strong class="quest-timer" data-slot="${i}">${formatDuration(slot.NextAt - now)}</strong>.</div>
+                    </div>`;
+                }
+                const done = q.Progress >= q.Goal;
+                const reward = `${q.RewardGold} Gold, ${Math.floor(q.RewardXP * xpMultiplier())} XP` + (q.RewardRubies ? `, ${q.RewardRubies} 💎` : '');
+                return `<div class="exp-card quest-card ${done ? 'done' : ''}">
+                    <h4 style="color:var(--text-gold);">${esc(questDescription(q))}</h4>
+                    <div class="progress-text">Progress: ${q.Progress} / ${q.Goal}</div>
+                    <div class="stat-bar"><div class="stat-fill fill-xp" style="width:${q.Progress / q.Goal * 100}%"></div></div>
+                    <div style="font-size:12px;">Reward: ${esc(reward)}</div>
+                    <div class="btn-row">
+                        ${done ? `<button class="btn-roman btn-gold" onclick="claimQuest(${i})">Claim Reward 🏺</button>`
+                               : `<button class="btn-roman" onclick="abandonQuest(${i})">Abandon</button>`}
+                    </div>
+                </div>`;
+            }).join('');
+            const ready = state.QuestSlots.filter(sl => sl.Quest && sl.Quest.Progress >= sl.Quest.Goal).length;
+            document.querySelector('.nav-tab[data-tab="quests"]').innerText = ready ? `🏺 Pantheon (${ready}!)` : '🏺 Pantheon';
         }
 
         function renderTimers(now) {
             const p = state.Player;
             const left = arenaCooldownLeft(now);
-            const arenaStatus = document.getElementById('arenaStatus');
-            arenaStatus.innerHTML = left > 0
-                ? `⏳ Next arena bout in <strong>${formatDuration(left)}</strong>`
-                : `⚔️ Ready to fight! Your rank: <strong>#${p.ArenaRank}</strong> of ${LADDER_SIZE}. Beat a higher-ranked gladiator to take their place.`;
+            // Only text is updated here (never buttons), so clicks are not swallowed by the 1-second refresh.
+            document.getElementById('arenaStatusText').textContent = left > 0
+                ? `⏳ Next arena bout in ${formatDuration(left)}`
+                : `⚔️ Ready to fight! Your rank: #${p.ArenaRank} of ${LADDER_SIZE}. Beat a higher-ranked gladiator to take their place.`;
+            const skip = document.getElementById('btnSkipArena');
+            skip.style.display = left > 0 ? '' : 'none';
+            skip.disabled = p.Rubies < RUBY_COST.skipArena;
+
+            document.querySelectorAll('.quest-timer').forEach(el => {
+                const slot = state.QuestSlots[toInt(el.dataset.slot, -1)];
+                if (slot) el.textContent = formatDuration(slot.NextAt - now);
+            });
 
             let status = '';
             if (state.ActiveWork.IsWorking) {
@@ -2431,9 +3185,11 @@
             renderForge();
             renderWork();
             renderGuild();
+            renderQuests();
             renderSettings();
             renderAudioButton();
-            if (document.getElementById('ovSubtab-hidden').style.display !== 'none') renderHiddenStats();
+            if (isSubtabVisible('hidden')) renderHiddenStats();
+            if (isSubtabVisible('chronicle')) renderChronicle();
             renderTimers(Date.now());
         }
 
@@ -2445,31 +3201,86 @@
             document.querySelectorAll('#navTabs .nav-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
         }
 
+        // The combat report reveals the log line by line (speed set in Settings) with live HP bars.
+        let combatAnim = null;
+
+        function setCombatBars(r, php, ehp) {
+            document.getElementById('modalHp1').innerText = `${php}/${r.PlayerMaxHP}`;
+            document.getElementById('modalHpFill1').style.width = `${clamp(php / r.PlayerMaxHP * 100, 0, 100)}%`;
+            document.getElementById('modalHp2').innerText = `${ehp}/${r.EnemyMaxHP}`;
+            document.getElementById('modalHpFill2').style.width = `${clamp(ehp / r.EnemyMaxHP * 100, 0, 100)}%`;
+        }
+
+        function appendCombatLine(r, t) {
+            const line = document.createElement('div');
+            line.className = `turn-line ${t.AttackerIsPlayer ? 'turn-player' : 'turn-enemy'} ${t.Type === 'Critical' ? 'turn-crit' : ''}`;
+            line.textContent = `[${t.Turn}] ${t.Message}`;
+            document.getElementById('modalCombatLog').appendChild(line);
+            setCombatBars(r, t.PHP, t.EHP);
+        }
+
+        function stopCombatAnimation() {
+            if (combatAnim) clearInterval(combatAnim.timer);
+            combatAnim = null;
+        }
+
         function showCombatModal(r) {
+            stopCombatAnimation();
             document.getElementById('modalCombatTitle').innerText = r.Title;
+            const banner = document.getElementById('modalCombatResultBanner');
+            banner.innerText = 'THE FIGHT IS ON…';
+            banner.className = 'combat-result-banner banner-pending';
+            document.getElementById('modalFighter1Name').innerText = r.PlayerName;
+            document.getElementById('modalFighter2Name').innerText = r.EnemyName;
+            document.getElementById('modalRewards').style.display = 'none';
+            document.getElementById('modalCombatLog').innerHTML = '';
+            setCombatBars(r, r.PlayerStartHP, r.EnemyMaxHP);
+            document.getElementById('combatModal').classList.add('open');
+
+            combatAnim = { r, shown: 0, timer: null };
+            const delay = COMBAT_SPEEDS[state.Settings.CombatSpeed];
+            if (!delay) { finishCombatAnimation(); return; }
+            document.getElementById('btnSkipCombat').style.display = '';
+            combatAnim.timer = setInterval(() => {
+                const a = combatAnim;
+                if (!a) return;
+                if (a.shown >= a.r.Turns.length) { finishCombatAnimation(); return; }
+                appendCombatLine(a.r, a.r.Turns[a.shown++]);
+                const body = document.querySelector('#combatModal .modal-body');
+                body.scrollTop = body.scrollHeight;
+            }, delay);
+        }
+
+        function finishCombatAnimation() {
+            const a = combatAnim;
+            if (!a) return;
+            stopCombatAnimation();
+            const r = a.r;
+            while (a.shown < r.Turns.length) appendCombatLine(r, r.Turns[a.shown++]);
+            document.getElementById('btnSkipCombat').style.display = 'none';
+
             const banner = document.getElementById('modalCombatResultBanner');
             banner.innerText = r.IsVictory ? 'VICTORY!' : 'DEFEAT';
             banner.className = 'combat-result-banner ' + (r.IsVictory ? 'victory-bg' : 'defeat-bg');
-            document.getElementById('modalFighter1Name').innerText = r.PlayerName;
-            document.getElementById('modalFighter2Name').innerText = r.EnemyName;
 
             const rewards = [];
-            if (r.IsVictory) rewards.push(`+${r.XPGained} XP, +${r.GoldGained} Gold`);
+            if (r.IsVictory) rewards.push(`+${r.XPGained} XP, +${r.GoldGained} Gold` + (r.RubiesGained ? `, +${r.RubiesGained} 💎` : ''));
             else rewards.push('No rewards. Rest to recover your health before the next fight.');
             if (r.LevelsGained) rewards.push(`⭐ Level up! You are now level ${state.Player.Level}.`);
             r.Loot.forEach(item => rewards.push(`🎁 Loot: <span class="rt-${esc(item.Rarity)}">${esc(displayName(item))}</span>`));
             r.Notes.forEach(n => rewards.push(esc(n)));
-            document.getElementById('modalRewards').innerHTML = rewards.join('<br>');
-
-            document.getElementById('modalCombatLog').innerHTML = r.Turns.map(t =>
-                `<div class="turn-line ${t.AttackerIsPlayer ? 'turn-player' : 'turn-enemy'} ${t.Type === 'Critical' ? 'turn-crit' : ''}">[${t.Turn}] ${esc(t.Message)}</div>`
-            ).join('');
-
-            document.getElementById('combatModal').classList.add('open');
+            const box = document.getElementById('modalRewards');
+            box.innerHTML = rewards.join('<br>');
+            box.style.display = '';
+            document.querySelector('#combatModal .modal-body').scrollTop = 0;
             playAudio(r.IsVictory ? 'victory' : 'hit');
+            renderUI();
         }
 
         function closeCombatModal() {
+            if (combatAnim) renderUI(); // closed mid-report: show the real state now
+            stopCombatAnimation();
+            document.getElementById('btnSkipCombat').style.display = 'none';
             document.getElementById('combatModal').classList.remove('open');
         }
 
@@ -2495,6 +3306,7 @@
         applyTheme();
         applyRegen(Date.now());
         completeWorkIfDone(Date.now());
+        refreshQuestSlots(Date.now());
         arenaWasCooling = arenaCooldownLeft(Date.now()) > 0;
         commit();
         setInterval(tick, 1000);
