@@ -5,14 +5,15 @@ raw state plus all derived numbers (damage, costs, scaled monster levels, ...).
 """
 
 from . import combat
-from .data import (ARENA_COOLDOWN_MS, ATTRIBUTES, COMBAT_SPEEDS, DUNGEON_ENERGY_COST, DUNGEONS, ENERGY_REGEN_PER_MIN,
-                   GUILD_BUILDING_MAX, GUILD_BUILDINGS, GUILD_COST, GUILD_DONATIONS, LADDER_SIZE, LOCATIONS,
-                   MAX_ENHANCE, RECIPES, RUBY_COST, SHIELD_BLOCK_BONUS, SLOT_FOR_TYPE, SLOTS, THEMES, VENDOR_DEFS,
-                   WORK_OPTIONS)
+from .data import (ACHIEVEMENTS, ARENA_COOLDOWN_MS, ATTRIBUTES, BESTIARY, BLESSINGS, COMBAT_SPEEDS, DUNGEONS,
+                   EFFECTS, ENERGY_REGEN_PER_MIN, GUILD_BUILDING_MAX, GUILD_BUILDINGS, GUILD_COST, GUILD_DONATIONS,
+                   HONOR_SHOP, LADDER_SIZE, LOCATIONS, MAX_ENHANCE, RECIPES, RUBY_COST, SETS, SHIELD_BLOCK_BONUS,
+                   SLOT_FOR_TYPE, SLOTS, THEMES, UNIQUES, VENDOR_DEFS, WORK_OPTIONS, blessing_cost)
+from .engine import dungeon_energy_cost
 from .items import is_equipment, sell_price
-from .rules import (arena_title, equip_bonus, guild_bonus_level, guild_building_cost, guild_effect, has_shield,
-                    hp_regen_per_min, max_damage, min_damage, min_fight_hp, total_armor, total_stat, training_cost,
-                    work_pay, xp_multiplier)
+from .rules import (all_effects, arena_title, describe_effects, equip_bonus, guild_bonus_level, guild_building_cost,
+                    guild_effect, has_shield, hp_regen_per_min, max_damage, min_damage, min_fight_hp, set_counts,
+                    total_armor, total_stat, training_cost, work_pay, xp_multiplier)
 from .state import dungeon_key, find_monster_by_id, quest_description
 from .util import round_half_up
 
@@ -37,17 +38,24 @@ def _comparison(player, item):
 
 def _hidden_stats(state):
     p = state['Player']
+    effects = all_effects(state)
     strength, dex, agi = total_stat(p, 'Strength'), total_stat(p, 'Dexterity'), total_stat(p, 'Agility')
     con, cha, intel = total_stat(p, 'Constitution'), total_stat(p, 'Charisma'), total_stat(p, 'Intelligence')
-    armor, shield, regen = total_armor(p), has_shield(p), hp_regen_per_min(state)
+    armor, shield, regen = total_armor(p, effects), has_shield(p), hp_regen_per_min(state)
+    block_bonus = (SHIELD_BLOCK_BONUS if shield else 0) + effects.get('BlockBonus', 0) / 100
+    crit_bonus = effects.get('CritBonus', 0) / 100
     return [
         {'icon': '🛡️', 'title': 'Block Chance',
-         'val': _pct(combat.block_chance(agi, strength, SHIELD_BLOCK_BONUS if shield else 0)),
-         'desc': 'From Agility & Strength (max 30%)' + (' + Shield (+8%)' if shield else ' — equip a shield for +8%')},
+         'val': _pct(combat.block_chance(agi, strength, block_bonus)),
+         'desc': 'From Agility & Strength (max 30%)' + (' + Shield (+8%)' if shield else ' — equip a shield for +8%')
+         + (' + %d%% from sets, treasures & blessings' % effects['BlockBonus'] if effects.get('BlockBonus') else '')},
         {'icon': '🎯', 'title': 'Hit Chance', 'val': _pct(combat.hit_chance(dex, agi)),
          'desc': "Your Dexterity vs. the enemy's Agility (15%-95%)"},
-        {'icon': '⚡', 'title': 'Critical Strike Chance', 'val': _pct(combat.crit_chance(dex, agi, intel)),
-         'desc': 'From Dexterity & Intelligence (max 40%)'},
+        {'icon': '⚡', 'title': 'Critical Strike Chance', 'val': _pct(combat.crit_chance(dex, agi, intel) + crit_bonus),
+         'desc': 'From Dexterity & Intelligence (max 40%)'
+         + (' + %d%% from sets, treasures & blessings' % effects['CritBonus'] if effects.get('CritBonus') else '')},
+        {'icon': '🩸', 'title': 'Life Steal', 'val': '%d%%' % effects.get('LifeSteal', 0),
+         'desc': 'Share of your damage returned as HP (from Mythic treasures and sets)'},
         {'icon': '💥', 'title': 'Critical Damage Multiplier', 'val': '%.1f%%' % (combat.crit_multiplier(intel) * 100),
          'desc': '+%.1f%% bonus damage from Intelligence' % (intel * 1.5)},
         {'icon': '⚔️', 'title': 'Double Strike Chance', 'val': _pct(combat.double_strike_chance(cha, cha)),
@@ -81,6 +89,10 @@ def _chronicle(stats):
         ['🎁 Items looted', stats['ItemsLooted']],
         ['🔨 Items forged', stats['ItemsCrafted']],
         ['✨ Enhancements made', stats['ItemsEnhanced']],
+        ['🧩 Set pieces found', stats['SetPiecesFound']],
+        ['🌟 Mythic treasures found', stats['UniquesFound']],
+        ['🙏 Blessings received', stats['BlessingsReceived']],
+        ['🏆 Honor spent', '{:,}'.format(stats['HonorSpent'])],
     ]
 
 
@@ -90,11 +102,15 @@ def build_view(game, save_path='', seq=0):
     now = game.clock()
     xp_mult = xp_multiplier(s)
 
+    effects = all_effects(s)
     player = {
+        'effects': effects,
+        'effectLines': describe_effects(effects),
+        'setCounts': set_counts(p),
         'totals': {a: total_stat(p, a) for a in ATTRIBUTES},
         'gearBonus': {a: equip_bonus(p, a) for a in ATTRIBUTES},
         'trainingCosts': [training_cost(s, p['Base' + a]) for a in ATTRIBUTES],
-        'minDamage': min_damage(p), 'maxDamage': max_damage(p), 'armor': total_armor(p),
+        'minDamage': min_damage(p, effects), 'maxDamage': max_damage(p, effects), 'armor': total_armor(p, effects),
         'title': arena_title(p['ArenaRank']), 'minFightHP': min_fight_hp(p),
     }
 
@@ -109,7 +125,8 @@ def build_view(game, save_path='', seq=0):
             monsters.append({'Name': monster['Name'], 'Level': scaled['Level'], 'MaxHP': scaled['MaxHP']})
         expeditions.append({'Id': location['Id'], 'Name': location['Name'], 'Description': location['Description'],
                             'ReqLevel': location['ReqLevel'], 'EnergyCost': location['EnergyCost'],
-                            'locked': p['Level'] < location['ReqLevel'], 'monsters': monsters})
+                            'locked': p['Level'] < location['ReqLevel'], 'monsters': monsters,
+                            'sets': [SETS[k]['Name'] for k in location.get('Sets', [])]})
 
     dungeons = []
     for dungeon in DUNGEONS:
@@ -121,7 +138,10 @@ def build_view(game, save_path='', seq=0):
                          'completed': progress['IsCompleted'], 'conquests': progress['Conquests'],
                          'floor': progress['CurrentStage'], 'floors': len(dungeon['Stages']),
                          'stageName': stage['Name'], 'isBoss': stage['IsBoss'],
-                         'monster': {'Name': scaled['Name'], 'Level': scaled['Level'], 'MaxHP': scaled['MaxHP']}})
+                         'monster': {'Name': scaled['Name'], 'Level': scaled['Level'], 'MaxHP': scaled['MaxHP']},
+                         'energy': dungeon_energy_cost(dungeon),
+                         'sets': [SETS[k]['Name'] for k in dungeon.get('Sets', [])],
+                         'treasure': UNIQUES.get(dungeon['Stages'][-1]['Monster']['Name'], {}).get('Name', '')})
 
     arena_rows = [{'player': True, 'Rank': p['ArenaRank']}]
     for idx, opponent in enumerate(s['ArenaLadder']):
@@ -174,9 +194,51 @@ def build_view(game, save_path='', seq=0):
                        'gold': quest['RewardGold'], 'xp': int(quest['RewardXP'] * xp_mult),
                        'rubies': quest['RewardRubies']})
 
+    bestiary_areas = {}
+    for location in LOCATIONS:
+        for monster in location['Monsters']:
+            bestiary_areas[monster['Name']] = location['Name']
+    for dungeon in DUNGEONS:
+        for stage in dungeon['Stages']:
+            bestiary_areas[stage['Monster']['Name']] = dungeon['Name'] + (' (boss)' if stage['IsBoss'] else '')
+    bestiary = [{'name': name, 'area': bestiary_areas[name], 'kills': s['Bestiary'].get(name, 0)} for name in BESTIARY]
+
+    achievements = []
+    for a in ACHIEVEMENTS:
+        value, goal = game.achievement_progress(a)
+        achievements.append({'Name': a['Name'], 'Desc': a['Desc'], 'Rubies': a['Rubies'],
+                             'done': a['Id'] in s['Achievements'], 'value': min(value, goal), 'goal': goal})
+
+    blessing = s.get('Blessing')
+    temple = {
+        'cost': blessing_cost(p['Level']),
+        'active': dict(blessing, **{k: BLESSINGS[blessing['Key']][k] for k in ('Name', 'Icon')}) if blessing else None,
+        'blessings': [{'key': k, 'Name': b['Name'], 'Icon': b['Icon'], 'Fights': b['Fights'],
+                       'effects': describe_effects(b['Effects'])} for k, b in BLESSINGS.items()],
+    }
+
+    honor_shop = []
+    for key, ware in HONOR_SHOP.items():
+        bought = s['HonorShop'][key]
+        sold_out = ware['Max'] is not None and bought >= ware['Max']
+        honor_shop.append({'key': key, 'Name': ware['Name'], 'Icon': ware['Icon'], 'Desc': ware['Desc'],
+                           'bought': bought, 'max': ware['Max'], 'soldOut': sold_out,
+                           'cost': None if sold_out else game.honor_cost(key)})
+
+    sets = {key: {'Name': d['Name'], 'Sources': d['Sources'],
+                  'Pieces': [name for name, _ in d['Pieces'].values()],
+                  'Bonuses': [{'pieces': n, 'effects': describe_effects(e)} for n, e in d['Bonuses']]}
+            for key, d in SETS.items()}
+
     return {
         'seq': seq,
         'now': now,
+        'bestiary': bestiary,
+        'achievements': achievements,
+        'temple': temple,
+        'honorShop': honor_shop,
+        'sets': sets,
+        'effectText': EFFECTS,
         'state': s,
         'player': player,
         'hiddenStats': _hidden_stats(s),
@@ -184,7 +246,6 @@ def build_view(game, save_path='', seq=0):
         'inventory': inventory,
         'expeditions': expeditions,
         'dungeons': dungeons,
-        'dungeonEnergyCost': DUNGEON_ENERGY_COST,
         'arena': {'rows': arena_rows, 'cooldownUntil': s['ArenaCooldownUntil'], 'ladderSize': LADDER_SIZE,
                   'cooldownMs': ARENA_COOLDOWN_MS},
         'vendors': vendors,

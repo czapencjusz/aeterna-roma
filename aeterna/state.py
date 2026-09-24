@@ -8,12 +8,12 @@ older C# server version) can be imported.
 import math
 import re
 
-from .data import (ALCHEMIST_ITEMS, ARENA_COOLDOWN_MS, ARENA_MILESTONES, ARENA_NAMES, ATTRIBUTES, COMBAT_SPEEDS,
-                   DUNGEONS, GUILD_BUILDING_MAX, GUILD_BUILDINGS, LADDER_SIZE, LOCATIONS, QUEST_ABANDON_WAIT_MS,
-                   QUEST_KINDS, QUEST_SLOTS, SAVE_VERSION, SLOT_FOR_TYPE, SLOTS, STAT_KEYS, THEMES, VENDOR_DEFS,
-                   VENDOR_STOCK_SIZE, WORK_GOLD_PER_HOUR, WORK_OPTIONS, WORK_XP_PER_HOUR)
+from .data import (ACHIEVEMENTS, ALCHEMIST_ITEMS, ARENA_COOLDOWN_MS, ARENA_MILESTONES, ARENA_NAMES, ATTRIBUTES,
+                   BESTIARY, BLESSINGS, COMBAT_SPEEDS, DUNGEONS, GUILD_BUILDING_MAX, GUILD_BUILDINGS, HONOR_SHOP,
+                   LADDER_SIZE, LOCATIONS, QUEST_ABANDON_WAIT_MS, QUEST_KINDS, QUEST_SLOTS, SAVE_VERSION, SLOT_FOR_TYPE,
+                   SLOTS, STAT_KEYS, THEMES, VENDOR_DEFS, VENDOR_STOCK_SIZE, WORK_OPTIONS)
 from .items import blank_item, generate_item, make_potion, normalize_item
-from .rules import guild_level_from_buildings, recalc_stats
+from .rules import guild_level_from_buildings, recalc_stats, work_rates, xp_to_next
 from .util import clamp, is_number, pick, rand_int, roll, text, to_int, uid
 
 
@@ -113,6 +113,10 @@ def new_game_state(now):
         'ArenaMilestonesClaimed': [],
         'QuestSlots': new_quest_slots(),
         'Stats': new_stats(),
+        'Blessing': None,  # {'Key': <data.BLESSINGS key>, 'FightsLeft': n}
+        'HonorShop': {key: 0 for key in HONOR_SHOP},  # how many of each Honor-shop ware were bought
+        'Achievements': [],  # ids of unlocked achievements
+        'Bestiary': {},  # creature name -> times defeated
         'Settings': {'ThemeMode': 'DarkImperial', 'AudioMuted': False, 'CombatSpeed': 'Fast'},
     }
     for slot in state['QuestSlots']:
@@ -131,6 +135,13 @@ def find_monster_by_id(monster_id):
     return None
 
 
+def _quest_reward(goal, level, low_gold, low_xp, factor):
+    """Per-goal rewards: the old linear formula early on, and a share of a typical fight's reward later."""
+    gold = max(low_gold, 0.8 * 2.6 * level * level)
+    xp = max(low_xp, 0.8 * 2.8 * level * level)
+    return math.floor(goal * gold * factor), math.floor(goal * xp * factor)
+
+
 def generate_quest(player):
     level = player['Level']
     kinds = ['expedition', 'expedition', 'monster', 'monster', 'arena']
@@ -141,22 +152,20 @@ def generate_quest(player):
              'RewardGold': 0, 'RewardXP': 0, 'RewardRubies': 0}
     if kind == 'expedition':
         quest['Goal'] = rand_int(3, 6)
-        quest['RewardGold'] = quest['Goal'] * (15 + level * 12)
-        quest['RewardXP'] = quest['Goal'] * (10 + level * 6)
+        quest['RewardGold'], quest['RewardXP'] = _quest_reward(quest['Goal'], level, 15 + level * 12, 10 + level * 6, 1)
     elif kind == 'monster':
-        location = pick([loc for loc in LOCATIONS if level >= loc['ReqLevel']])
+        # Hunt a monster from one of the three highest regions the player can enter.
+        open_regions = [loc for loc in LOCATIONS if level >= loc['ReqLevel']]
+        location = pick(sorted(open_regions, key=lambda loc: loc['ReqLevel'])[-3:])
         quest['Target'] = pick(location['Monsters'])['Id']
         quest['Goal'] = rand_int(2, 4)
-        quest['RewardGold'] = math.floor(quest['Goal'] * (15 + level * 12) * 1.3)
-        quest['RewardXP'] = math.floor(quest['Goal'] * (10 + level * 6) * 1.3)
+        quest['RewardGold'], quest['RewardXP'] = _quest_reward(quest['Goal'], level, 15 + level * 12, 10 + level * 6, 1.3)
     elif kind == 'arena':
         quest['Goal'] = rand_int(1, 3)
-        quest['RewardGold'] = quest['Goal'] * (40 + level * 20)
-        quest['RewardXP'] = quest['Goal'] * (20 + level * 8)
+        quest['RewardGold'], quest['RewardXP'] = _quest_reward(quest['Goal'], level, 40 + level * 20, 20 + level * 8, 1.5)
     else:  # dungeon
         quest['Goal'] = rand_int(1, 2)
-        quest['RewardGold'] = quest['Goal'] * (80 + level * 30)
-        quest['RewardXP'] = quest['Goal'] * (40 + level * 10)
+        quest['RewardGold'], quest['RewardXP'] = _quest_reward(quest['Goal'], level, 80 + level * 30, 40 + level * 10, 2)
     quest['RewardRubies'] = 1 if roll() < (0.5 if kind == 'dungeon' else 0.25) else 0
     return quest
 
@@ -173,8 +182,8 @@ def normalize_quest(raw):
         'Target': raw['Target'] if raw['Kind'] == 'monster' else '',
         'Goal': goal,
         'Progress': clamp(to_int(raw.get('Progress'), 0), 0, goal),
-        'RewardGold': clamp(to_int(raw.get('RewardGold'), 0), 0, 1000000),
-        'RewardXP': clamp(to_int(raw.get('RewardXP'), 0), 0, 1000000),
+        'RewardGold': clamp(to_int(raw.get('RewardGold'), 0), 0, 10000000),
+        'RewardXP': clamp(to_int(raw.get('RewardXP'), 0), 0, 10000000),
         'RewardRubies': clamp(to_int(raw.get('RewardRubies'), 0), 0, 3),
     }
 
@@ -197,8 +206,8 @@ def _normalize_player(state, raw_player):
     rp = raw_player
     if isinstance(rp.get('Name'), str) and rp['Name'].strip():
         player['Name'] = rp['Name'].strip()[:24]
-    player['Level'] = max(1, to_int(rp.get('Level'), player['Level']))
-    player['MaxXP'] = max(1, to_int(rp.get('MaxXP'), player['MaxXP']))
+    player['Level'] = clamp(to_int(rp.get('Level'), player['Level']), 1, 100)
+    player['MaxXP'] = xp_to_next(player['Level'])  # always follows the current XP curve
     player['XP'] = clamp(to_int(rp.get('XP'), 0), 0, player['MaxXP'] - 1)
     for key in ('Gold', 'Rubies', 'Honor'):
         player[key] = max(0, to_int(rp.get(key), player[key]))
@@ -311,11 +320,13 @@ def normalize_state(raw, now):
     if (isinstance(raw_work, dict) and raw_work.get('IsWorking') is True
             and to_int(raw_work.get('DurationHours'), 0) in WORK_OPTIONS and is_number(raw_work.get('StartTime'))):
         hours = to_int(raw_work['DurationHours'], 0)
-        max_gold = math.floor(hours * WORK_GOLD_PER_HOUR * (1 + GUILD_BUILDING_MAX * 0.10))
+        gold_rate, xp_rate = work_rates(player['Level'])
+        base_gold, _ = work_rates(1)
+        max_gold = math.floor(hours * gold_rate * (1 + GUILD_BUILDING_MAX * 0.10))
         state['ActiveWork'] = {
             'IsWorking': True, 'DurationHours': hours, 'StartTime': min(int(raw_work['StartTime']), now),
-            'ExpectedGold': clamp(to_int(raw_work.get('ExpectedGold'), 0), hours * WORK_GOLD_PER_HOUR, max_gold),
-            'ExpectedXP': hours * WORK_XP_PER_HOUR,
+            'ExpectedGold': clamp(to_int(raw_work.get('ExpectedGold'), 0), hours * base_gold, max_gold),
+            'ExpectedXP': clamp(to_int(raw_work.get('ExpectedXP'), 0), hours * work_rates(1)[1], hours * xp_rate),
         }
 
     state['PlayerGuild'] = _normalize_guild(raw.get('PlayerGuild'))
@@ -368,4 +379,18 @@ def normalize_state(raw, now):
         else:
             slots.append({'Quest': generate_quest(player), 'NextAt': 0})
     state['QuestSlots'] = slots
+
+    # Blessing, Honor shop, achievements and Bestiary (added in save version 4)
+    blessing = raw.get('Blessing')
+    if isinstance(blessing, dict) and blessing.get('Key') in BLESSINGS:
+        fights = clamp(to_int(blessing.get('FightsLeft'), 0), 0, BLESSINGS[blessing['Key']]['Fights'])
+        state['Blessing'] = {'Key': blessing['Key'], 'FightsLeft': fights} if fights else None
+    if isinstance(raw.get('HonorShop'), dict):
+        for key, ware in HONOR_SHOP.items():
+            state['HonorShop'][key] = clamp(to_int(raw['HonorShop'].get(key), 0), 0, ware['Max'] or 1000000)
+    if isinstance(raw.get('Achievements'), list):
+        state['Achievements'] = [a['Id'] for a in ACHIEVEMENTS if a['Id'] in raw['Achievements']]
+    if isinstance(raw.get('Bestiary'), dict):
+        state['Bestiary'] = {name: max(0, to_int(raw['Bestiary'].get(name), 0)) for name in BESTIARY
+                             if to_int(raw['Bestiary'].get(name), 0) > 0}
     return state

@@ -11,21 +11,24 @@ An offline, single-player ancient Roman RPG written in Python. The game runs ent
 
 - **Dynamic Level Scaling**: Colosseum Arena ladder opponents and Expedition/Dungeon monsters scale their stats, HP, damage, and rewards to match the player's level.
 - **11 Interactive Tabs**:
-  - Overview / Character Sheet: attributes, inventory with gear comparison, hidden combat stats, and a Chronicle of lifetime statistics
+  - Overview / Character Sheet: attributes, inventory with gear comparison, hidden combat stats, a Chronicle of lifetime statistics, gear sets, a Bestiary of every foe you have slain, and 23 Laurels (achievements) that pay rubies
   - Attribute Training
-  - Expeditions: 6 regions, from the Suburbs of Rome to the Dacian Frontier
-  - Colosseum Arena: 21-place ranking ladder, titles, ruby rewards for reaching the top 5, 3 and 1, and a 5-minute cooldown between bouts
-  - Dungeons: 3 multi-floor dungeons with bosses, replayable after you conquer them
-  - Pantheon: 3 divine tasks at a time (win expeditions, hunt a specific monster, win arena bouts, clear dungeon floors) for gold, XP and rubies
+  - Expeditions: 12 regions, from the Suburbs of Rome and the Port of Ostia to Britannia, the Parthian Steppe, the Gates of Avernus and the Slopes of Olympus
+  - Colosseum Arena: 21-place ranking ladder, titles, ruby rewards for reaching the top 5, 3 and 1, a 5-minute cooldown between bouts, and an Honor exchange (bigger satchel, the Emperor's Favor, Murmillo set pieces, rubies)
+  - Dungeons: 6 multi-floor dungeons, down to the Depths of Tartarus, whose bosses guard Mythic treasures; replayable after you conquer them
+  - Pantheon: 3 divine tasks at a time (win expeditions, hunt a specific monster, win arena bouts, clear dungeon floors) for gold, XP and rubies, plus a Temple where a gold offering buys a blessing of Mars, Minerva, Juno, Mercury or Apollo for the next few fights
   - Roman Forum Merchants (Weaponsmith, Armorer, General Merchant, Apothecary): they buy your items back for half their value
-  - The Forge: smelting, 10 crafting recipes, and gear enhancement up to +5
+  - The Forge: smelting, 16 crafting recipes, and gear enhancement up to +5
   - Patrician Villa Work: timed shifts that pay out even while the game is closed
   - Gladiator Guild: a shared gold vault plus Training Grounds, Library, and Villa buildings with real bonuses
   - Game Settings: theme, combat report speed, renaming, and save import/export
-- **Gear with character**: item prefixes and suffixes (e.g. *Titan* or *of Mars*) add attribute bonuses, and rarity makes them stronger.
+- **Gear with character**: dozens of named weapons and armor (pila, spathae, lorica squamata, ...), prefixes and suffixes (e.g. *Titan* or *of Mars*) that add attribute bonuses, and rarity that makes them stronger.
+- **6 gear sets**: wear 2 or more pieces of the Legionary's Panoply, Murmillo of Capua, Regalia of the Pharaoh, Vulcan's Forgework, Mercury's Swiftness or Tidecaller's Raiment for bonuses such as +armor, +damage, +crit or +gold.
+- **Mythic treasures**: each dungeon boss guards a unique item with special powers (life steal, bonus damage, HP regeneration, ...), guaranteed on your first conquest.
+- **Balanced progression**: monster strength, the XP curve and rewards were tuned with a built-in simulator (`python -m aeterna.balance`) so every region is winnable when it unlocks and stays worthwhile as you level.
 - **Rubies**: earned from dungeon bosses (mostly on the first conquest), Pantheon tasks, and arena milestones. Spend them to refill energy, skip the arena cooldown, or bring in new merchant wares.
 - **Animated combat reports**: fights play out line by line with live HP bars (Instant, Fast, or Normal speed).
-- **Hand-drawn vector art**: icons for every kind of gear, portraits for all 25 monsters and the 4 gladiator styles, scene banners for every region and dungeon, and a player figure that changes with the gear you equip.
+- **Hand-drawn vector art**: icons for every kind of gear, portraits for all 52 monsters and the 4 gladiator styles, scene banners for every region and dungeon, and a player figure that changes with the gear you equip.
 - **5 Custom Visual Themes**: Dark Imperial, Roman Parchment, Colosseum Crimson, Legion Emerald, and Tyrian Purple.
 
 ## Playing
@@ -71,12 +74,13 @@ Run `build.bat` on Windows. It installs PyInstaller and packs Python, the game a
 ```
 aeterna_roma.py        Launcher: opens the game window (python aeterna_roma.py --check tests a build without a window)
 aeterna/
-  data.py              Game content and tuning numbers (monsters, regions, recipes, ...)
+  data.py              Game content and tuning numbers (monsters, regions, recipes, sets, blessings, ...)
   items.py             Item generation, names, prices, save-file cleanup for items
   rules.py             Gladiator stat formulas and guild bonuses
   combat.py            Combat formulas and the fight loop
   state.py             New games, Pantheon quests, loading any save format
   engine.py            The Game class: every player action and the timers
+  balance.py           Balance simulator: python -m aeterna.balance
   view.py              Builds the numbers the interface draws
   storage.py           Save files, save location, single-instance lock
   api.py               Bridge between the window and the game

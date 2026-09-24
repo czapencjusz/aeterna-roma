@@ -8,13 +8,14 @@ unchanged. Fights return a combat-result dict for the combat report.
 import math
 
 from . import combat
-from .data import (ARENA_COOLDOWN_MS, ARENA_MILESTONES, ATTRIBUTES, COMBAT_SPEEDS, DUNGEON_ENERGY_COST, DUNGEONS,
-                   ENERGY_REGEN_PER_MIN, GUILD_BUILDING_MAX, GUILD_BUILDINGS, GUILD_COST, GUILD_DONATIONS,
-                   LADDER_SIZE, LOCATIONS, LOOT_CHANCE, MAX_ENHANCE, QUEST_ABANDON_WAIT_MS, RECIPES, RUBY_COST,
-                   SLOT_FOR_TYPE, SLOTS, THEMES, VENDOR_DEFS, WORK_OPTIONS)
-from .items import display_name, generate_item, is_equipment, sell_price
-from .rules import (guild_building_cost, guild_level_from_buildings, heal_multiplier, hp_regen_per_min, min_fight_hp,
-                    recalc_stats, training_cost, work_pay, xp_multiplier)
+from .data import (ACHIEVEMENTS, ARENA_COOLDOWN_MS, ARENA_MILESTONES, ARENA_SET_DROP_CHANCE, ATTRIBUTES, BESTIARY,
+                   BLESSINGS, COMBAT_SPEEDS, DUNGEON_ENERGY_COST, DUNGEONS, ENERGY_REGEN_PER_MIN, GUILD_BUILDING_MAX,
+                   GUILD_BUILDINGS, GUILD_COST, GUILD_DONATIONS, HONOR_SHOP, LADDER_SIZE, LOCATIONS, LOOT_CHANCE,
+                   MAX_ENHANCE, QUEST_ABANDON_WAIT_MS, RECIPES, RUBY_COST, SATCHEL_SLOTS, SET_DROP_CHANCE,
+                   SLOT_FOR_TYPE, SLOTS, THEMES, UNIQUE_REPEAT_CHANCE, UNIQUES, VENDOR_DEFS, WORK_OPTIONS, blessing_cost)
+from .items import display_name, generate_item, is_equipment, make_set_piece, make_unique, sell_price
+from .rules import (all_effects, guild_building_cost, guild_level_from_buildings, has_full_set, heal_multiplier,
+                    hp_regen_per_min, min_fight_hp, recalc_stats, training_cost, work_pay, xp_multiplier, xp_to_next)
 from .state import (dungeon_key, generate_quest, idle_work, new_game_state, new_guild, normalize_state,
                     quest_description, stock_vendor)
 from .util import now_ms, pick, rand_int, roll, to_int, uid
@@ -66,7 +67,7 @@ class Game:
         while p['XP'] >= p['MaxXP']:
             p['XP'] -= p['MaxXP']
             p['Level'] += 1
-            p['MaxXP'] = math.floor(p['MaxXP'] * 1.5)
+            p['MaxXP'] = xp_to_next(p['Level'])
             p['MaxEnergy'] += 2
             p['CurrentEnergy'] = p['MaxEnergy']
             for attr in ('Strength', 'Dexterity', 'Agility', 'Constitution'):
@@ -188,25 +189,55 @@ class Game:
             return False
         return True
 
-    def grant_rewards(self, result, xp, gold):
-        xp = math.floor(xp * xp_multiplier(self.state))
+    def grant_rewards(self, result, xp, gold, effects=None):
+        effects = all_effects(self.state) if effects is None else effects
+        xp = math.floor(xp * (xp_multiplier(self.state) + effects.get('XPPct', 0) / 100))
+        gold = math.floor(gold * (1 + effects.get('GoldPct', 0) / 100))
         self.player['Gold'] += gold
         self.state['Stats']['GoldEarned'] += gold
         result['GoldGained'] = gold
         result['XPGained'] = xp
         result['LevelsGained'] = self.gain_xp(xp)
 
-    def roll_loot(self, result):
+    def give_loot(self, result, item):
+        """Puts a found item in the bag (or notes that there was no room)."""
+        p, stats = self.player, self.state['Stats']
+        if len(p['Inventory']) >= p['InventoryCapacity']:
+            result['Notes'].append('You found %s, but your inventory is full.' % display_name(item))
+            return False
+        p['Inventory'].append(item)
+        result['Loot'].append(item)
+        stats['ItemsLooted'] += 1
+        if item.get('SetId'):
+            stats['SetPiecesFound'] += 1
+        if item['Rarity'] == 'Mythic':
+            stats['UniquesFound'] += 1
+        return True
+
+    def roll_loot(self, result, set_ids=()):
+        """Random loot after a win. Areas with gear sets sometimes drop a set piece instead."""
         if roll() >= LOOT_CHANCE:
             return
-        p = self.player
-        item = generate_item(p['Level'])
-        if len(p['Inventory']) < p['InventoryCapacity']:
-            p['Inventory'].append(item)
-            result['Loot'].append(item)
-            self.state['Stats']['ItemsLooted'] += 1
+        level = self.player['Level']
+        if set_ids and roll() < SET_DROP_CHANCE:
+            item = make_set_piece(pick(list(set_ids)), level)
         else:
-            result['Notes'].append('You found %s, but your inventory is full.' % display_name(item))
+            item = generate_item(level)
+        self.give_loot(result, item)
+
+    def after_fight(self, result, monster_name=None):
+        """Book-keeping shared by every fight: blessings wear off, the Bestiary records kills."""
+        blessing = self.state.get('Blessing')
+        if blessing:
+            blessing['FightsLeft'] -= 1
+            if blessing['FightsLeft'] <= 0:
+                self.state['Blessing'] = None
+                result['Notes'].append('✨ Your %s has faded.' % BLESSINGS[blessing['Key']]['Name'])
+        if monster_name and result['IsVictory']:
+            bestiary = self.state['Bestiary']
+            if monster_name not in bestiary:
+                result['Notes'].append('📖 New Bestiary entry: %s' % monster_name)
+            bestiary[monster_name] = bestiary.get(monster_name, 0) + 1
 
     def check_arena_milestones(self, result):
         """Pays rubies the first time the player reaches each milestone rank."""
@@ -254,13 +285,15 @@ class Game:
 
         p['CurrentEnergy'] -= location['EnergyCost']
         monster = combat.scale_monster(location['Monsters'][mi], p['Level'], location['ReqLevel'])
+        effects = all_effects(self.state)  # taken before the fight uses up a blessing
         result = combat.run_fight(self.state, 'Expedition: ' + monster['Name'], combat.monster_combatant(monster))
         result['EnemyArt'] = monster['Name']
         if result['IsVictory']:
             self.state['Stats']['MonstersSlain'] += 1
-            self.grant_rewards(result, monster['XPReward'], rand_int(monster['MinGold'], monster['MaxGold']))
-            self.roll_loot(result)
+            self.grant_rewards(result, monster['XPReward'], rand_int(monster['MinGold'], monster['MaxGold']), effects)
+            self.roll_loot(result, location.get('Sets', ()))
             self.progress_quests('expedition', monster['Id'], result)
+        self.after_fight(result, monster['Name'])
         return result
 
     def challenge_arena(self, ladder_index):
@@ -278,12 +311,18 @@ class Game:
             return None
 
         rival = combat.arena_opponent_stats(opponent, p)
+        effects = all_effects(s)
         result = combat.run_fight(s, 'Arena Challenge: ' + rival['Name'], combat.arena_combatant(rival))
         result['EnemyArt'] = opponent['IconSvg']
         s['ArenaCooldownUntil'] = now + ARENA_COOLDOWN_MS
 
         if result['IsVictory']:
-            self.grant_rewards(result, rival['Level'] * 15 + 20, rival['Level'] * 45 + rand_int(20, 79))
+            lvl = rival['Level']
+            xp = max(lvl * 15 + 20, round(2.8 * lvl * lvl))
+            gold = max(lvl * 45, round(2.6 * lvl * lvl)) + rand_int(20, 79)
+            self.grant_rewards(result, xp, gold, effects)
+            if roll() < ARENA_SET_DROP_CHANCE:
+                self.give_loot(result, make_set_piece('murmillo', p['Level']))
             honor = 10 + max(0, LADDER_SIZE - opponent['Rank'])
             p['Honor'] += honor
             result['Notes'].append('+%d Honor' % honor)
@@ -295,6 +334,7 @@ class Game:
             self.progress_quests('arena', None, result)
         else:
             s['Stats']['ArenaLosses'] += 1
+        self.after_fight(result)
         return result
 
     def enter_dungeon(self, dungeon_index):
@@ -310,29 +350,36 @@ class Game:
         if p['Level'] < dungeon['ReqLevel']:
             self.notify('%s requires level %d.' % (dungeon['Name'], dungeon['ReqLevel']))
             return None
-        if p['CurrentEnergy'] < DUNGEON_ENERGY_COST:
-            self.notify('Not enough energy (%d needed).' % DUNGEON_ENERGY_COST)
+        energy = dungeon_energy_cost(dungeon)
+        if p['CurrentEnergy'] < energy:
+            self.notify('Not enough energy (%d needed).' % energy)
             return None
         if not self.can_fight():
             return None
 
         stage = dungeon['Stages'][progress['CurrentStage'] - 1]
-        p['CurrentEnergy'] -= DUNGEON_ENERGY_COST
+        p['CurrentEnergy'] -= energy
         monster = combat.scale_monster(stage['Monster'], p['Level'], dungeon['ReqLevel'])
+        effects = all_effects(self.state)
         result = combat.run_fight(self.state, '%s — %s' % (dungeon['Name'], stage['Name']), combat.monster_combatant(monster))
         result['EnemyArt'] = monster['Name']
         if result['IsVictory']:
             stats = self.state['Stats']
             stats['MonstersSlain'] += 1
             stats['DungeonFloorsCleared'] += 1
-            self.grant_rewards(result, monster['XPReward'], rand_int(monster['MinGold'], monster['MaxGold']))
-            self.roll_loot(result)
+            self.grant_rewards(result, monster['XPReward'], rand_int(monster['MinGold'], monster['MaxGold']), effects)
+            self.roll_loot(result, dungeon.get('Sets', ()))
             if stage['IsBoss']:
+                first = progress['Conquests'] == 0
                 # Generous on the first conquest; repeat runs only occasionally drop a ruby.
-                rubies = rand_int(2, 3) if progress['Conquests'] == 0 else (1 if roll() < 0.2 else 0)
+                rubies = rand_int(2, 3) if first else (1 if roll() < 0.2 else 0)
                 if rubies:
                     self.add_rubies(rubies)
                     result['RubiesGained'] += rubies
+                # The boss's Mythic treasure: guaranteed the first time, rare afterwards.
+                if monster['Name'] in UNIQUES and (first or roll() < UNIQUE_REPEAT_CHANCE):
+                    if self.give_loot(result, make_unique(monster['Name'], p['Level'])):
+                        result['Notes'].append('🌟 A Mythic treasure: %s!' % UNIQUES[monster['Name']]['Name'])
             if progress['CurrentStage'] < len(dungeon['Stages']):
                 progress['CurrentStage'] += 1
                 result['Notes'].append('You advance to floor %d of %d.' % (progress['CurrentStage'], len(dungeon['Stages'])))
@@ -342,6 +389,7 @@ class Game:
                 stats['DungeonsConquered'] += 1
                 result['Notes'].append('🏆 %s has been conquered!' % dungeon['Name'])
             self.progress_quests('dungeon', None, result)
+        self.after_fight(result, monster['Name'])
         return result
 
     def restart_dungeon(self, dungeon_index):
@@ -666,6 +714,90 @@ class Game:
             return
         slots[si] = {'Quest': None, 'NextAt': self.clock() + QUEST_ABANDON_WAIT_MS}
 
+    # ------------------------------------------------------------ temple & honor
+
+    def buy_blessing(self, key):
+        blessing = BLESSINGS.get(key)
+        if not blessing:
+            return
+        cost = blessing_cost(self.player['Level'])
+        if self.player['Gold'] < cost:
+            self.notify('The priests ask an offering of %d gold.' % cost)
+            return
+        self.player['Gold'] -= cost
+        self.state['Blessing'] = {'Key': key, 'FightsLeft': blessing['Fights']}
+        self.state['Stats']['BlessingsReceived'] += 1
+        self.notify('%s %s is upon you for %d fights.' % (blessing['Icon'], blessing['Name'], blessing['Fights']))
+
+    def honor_cost(self, key):
+        ware = HONOR_SHOP[key]
+        return ware['Base'] + ware['Step'] * self.state['HonorShop'][key]
+
+    def buy_honor(self, key):
+        ware = HONOR_SHOP.get(key)
+        if not ware:
+            return
+        s, p = self.state, self.player
+        if ware['Max'] is not None and s['HonorShop'][key] >= ware['Max']:
+            self.notify('%s is sold out.' % ware['Name'])
+            return
+        cost = self.honor_cost(key)
+        if p['Honor'] < cost:
+            self.notify('%s costs %d Honor. Win arena bouts to earn more.' % (ware['Name'], cost))
+            return
+        if key == 'tribute' and len(p['Inventory']) >= p['InventoryCapacity']:
+            self.notify('Your inventory is full.')
+            return
+        p['Honor'] -= cost
+        s['Stats']['HonorSpent'] += cost
+        s['HonorShop'][key] += 1
+        if key == 'satchel':
+            p['InventoryCapacity'] += SATCHEL_SLOTS
+        elif key == 'favor':
+            for attr in ATTRIBUTES:
+                p['Base' + attr] += 1
+            recalc_stats(p)
+        elif key == 'tribute':
+            item = make_set_piece('murmillo', p['Level'])
+            p['Inventory'].append(item)
+            s['Stats']['SetPiecesFound'] += 1
+            self.notify('🎁 The sponsor of the games sends you: %s' % display_name(item))
+        elif key == 'ruby':
+            self.add_rubies(1)
+        if key != 'tribute':
+            self.notify('%s %s bought.' % (ware['Icon'], ware['Name']))
+
+    # ----------------------------------------------------------------- achievements
+
+    def achievement_progress(self, achievement):
+        """(current value, goal) for an achievement."""
+        s, stat, goal = self.state, achievement['Stat'], achievement['Goal']
+        if stat == 'Level':
+            return self.player['Level'], goal
+        if stat == 'BestArenaRank':
+            # Ranks count down: progress is how many places you have climbed toward the goal rank.
+            climbed = LADDER_SIZE - s['Stats']['BestArenaRank']
+            return climbed, LADDER_SIZE - goal
+        if stat == 'FullSet':
+            return (1 if has_full_set(self.player) else 0), goal
+        if stat == 'BestiaryPct':
+            return len(s['Bestiary']) * 100 // len(BESTIARY), goal
+        return s['Stats'].get(stat, 0), goal
+
+    def check_achievements(self):
+        """Unlocks any achievements that have been earned. Returns the newly unlocked ones."""
+        unlocked = []
+        for achievement in ACHIEVEMENTS:
+            if achievement['Id'] in self.state['Achievements']:
+                continue
+            value, goal = self.achievement_progress(achievement)
+            if value >= goal:
+                self.state['Achievements'].append(achievement['Id'])
+                self.add_rubies(achievement['Rubies'])
+                self.notify('🏅 Achievement unlocked: %s (+%s)' % (achievement['Name'], rubies_text(achievement['Rubies'])))
+                unlocked.append(achievement)
+        return unlocked
+
     # ------------------------------------------------------------------ ruby shop
 
     def ruby_refill_energy(self):
@@ -726,6 +858,14 @@ class Game:
         self.apply_regen(now)
         self.complete_work_if_done(now)
         self.refresh_quest_slots(now)
+
+
+def rubies_text(n):
+    return '%d rub%s' % (n, 'y' if n == 1 else 'ies')
+
+
+def dungeon_energy_cost(dungeon):
+    return dungeon.get('EnergyCost', DUNGEON_ENERGY_COST)
 
 
 def format_duration(ms):

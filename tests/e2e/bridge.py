@@ -50,6 +50,11 @@ def test_add_item(level, item_type, rarity):
     api._game.player['Inventory'].append(generate_item(level, item_type, rarity))
 
 
+def test_add_unique(boss_name, level):
+    from aeterna.items import make_unique
+    api._game.player['Inventory'].append(make_unique(boss_name, level))
+
+
 def test_advance_clock(ms):
     clock_offset['ms'] += ms
 
@@ -60,7 +65,7 @@ def test_export_import(path):
     return api._run(api._import_from, path)
 
 
-TEST_COMMANDS = {f.__name__: f for f in (test_set, test_get, test_add_item, test_advance_clock, test_export_import)}
+TEST_COMMANDS = {f.__name__: f for f in (test_set, test_get, test_add_item, test_add_unique, test_advance_clock, test_export_import)}
 
 for line in sys.stdin:
     request = json.loads(line)

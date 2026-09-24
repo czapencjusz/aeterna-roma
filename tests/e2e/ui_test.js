@@ -72,9 +72,15 @@ function pyCall(method, args) {
         check(await page.isVisible(`#tab-${tab}`), `tab ${tab} opens`);
     }
     await page.click('#ovSubtabBtnHidden');
-    check((await page.$$('#hiddenStatsGrid .monster-row')).length === 10, 'hidden stats render');
+    check((await page.$$('#hiddenStatsGrid .monster-row')).length === 11, 'hidden stats render');
     await page.click('#ovSubtabBtnChronicle');
-    check((await page.$$('#chronicleGrid .monster-row')).length === 12, 'chronicle renders');
+    check((await page.$$('#chronicleGrid .monster-row')).length === 16, 'chronicle renders');
+    await page.click('#ovSubtabBtnSets');
+    check((await page.$$('#setsGrid .exp-card')).length === 6, 'gear sets render');
+    await page.click('#ovSubtabBtnBestiary');
+    check((await page.$$('#bestiaryGrid .beast-card.unknown')).length === 52, 'bestiary starts with every foe unknown');
+    await page.click('#ovSubtabBtnLaurels');
+    check((await page.$$('#laurelsGrid .ach-card')).length === 23 && (await page.$$('#laurelsGrid .ach-card.done')).length === 0, 'laurels render');
     await page.click('#ovSubtabBtnBase');
 
     // Merchants
@@ -84,7 +90,7 @@ function pyCall(method, args) {
         await page.click(`#vendorButtons button:has-text("${label}")`);
         vendorCounts.push((await page.$$('#merchantContainer .exp-card')).length);
     }
-    check(vendorCounts.join() === '6,6,6,3', 'all four merchants show stock ' + vendorCounts);
+    check(vendorCounts.join() === '6,6,6,7', 'all four merchants show stock ' + vendorCounts);
     await page.click('#merchantContainer .exp-card:nth-child(1) button');
     await page.waitForFunction(() => view.state.Player.Inventory.length === 2);
     check(await text('#resGold') === '235', 'buying a potion goes through Python');
@@ -99,7 +105,17 @@ function pyCall(method, args) {
     await page.keyboard.press('Escape');
     check(!(await page.isVisible('#combatModal.open')), 'Escape closes the report');
     check((await text('#textEnergy')) === '23/24', 'expedition energy cost shown');
-    check(await page.isDisabled('#expeditionContainer .exp-card:nth-child(2) button'), 'locked region buttons disabled');
+    check(await page.isDisabled('#expeditionContainer .exp-card:nth-child(3) button'), 'locked region buttons disabled');
+    check((await page.$$('#expeditionContainer .exp-card')).length === 12, 'all twelve regions listed');
+    await page.click('.nav-tab[data-tab="overview"]');
+    await page.click('#ovSubtabBtnBestiary');
+    check((await page.$$('#bestiaryGrid .beast-card:not(.unknown)')).length === (await get(['Stats', 'FightsWon'])), 'a won fight adds a bestiary entry');
+    await page.click('#ovSubtabBtnLaurels');
+    check((await get(['Stats', 'FightsWon'])) === 0 || (await page.$$('#laurelsGrid .ach-card.done')).length === 1, 'first victory earns a laurel');
+    await page.click('#ovSubtabBtnBase');
+    await page.click('.nav-tab[data-tab="dungeons"]');
+    check(/Energy per floor: 2/.test(await text('#dungeonContainer .exp-card:nth-child(1)')), 'dungeon energy cost comes from Python');
+    check(/Crown of Cassius/.test(await text('#dungeonContainer')), 'dungeon boss treasures are shown');
 
     // Arena
     await set(['Player', 'CurrentHP'], 999);
@@ -116,6 +132,39 @@ function pyCall(method, args) {
     await page.click('#btnSkipArena');
     await page.waitForFunction(() => view.arena.cooldownUntil === 0);
     check(await get(['Player', 'Rubies']) === 4, 'ruby skip button works while timers tick');
+
+    // Honor exchange
+    await set(['Player', 'Honor'], 1000);
+    await refresh();
+    await page.waitForFunction(() => view.state.Player.Honor === 1000);
+    check((await page.$$('#honorShopContainer .exp-card')).length === 4, 'honor exchange renders');
+    const capBefore = await get(['Player', 'InventoryCapacity']);
+    await page.click('#honorShopContainer .exp-card:nth-child(1) button');
+    await page.waitForFunction(cap => view.state.Player.InventoryCapacity === cap + 4 && document.getElementById('resHonor').textContent === '850', capBefore);
+    check(true, 'honor purchase goes through Python');
+
+    // Temple blessing
+    await set(['Player', 'Gold'], 1000);
+    await refresh();
+    await page.waitForFunction(() => view.state.Player.Gold === 1000);
+    await page.click('.nav-tab[data-tab="quests"]');
+    check((await page.$$('#templeContainer .exp-card')).length === 5, 'temple blessings render');
+    await page.click('#templeContainer .exp-card:nth-child(1) button');
+    await page.waitForFunction(() => view.state.Blessing && view.state.Blessing.Key === 'mars');
+    check(/Blessing of Mars · 5 fights/.test(await text('#sidebarBlessing')), 'active blessing shown in the sidebar');
+
+    // Mythic treasure details
+    await pyCall('test_add_unique', ['Lich Lord Cassius', 1]);
+    await refresh();
+    await page.click('.nav-tab[data-tab="overview"]');
+    const mythicIndex = (await get(['Player', 'Inventory'])).length - 1;
+    await page.click(`#inventoryContainer .inv-slot:nth-child(${mythicIndex + 1})`);
+    check(/Heal 5% of the damage you deal/.test(await text('#selectedItemPanel')), 'mythic effects listed in item details');
+    check((await page.$$('#inventoryContainer .rarity-Mythic')).length === 1, 'mythic rarity styled');
+    await shot('mythic.png');
+    dialogAnswers.push(true);
+    await page.click('#selectedItemPanel button:has-text("Sell")');
+    await page.waitForFunction(n => view.state.Player.Inventory.length === n, mythicIndex);
 
     // Inventory: select, compare, equip, sell
     await pyCall('test_add_item', [1, 'Helmet', 'Rare']);
@@ -231,7 +280,7 @@ function pyCall(method, args) {
     if (SHOTS) {
         await set(['Settings', 'ThemeMode'], 'DarkImperial');
         await refresh();
-        for (const tab of ['overview', 'expeditions', 'arena', 'quests']) {
+        for (const tab of ['overview', 'expeditions', 'arena', 'dungeons', 'quests']) {
             await page.click(`.nav-tab[data-tab="${tab}"]`);
             await shot(`tab-${tab}.png`);
         }

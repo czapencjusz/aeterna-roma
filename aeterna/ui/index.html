@@ -430,12 +430,24 @@
         .rarity-Rare { border-color: #1565c0; box-shadow: inset 0 0 8px #1565c0; }
         .rarity-Epic { border-color: #7b1fa2; box-shadow: inset 0 0 10px #7b1fa2; }
         .rarity-Legendary { border-color: #ffd700; box-shadow: inset 0 0 12px #ffd700; }
+        .rarity-Mythic { border-color: #ff5722; box-shadow: inset 0 0 14px #ff5722, 0 0 6px rgba(255,87,34,.6); }
 
         .rt-Common { color: #d0d0d0; }
         .rt-Uncommon { color: #66bb6a; }
         .rt-Rare { color: #42a5f5; }
         .rt-Epic { color: #ce93d8; }
         .rt-Legendary { color: #ffd700; }
+        .rt-Mythic { color: #ff7043; text-shadow: 0 0 6px rgba(255,112,67,.55); }
+        .set-label { color: #4dd0e1; font-size: 11px; font-weight: bold; }
+        .set-bonus { font-size: 11px; opacity: .55; }
+        .set-bonus.on { opacity: 1; color: #80deea; }
+        .effect-line { color: #ff8a65; }
+        .hint-line { font-size: 11px; color: #80deea; }
+        .blessing-chip { display: inline-block; margin-top: 4px; padding: 2px 8px; border: 1px solid var(--border-gold); border-radius: 10px; font-size: 11px; color: var(--text-gold); }
+        .ach-card.done { border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,.35); }
+        .beast-card { display: flex; gap: 10px; align-items: center; }
+        .beast-card.unknown .art-portrait { filter: brightness(0) opacity(.45); }
+        .section-title { font-family: 'Cinzel', serif; color: var(--text-gold); margin: 22px 0 10px; }
 
         .item-name { font-weight: bold; margin-bottom: 2px; }
         .item-meta { font-size: 11px; opacity: 0.75; margin-bottom: 6px; }
@@ -714,6 +726,20 @@
             <linearGradient id="g-purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ce93d8"/><stop offset=".5" stop-color="#7b1fa2"/><stop offset="1" stop-color="#38104a"/></linearGradient>
             <radialGradient id="g-potion-red" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ff8a80"/><stop offset=".5" stop-color="#d50000"/><stop offset="1" stop-color="#5c0000"/></radialGradient>
             <radialGradient id="g-potion-blue" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#b3e5fc"/><stop offset=".5" stop-color="#1e88e5"/><stop offset="1" stop-color="#0b3470"/></radialGradient>
+            <radialGradient id="g-potion-green" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ccff90"/><stop offset=".5" stop-color="#2e7d32"/><stop offset="1" stop-color="#0b3a12"/></radialGradient>
+            <radialGradient id="g-potion-gold" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#fffde7"/><stop offset=".45" stop-color="#ffc107"/><stop offset="1" stop-color="#8a5a00"/></radialGradient>
+            <radialGradient id="g-glow-sea" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#b2ebf2" stop-opacity=".7"/><stop offset="1" stop-color="#00838f" stop-opacity="0"/></radialGradient>
+            <radialGradient id="g-glow-green" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ccff90" stop-opacity=".7"/><stop offset="1" stop-color="#33691e" stop-opacity="0"/></radialGradient>
+            <radialGradient id="g-glow-blue" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#80d8ff" stop-opacity=".85"/><stop offset=".5" stop-color="#2962ff" stop-opacity=".4"/><stop offset="1" stop-color="#0d47a1" stop-opacity="0"/></radialGradient>
+            <linearGradient id="g-sky-day" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#4f8fc9"/><stop offset="1" stop-color="#cfe7f5"/></linearGradient>
+            <linearGradient id="g-sea" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2d7fa6"/><stop offset="1" stop-color="#0c3552"/></linearGradient>
+            <linearGradient id="g-sky-moor" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6f7f86"/><stop offset="1" stop-color="#c9d3cf"/></linearGradient>
+            <linearGradient id="g-sky-steppe" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5b3a6e"/><stop offset=".55" stop-color="#e0875a"/><stop offset="1" stop-color="#f3c77c"/></linearGradient>
+            <linearGradient id="g-sky-underworld" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#050308"/><stop offset=".7" stop-color="#2a0d1a"/><stop offset="1" stop-color="#5c1a14"/></linearGradient>
+            <linearGradient id="g-sky-olympus" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#6fa8dc"/><stop offset=".6" stop-color="#f7e2a8"/><stop offset="1" stop-color="#fff6d8"/></linearGradient>
+            <linearGradient id="g-deep" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0f6b7a"/><stop offset="1" stop-color="#021a26"/></linearGradient>
+            <linearGradient id="g-abyss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#140a1f"/><stop offset=".7" stop-color="#2b0b2e"/><stop offset="1" stop-color="#7a1d0c"/></linearGradient>
+            <filter id="f-ghost" x="-10%" y="-10%" width="120%" height="120%"><feColorMatrix type="matrix" values="0.2 0.3 0.1 0 0.05  0.3 0.5 0.2 0 0.25  0.3 0.5 0.3 0 0.35  0 0 0 0.8 0"/></filter>
             <radialGradient id="g-glass" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#ffffff" stop-opacity=".45"/><stop offset="1" stop-color="#b3e5fc" stop-opacity=".08"/></radialGradient>
             <radialGradient id="g-gem-red" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#ffcdd2"/><stop offset=".45" stop-color="#e53935"/><stop offset="1" stop-color="#6b0000"/></radialGradient>
             <radialGradient id="g-gem-green" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#ccff90"/><stop offset=".5" stop-color="#43a047"/><stop offset="1" stop-color="#0d3b12"/></radialGradient>
@@ -764,6 +790,7 @@
                 <div class="gladiator-level" id="gladLevel">LVL 1</div>
                 <div class="gladiator-title" id="gladTitle"></div>
                 <div class="status-note" id="sidebarStatus"></div>
+                <div id="sidebarBlessing"></div>
             </div>
 
             <!-- STAT BARS -->
@@ -826,6 +853,9 @@
                         <button class="subtab-btn active" id="ovSubtabBtnBase" onclick="switchOverviewSubtab('base')">Base Attributes</button>
                         <button class="subtab-btn" id="ovSubtabBtnHidden" onclick="switchOverviewSubtab('hidden')">Hidden &amp; Combat Stats</button>
                         <button class="subtab-btn" id="ovSubtabBtnChronicle" onclick="switchOverviewSubtab('chronicle')">Chronicle</button>
+                        <button class="subtab-btn" id="ovSubtabBtnSets" onclick="switchOverviewSubtab('sets')">Sets</button>
+                        <button class="subtab-btn" id="ovSubtabBtnBestiary" onclick="switchOverviewSubtab('bestiary')">Bestiary</button>
+                        <button class="subtab-btn" id="ovSubtabBtnLaurels" onclick="switchOverviewSubtab('laurels')">Laurels</button>
                     </div>
 
                     <div id="ovSubtab-base">
@@ -871,6 +901,25 @@
                         <p class="muted">A lifetime record of your gladiator's career.</p>
                         <div class="monster-list" id="chronicleGrid"></div>
                     </div>
+
+                    <div id="ovSubtab-sets" style="display:none;">
+                        <h2 class="tab-title">Gear Sets</h2>
+                        <p class="muted">Wear several pieces of the same set to unlock its bonuses. Set pieces are Epic gear found in the regions and dungeons listed.</p>
+                        <div class="monster-list" id="activeEffects" style="margin-bottom:15px;"></div>
+                        <div class="exp-grid" id="setsGrid"></div>
+                    </div>
+
+                    <div id="ovSubtab-bestiary" style="display:none;">
+                        <h2 class="tab-title">Bestiary</h2>
+                        <p class="muted" id="bestiarySummary"></p>
+                        <div class="exp-grid" id="bestiaryGrid"></div>
+                    </div>
+
+                    <div id="ovSubtab-laurels" style="display:none;">
+                        <h2 class="tab-title">Laurels of Glory</h2>
+                        <p class="muted" id="laurelsSummary"></p>
+                        <div class="exp-grid" id="laurelsGrid"></div>
+                    </div>
                 </div>
 
                 <!-- TRAINING TAB -->
@@ -894,6 +943,9 @@
                         <button class="btn-mini" id="btnSkipArena" onclick="rubySkipArena()" style="margin-left:8px; display:none;">💎 1 Skip wait</button>
                     </div>
                     <div class="monster-list" id="arenaContainer"></div>
+                    <h3 class="section-title">🏆 Honor Exchange</h3>
+                    <p class="muted">Arena victories earn Honor. The editor of the games trades it for lasting rewards.</p>
+                    <div class="exp-grid" id="honorShopContainer"></div>
                 </div>
 
                 <!-- DUNGEONS TAB -->
@@ -907,6 +959,9 @@
                     <h2 class="tab-title">The Pantheon - Divine Tasks</h2>
                     <p style="font-size:13px; margin-bottom:15px;">The priests of Rome relay the wishes of the gods. Complete their tasks for gold, experience, and sometimes rubies. Abandoned tasks are replaced after a short wait.</p>
                     <div class="exp-grid" id="questContainer"></div>
+                    <h3 class="section-title">🏛️ Temple of the Gods</h3>
+                    <p class="muted" id="templeInfo"></p>
+                    <div class="exp-grid" id="templeContainer"></div>
                 </div>
 
                 <!-- MERCHANTS TAB -->
@@ -1172,6 +1227,96 @@
                 potion_red: potion('g-potion-red'),
                 potion_blue: potion('g-potion-blue'),
 
+                weapon_6: rot(`
+                    <path d="M30 44 C29 32 27 22 31 12 C34 6 41 4 44 8 C38 9 35 15 35 22 C35 30 36 38 36 44 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width="1.2" stroke-linejoin="round"/>
+                    <path d="M33 42 C32 32 31 22 34 14" fill="none" stroke="#fff" stroke-opacity=".55" stroke-width="1.1"/>
+                    <path d="M24 44 H42 L40 48 H26 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <rect x="30" y="48" width="5" height="10" rx="1.5" fill="url(#g-wood)" stroke="#3b2410"/>
+                    <circle cx="32.5" cy="60" r="3.2" fill="url(#g-gold)" stroke="#5a4210"/>`),
+                weapon_7: rot(`
+                    <rect x="30.6" y="24" width="2.8" height="39" rx="1.2" fill="url(#g-wood)" stroke="#3b2410" stroke-width=".7"/>
+                    <path d="M31 6 V26 H33 V6 Z" fill="#9aa1a8" stroke="#33383d" stroke-width=".7"/>
+                    <path d="M32 0.5 L35 8 L32 10 L29 8 Z" fill="url(#g-steel)" stroke="#33383d" stroke-linejoin="round"/>
+                    <rect x="29.3" y="24" width="5.4" height="5" rx="1" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width=".8"/>
+                    <path d="M30.6 44 H33.4 M30.6 47 H33.4" stroke="#3b2410" stroke-width="1.4"/>`),
+                weapon_8: rot(`
+                    <rect x="30.3" y="22" width="3.4" height="40" rx="1.5" fill="url(#g-wood)" stroke="#3b2410" stroke-width=".8"/>
+                    <path d="M30.3 50 H33.7 M30.3 54 H33.7 M30.3 58 H33.7" stroke="#3b2410"/>
+                    <ellipse cx="32" cy="16" rx="10" ry="11" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.3"/>
+                    <path d="M32 3 L34.5 7 H29.5 Z M20 16 L23.5 13.5 V18.5 Z M44 16 L40.5 13.5 V18.5 Z M25 7 L28 9 L25.5 11 Z M39 7 L36 9 L38.5 11 Z M25 25 L28 23 L25.5 21 Z M39 25 L36 23 L38.5 21 Z" fill="#dde1e5" stroke="#2f3439" stroke-width=".7"/>
+                    <ellipse cx="28.5" cy="12.5" rx="2.5" ry="3.5" fill="#fff" fill-opacity=".6"/>
+                    <rect x="28.5" y="26" width="7" height="3.5" rx="1" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width=".8"/>`),
+                weapon_9: rot(`
+                    <rect x="30.4" y="6" width="3.2" height="57" rx="1.5" fill="url(#g-wood)" stroke="#3b2410" stroke-width=".8"/>
+                    <path d="M33 12 C42 6 50 10 52 16 C54 22 54 26 52 32 C50 38 42 42 33 36 Z" fill="url(#g-gold)" stroke="#5a4210" stroke-width="1.2"/>
+                    <path d="M31 12 C22 6 14 10 12 16 C10 22 10 26 12 32 C14 38 22 42 31 36 Z" fill="url(#g-gold)" stroke="#5a4210" stroke-width="1.2"/>
+                    <path d="M47 13 C50 19 50 29 47 35 M17 13 C14 19 14 29 17 35" fill="none" stroke="#fff3b0" stroke-width="1.2"/>
+                    <path d="M24 24 H40" stroke="#8a6410" stroke-width="1.5" stroke-dasharray="2 2"/>
+                    <circle cx="32" cy="4" r="2.5" fill="url(#g-gold)" stroke="#5a4210"/>`),
+
+                helmet_4: `
+                    <path d="M22 16 C18 6 28 0 36 3 C44 6 46 14 40 18 C38 12 30 10 26 18 Z" fill="url(#g-red)" stroke="#3d0707"/>
+                    <path d="M24 13 C26 7 34 5 38 9" fill="none" stroke="#ff8a80" stroke-opacity=".6"/>
+                    <path d="M16 36 C16 22 23 16 32 16 C41 16 48 22 48 36 V46 C48 52 42 56 32 56 C22 56 16 52 16 46 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.4"/>
+                    <path d="M4 38 C4 33 60 33 60 38 C60 43 4 43 4 38 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.2"/>
+                    <rect x="21" y="42" width="22" height="10" rx="3" fill="#15181b"/>
+                    ${[24, 28, 32, 36, 40].map(x => `<circle cx="${x}" cy="45" r="1.1" fill="#e0b030"/><circle cx="${x}" cy="49" r="1.1" fill="#e0b030"/>`).join('')}
+                    <path d="M20 24 C19 28 19 32 20 34" fill="none" stroke="#fbe3b8" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>`,
+                helmet_5: `
+                    <path d="M12 60 L16 22 C16 10 48 10 48 22 L52 60 Z" fill="url(#g-gold)" stroke="#5a4210" stroke-width="1.3"/>
+                    <path d="M15.5 28 H48.5 M15 34 H49 M14.4 40 H49.6 M13.8 46 H50.2 M13.2 52 H50.8 M20 13 L27 22 M44 13 L37 22 M32 11 V20" stroke="#1e5fb3" stroke-width="2.6"/>
+                    <path d="M22 22 H42 V44 C42 50 22 50 22 44 Z" fill="#0f0a0a" opacity=".85"/>
+                    <path d="M32 9 C29 11 29 16 32 17 C35 16 35 11 32 9 Z" fill="#1e5fb3" stroke="#e0b030"/>
+                    <circle cx="32" cy="7" r="2" fill="url(#g-gem-red)"/>`,
+                helmet_6: `
+                    <path d="M12 44 L14 18 L22 30 L27 10 L32 24 L37 10 L42 30 L50 18 L52 44 Z" fill="#2a2f35" stroke="#0e1114" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M12 44 H52 V52 H12 Z" fill="#1c2024" stroke="#0e1114"/>
+                    <path d="M14 18 L22 30 L27 10 L32 24 L37 10 L42 30 L50 18" fill="none" stroke="#6d7680" stroke-width="1"/>
+                    <circle cx="32" cy="48" r="3.5" fill="url(#g-gem-green)"/><circle cx="20" cy="48" r="2" fill="url(#g-gem-green)"/><circle cx="44" cy="48" r="2" fill="url(#g-gem-green)"/>
+                    <circle cx="14" cy="17" r="2" fill="#b2ff59"/><circle cx="27" cy="9" r="2" fill="#b2ff59"/><circle cx="37" cy="9" r="2" fill="#b2ff59"/><circle cx="50" cy="17" r="2" fill="#b2ff59"/>`,
+
+                armor_4: `
+                    <path d="M18 9 H46 L53 21 L49 55 H15 L11 21 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M18 9 H46 L53 21 L49 55 H15 L11 21 Z" fill="url(#p-scale)" opacity=".9"/>
+                    <path d="M26 9 Q32 16 38 9" fill="#4a2e10"/>
+                    <path d="M11 21 C9 13 16 7 23 9 L21 22 Z M53 21 C55 13 48 7 41 9 L43 22 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.2"/>
+                    <path d="M15 50 H49" stroke="url(#g-leather)" stroke-width="3"/>
+                    <path d="M16 56 V63 M21 56 V63 M26 56 V63 M31 56 V63 M36 56 V63 M41 56 V63 M46 56 V63" stroke="url(#g-leather)" stroke-width="3.5"/>
+                    <path d="M20 14 C18 20 17 30 18 40" fill="none" stroke="#fbe3b8" stroke-opacity=".5" stroke-width="2.5" stroke-linecap="round"/>`,
+                shield_4: `
+                    <ellipse cx="32" cy="32" rx="21" ry="29" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.5"/>
+                    <ellipse cx="32" cy="32" rx="17" ry="25" fill="#3d5a2e" stroke="#4a2e10"/>
+                    <path d="M32 9 C24 18 24 26 32 32 C40 38 40 46 32 55" fill="none" stroke="url(#g-gold)" stroke-width="2.5"/>
+                    <path d="M22 20 L26 24 M42 20 L38 24 M22 44 L26 40 M42 44 L38 40" stroke="#e0b030" stroke-width="1.8" stroke-linecap="round"/>
+                    <circle cx="32" cy="32" r="6" fill="url(#g-steel)" stroke="#2f3439"/>
+                    <circle cx="30" cy="30" r="1.8" fill="#fff" fill-opacity=".7"/>`,
+                ring_2: `
+                    <ellipse cx="32" cy="38" rx="17" ry="15" fill="none" stroke="#1b5e20" stroke-width="8"/>
+                    <ellipse cx="32" cy="38" rx="17" ry="15" fill="none" stroke="url(#g-gold)" stroke-width="5"/>
+                    <path d="M15.5 36 Q20 30 26 33 Q32 36 38 33 Q44 30 48.5 36" fill="none" stroke="#2e7d32" stroke-width="2.5"/>
+                    <path d="M40 20 C46 16 52 20 50 26 C48 30 42 30 40 26 Z" fill="#43a047" stroke="#1b5e20"/>
+                    <circle cx="46" cy="22" r="1.4" fill="#ff1744"/><path d="M50 25 L54 26 L52 27 L54 28" fill="none" stroke="#e53935" stroke-width=".8"/>
+                    <path d="M40 24 C36 22 32 22 28 24" fill="none" stroke="#43a047" stroke-width="3.5" stroke-linecap="round"/>`,
+                amulet_2: `
+                    <path d="M12 36 C12 14 52 14 52 36" fill="none" stroke="#5a4210" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M12 36 C12 14 52 14 52 36" fill="none" stroke="url(#g-gold)" stroke-width="6.5" stroke-linecap="round"/>
+                    <path d="M14 30 L18 26 M20 22 L24 20 M29 18 L33 18 M38 19 L42 21 M46 25 L50 29" stroke="#8a6410" stroke-width="1.2"/>
+                    <circle cx="12" cy="40" r="6" fill="url(#g-gold)" stroke="#5a4210" stroke-width="1.2"/>
+                    <circle cx="52" cy="40" r="6" fill="url(#g-gold)" stroke="#5a4210" stroke-width="1.2"/>
+                    <circle cx="12" cy="40" r="2.5" fill="url(#g-gem-red)"/><circle cx="52" cy="40" r="2.5" fill="url(#g-gem-red)"/>`,
+                gloves_2: `
+                    <path d="M20 58 L18 12 C18 8 46 8 46 12 L44 58 Z" fill="url(#g-leather)" stroke="${INK}" stroke-width="1.2"/>
+                    ${[12, 19, 26, 33, 40, 47].map(y => `<path d="M17 ${y} C24 ${y + 4} 40 ${y + 4} 47 ${y} L46.5 ${y + 7} C40 ${y + 11} 24 ${y + 11} 17.5 ${y + 7} Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width=".9"/>`).join('')}
+                    <path d="M20 54 H44 V60 H20 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>`,
+                shoes_2: `
+                    <path d="M22 4 H42 C44 16 44 34 42 46 C40 52 36 56 32 56 C28 56 24 52 22 46 C20 34 20 16 22 4 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.4"/>
+                    <path d="M32 6 V52" stroke="#6b3f16" stroke-width="1.4"/>
+                    <path d="M26 14 C28 20 28 30 26 38" fill="none" stroke="#fbe3b8" stroke-opacity=".6" stroke-width="2.5" stroke-linecap="round"/>
+                    <ellipse cx="32" cy="26" rx="6" ry="4" fill="none" stroke="#6b3f16" stroke-width="1.2"/>
+                    <path d="M20 10 H24 M40 10 H44 M20 40 H24 M40 40 H44" stroke="#c48a52" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M18 56 H46 C48 56 48 62 46 62 H18 C16 62 16 56 18 56 Z" fill="#3a2614" stroke="${INK}"/>`,
+                potion_green: potion('g-potion-green'),
+                potion_gold: potion('g-potion-gold'),
                 // crafting materials
                 mat_iron: ingot('g-steel', '#2f3439'),
                 mat_bronze: ingot('g-bronze', '#4a2e10'),
@@ -1536,6 +1681,259 @@
                 'Fire Salamander': 'salamander', 'Cyclops Smith': 'cyclops', 'Avatar of Vulcan': 'vulcan'
             };
 
+            // --- portraits added with the late-game regions and dungeons -------------------------
+            // Generic human bust: skin, hair, beard, eyes and optional headgear/clothing/extras.
+            function bust(o) {
+                const skin = o.skin || SKIN;
+                const hair = o.hair ? `<path d="M20 30 C18 16 26 11 32 11 C38 11 46 16 44 30 C42 22 36 19 32 19 C28 19 22 22 20 30 Z" fill="${o.hair}"/>` : '';
+                const long = o.longHair ? `<path d="M19 28 C14 42 16 56 21 60 L26 44 Z M45 28 C50 42 48 56 43 60 L38 44 Z" fill="${o.longHair}"/>` : '';
+                const beard = o.beard ? `<path d="M21 36 C21 ${o.longBeard ? 60 : 53} 43 ${o.longBeard ? 60 : 53} 43 36 C39 42 25 42 21 36 Z" fill="${o.beard}"/><path d="M26 39 Q32 37 38 39 Q32 41 26 39 Z" fill="${o.beard}" stroke="#000" stroke-opacity=".25"/>` : '';
+                return `
+                    <path d="M6 64 C8 50 18 46 32 46 C46 46 56 50 58 64 Z" fill="${o.body || '#6b3f16'}"/>
+                    ${o.bodyExtra || ''}
+                    ${long}
+                    <ellipse cx="32" cy="33" rx="11.5" ry="13.5" fill="${skin}"/>
+                    ${o.face || ''}
+                    ${o.glow ? glowEyes(31, o.glow, 5, 1.4) : eyes(31, o.eyes || '#1b1b1b', 5, 1.5)}${o.calm ? '' : brows(28, 5)}
+                    ${beard}
+                    ${o.mouth === false ? '' : `<path d="M28 42 Q32 ${o.smile ? 45 : 41} 36 42" fill="none" stroke="#5c1a1a" stroke-width="1.4"/>`}
+                    ${hair}
+                    ${o.head || ''}
+                    ${o.extra || ''}`;
+            }
+
+            Object.assign(portraits, {
+                dockthug: bust({ skin: '#c48b5e', body: '#5d4a3a', beard: null,
+                    face: `<path d="M22 40 Q27 44 26 36 M38 26 L42 34" stroke="#8a4a2a" stroke-width="1.4" fill="none"/><path d="M21 42 C24 46 40 46 43 42 C40 48 24 48 21 42 Z" fill="#6b5446" opacity=".6"/>`,
+                    head: `<path d="M21 26 C21 16 43 16 43 26 C40 22 24 22 21 26 Z" fill="#a8744a"/>`,
+                    extra: `<path d="M48 64 L60 30 L64 32 L53 64 Z" fill="url(#g-wood)" stroke="#3b2410"/><circle cx="61.5" cy="30" r="4" fill="#6b4220"/>`,
+                    bodyExtra: `<path d="M18 50 Q32 58 46 50" fill="none" stroke="#3a2e24" stroke-width="3"/>` }),
+                pirate: bust({ body: '#1e3d6b', beard: '#1a1a1a', calm: false,
+                    bodyExtra: `<path d="M10 58 H54 M12 53 H52" stroke="#e6dac3" stroke-width="2.5"/>`,
+                    head: `<path d="M19 27 C19 15 45 15 45 27 C45 23 19 23 19 27 Z" fill="#b71c1c"/><path d="M44 24 L54 30 L50 20 Z" fill="#b71c1c"/><circle cx="21.5" cy="37" r="2" fill="none" stroke="url(#g-gold)" stroke-width="1.4"/>`,
+                    extra: `<path d="M44 62 C50 52 58 50 62 54 C56 54 52 58 48 64 Z" fill="url(#g-steel)" stroke="#33383d"/>` }),
+                ratking: `
+                    <circle cx="32" cy="32" r="28" fill="#1a1512"/>
+                    ${[[10, 48], [54, 48], [8, 36], [56, 36]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="6" ry="4.5" fill="#5f5a56"/><circle cx="${x + (x < 32 ? -3 : 3)}" cy="${y - 1}" r="1" fill="#ff5252"/>`).join('')}
+                    <circle cx="18" cy="18" r="8" fill="#9e8f8f" stroke="#3a3330"/><circle cx="18" cy="18" r="4.5" fill="#e8a0a8"/>
+                    <circle cx="46" cy="18" r="8" fill="#9e8f8f" stroke="#3a3330"/><circle cx="46" cy="18" r="4.5" fill="#e8a0a8"/>
+                    <path d="M16 32 C16 18 48 18 48 32 C48 42 40 52 32 58 C24 52 16 42 16 32 Z" fill="#7d7470" stroke="#3a3330" stroke-width="1.3"/>
+                    ${glowEyes(30, '#ff1744', 7, 1.7)}
+                    <ellipse cx="32" cy="52" rx="3.5" ry="2.5" fill="#e8a0a8"/>
+                    <rect x="29.5" y="54" width="2.3" height="4" fill="#fff8e1"/><rect x="32.2" y="54" width="2.3" height="4" fill="#fff8e1"/>
+                    <path d="M26 50 L8 46 M26 52 L9 54 M38 50 L56 46 M38 52 L55 54" stroke="#e0e0e0" stroke-width=".7"/>
+                    <path d="M22 16 L25 8 L29 14 L32 6 L35 14 L39 8 L42 16 Z" fill="url(#g-gold)" stroke="#5a4210"/>`,
+                pict: bust({ skin: '#dcb08e', body: '#4b5a2e', longHair: '#c1440e', beard: '#c1440e',
+                    face: `<path d="M22 28 C26 32 22 36 26 38 M42 28 C38 32 42 36 38 38 M28 22 C30 26 34 26 36 22" fill="none" stroke="#1e5fb3" stroke-width="2.2" stroke-linecap="round"/>`,
+                    head: `<path d="M20 26 L18 12 L24 20 L26 8 L30 18 L34 6 L36 18 L41 9 L42 20 L47 13 L44 27 C40 20 24 20 20 26 Z" fill="#c1440e"/>`,
+                    extra: `<path d="M54 64 V8" stroke="url(#g-wood)" stroke-width="2.5"/><path d="M51 12 L54 2 L57 12 Z" fill="url(#g-steel)"/>` }),
+                bear: `
+                    <circle cx="16" cy="16" r="8" fill="#4e342e"/><circle cx="16" cy="16" r="4" fill="#8d6e63"/>
+                    <circle cx="48" cy="16" r="8" fill="#4e342e"/><circle cx="48" cy="16" r="4" fill="#8d6e63"/>
+                    <path d="M8 38 C8 18 22 10 32 10 C42 10 56 18 56 38 C56 52 46 60 32 60 C18 60 8 52 8 38 Z" fill="#5d4037" stroke="#2b1b16" stroke-width="1.3"/>
+                    <ellipse cx="32" cy="45" rx="13" ry="10" fill="#a1887f"/>
+                    <ellipse cx="32" cy="39" rx="5" ry="3.5" fill="#1b1b1b"/>
+                    <circle cx="23" cy="30" r="2.2" fill="#1b1b1b"/><circle cx="41" cy="30" r="2.2" fill="#1b1b1b"/>
+                    <path d="M24 50 Q32 56 40 50 Q32 52 24 50 Z" fill="#3e1c1c"/>
+                    <path d="M26 50 L27 53 L28 50 M36 50 L37 53 L38 50" fill="#fff"/>`,
+                druid: bust({ skin: '#d7b48f', body: '#e8e4d8', beard: '#f2f2f2', longBeard: true, glow: '#76ff03', calm: true, mouth: false,
+                    head: `<path d="M14 40 C12 18 22 8 32 8 C42 8 52 18 50 40 C48 28 42 22 32 22 C22 22 16 28 14 40 Z" fill="#e8e4d8" stroke="#bdb6a4"/>
+                        ${[20, 26, 32, 38, 44].map((x, i) => `<ellipse cx="${x}" cy="${14 - (i % 2) * 2 + (x === 32 ? -2 : 0)}" rx="3" ry="1.8" fill="#2e7d32" transform="rotate(${(x - 32) * 3} ${x} 14)"/>`).join('')}
+                        <circle cx="26" cy="13" r="1.2" fill="#e53935"/><circle cx="38" cy="13" r="1.2" fill="#e53935"/>`,
+                    extra: `<path d="M8 64 V20" stroke="url(#g-wood)" stroke-width="3"/><path d="M2 20 C6 10 16 12 14 20 C12 16 6 16 2 20 Z" fill="url(#g-gold)"/>` }),
+                horsearcher: bust({ body: '#7b1f1f', beard: '#3b2410',
+                    bodyExtra: `<path d="M12 56 C18 50 26 48 32 48 C38 48 46 50 52 56" fill="none" stroke="url(#g-gold)" stroke-width="3"/>`,
+                    head: `<path d="M19 28 C17 14 26 6 36 6 C42 6 46 12 44 20 L45 28 C40 22 24 22 19 28 Z" fill="#e6c07b" stroke="#8a6a3a"/><path d="M36 6 C30 2 26 6 28 10" fill="#e6c07b" stroke="#8a6a3a"/>`,
+                    extra: `<path d="M50 8 Q64 32 50 58" fill="none" stroke="url(#g-wood)" stroke-width="3"/><path d="M50 8 L50 58" stroke="#eee" stroke-width=".7"/><path d="M38 32 L58 32" stroke="#6b4220" stroke-width="1.5"/><path d="M58 32 L54 30 L54 34 Z" fill="url(#g-steel)"/>` }),
+                cataphract: `
+                    <path d="M4 64 C6 48 18 44 32 44 C46 44 58 48 60 64 Z" fill="url(#g-steel)"/>
+                    <path d="M4 64 C6 48 18 44 32 44 C46 44 58 48 60 64 Z" fill="url(#p-scale)"/>
+                    <path d="M16 30 C16 12 24 4 32 4 C40 4 48 12 48 30 V48 C48 52 40 54 32 54 C24 54 16 52 16 48 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.4"/>
+                    <path d="M16 36 H48 V50 C40 54 24 54 16 50 Z" fill="url(#p-mail)"/>
+                    <path d="M21 22 C21 16 43 16 43 22 L42 38 C38 42 26 42 22 38 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <path d="M24 27 Q27 25 30 27 Q27 28.5 24 27 Z M34 27 Q37 25 40 27 Q37 28.5 34 27 Z" fill="#111"/>
+                    <path d="M32 28 V34 M28 37 Q32 38.5 36 37" fill="none" stroke="#8a6410" stroke-width="1.2"/>
+                    <path d="M32 4 V-2" stroke="#b71c1c" stroke-width="4"/>
+                    <path d="M2 10 L62 58" stroke="url(#g-wood)" stroke-width="3"/><path d="M0 8 L6 8 L3 14 Z" fill="url(#g-steel)"/>`,
+                sandwraith: `
+                    <circle cx="32" cy="32" r="26" fill="url(#g-glow-fire)" opacity=".5"/>
+                    <path d="M12 62 C8 40 14 12 32 10 C50 12 56 40 52 62 L46 56 L40 62 L34 56 L28 62 L22 56 Z" fill="#d4b483" fill-opacity=".9" stroke="#fff3c4" stroke-opacity=".5"/>
+                    <path d="M16 20 C12 14 18 8 22 12 M48 20 C52 14 46 8 42 12 M10 44 C4 42 6 36 10 36 M54 44 C60 42 58 36 54 36" fill="none" stroke="#e8d3a0" stroke-opacity=".7" stroke-width="1.5"/>
+                    <path d="M22 30 C22 24 30 24 30 31 C30 36 22 36 22 30 Z M34 31 C34 24 42 24 42 30 C42 36 34 36 34 31 Z" fill="#3b2a12"/>
+                    <circle cx="26" cy="30" r="1.8" fill="#ff9100"/><circle cx="38" cy="30" r="1.8" fill="#ff9100"/>
+                    <path d="M26 44 Q32 50 38 44 Q32 47 26 44 Z" fill="#3b2a12"/>
+                    ${[[18, 50], [44, 20], [48, 52], [14, 30]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1" fill="#fff3c4" opacity=".8"/>`).join('')}`,
+                warlord: bust({ skin: '#e0b48c', body: '#3e3a36', longHair: '#e0c068', beard: '#e0c068', longBeard: true,
+                    bodyExtra: `<path d="M6 60 C12 48 22 46 32 46 C42 46 52 48 58 60" fill="none" stroke="#8d8d8d" stroke-width="7" stroke-linecap="round" stroke-dasharray="3 2"/>`,
+                    head: `<path d="M14 34 C12 14 22 6 32 6 C42 6 52 14 50 34 C46 24 40 20 32 20 C24 20 18 24 14 34 Z" fill="#6d4c41" stroke="#3e2723"/>
+                        <path d="M18 14 L14 4 L24 10 Z M46 14 L50 4 L40 10 Z" fill="#6d4c41" stroke="#3e2723"/>
+                        <circle cx="26" cy="16" r="1.3" fill="#ffca28"/><circle cx="38" cy="16" r="1.3" fill="#ffca28"/>` }),
+                aurochs: `
+                    <path d="M18 22 C6 22 0 12 4 4 C8 12 14 14 22 16 Z M46 22 C58 22 64 12 60 4 C56 12 50 14 42 16 Z" fill="#efe6d0" stroke="#8a8069"/>
+                    <path d="M12 26 L4 22 L10 32 Z M52 26 L60 22 L54 32 Z" fill="#2b1d14"/>
+                    <path d="M18 18 C18 12 46 12 46 18 L47 36 C47 48 40 58 32 60 C24 58 17 48 17 36 Z" fill="#2b1d14" stroke="#120a06" stroke-width="1.3"/>
+                    <path d="M26 16 C28 22 36 22 38 16 C36 19 28 19 26 16 Z" fill="#5d4037"/>
+                    <circle cx="23" cy="31" r="2" fill="#ffb300"/><circle cx="41" cy="31" r="2" fill="#ffb300"/>
+                    <circle cx="23" cy="31" r=".9" fill="#111"/><circle cx="41" cy="31" r=".9" fill="#111"/>
+                    <ellipse cx="32" cy="50" rx="9" ry="7" fill="#d7ccc8"/>
+                    <ellipse cx="28.5" cy="50" rx="1.6" ry="1.1" fill="#3e2723"/><ellipse cx="35.5" cy="50" rx="1.6" ry="1.1" fill="#3e2723"/>
+                    <path d="M28 6 Q32 2 36 6" fill="none" stroke="#e8e4d8" stroke-width="3"/>`,
+                ghostlegion: `<circle cx="32" cy="32" r="28" fill="url(#g-glow-ghost)"/><g filter="url(#f-ghost)" opacity=".9">${portraits.skeleton}</g>
+                    <path d="M4 64 C4 56 10 54 14 58 M60 64 C60 56 54 54 50 58" fill="none" stroke="#b2ebf2" stroke-opacity=".7" stroke-width="2"/>`,
+                charon: `
+                    <circle cx="44" cy="26" r="12" fill="url(#g-glow-green)"/>
+                    <path d="M6 64 C8 38 16 14 32 12 C48 14 56 38 58 64 Z" fill="#1c1a24"/>
+                    <path d="M16 64 C16 44 22 28 32 28 C42 28 48 44 48 64 Z" fill="#0d0c12"/>
+                    <path d="M25 36 C25 30 39 30 39 36 V42 C39 45 36 46 34 46 V50 H30 V46 C28 46 25 45 25 42 Z" fill="#cfc8b6" opacity=".85"/>
+                    <circle cx="29" cy="38" r="2.4" fill="#0d0c12"/><circle cx="35" cy="38" r="2.4" fill="#0d0c12"/>
+                    <circle cx="29" cy="38" r="1" fill="#76ff03"/><circle cx="35" cy="38" r="1" fill="#76ff03"/>
+                    <path d="M8 6 L20 64" stroke="url(#g-wood)" stroke-width="3"/><path d="M4 2 C8 0 12 4 10 10 L7 10 Z" fill="#5d4037"/>
+                    <path d="M44 16 V20" stroke="#5d5d5d" stroke-width="1.5"/><rect x="40" y="20" width="8" height="11" rx="2" fill="#33691e" stroke="#1b1b1b"/><rect x="42" y="22" width="4" height="7" fill="#ccff90"/>`,
+                fury: `
+                    <path d="M32 30 C20 14 8 12 1 19 C9 21 11 25 6 29 C13 29 15 33 10 38 C18 36 25 38 32 42 Z" fill="#5c1016" stroke="#2a0508"/>
+                    <path d="M32 30 C44 14 56 12 63 19 C55 21 53 25 58 29 C51 29 49 33 54 38 C46 36 39 38 32 42 Z" fill="#5c1016" stroke="#2a0508"/>
+                    ${[[22, 14], [28, 8], [36, 8], [42, 14], [20, 22], [44, 22]].map(([x, y]) => `<path d="M32 22 Q${(x + 32) / 2} ${y - 4} ${x} ${y}" fill="none" stroke="#1b5e20" stroke-width="3" stroke-linecap="round"/><circle cx="${x}" cy="${y}" r="2" fill="#43a047"/>`).join('')}
+                    <path d="M24 38 C24 54 40 54 40 38 Z" fill="#3d0a0e"/>
+                    <ellipse cx="32" cy="28" rx="8" ry="9" fill="#c9b3a8"/>
+                    ${glowEyes(27, '#ff1744', 3.5, 1.2)}
+                    <path d="M28.5 33 Q32 31 35.5 33" stroke="#5c1a1a" fill="none" stroke-width="1.2"/>
+                    <path d="M52 64 L56 40" stroke="url(#g-wood)" stroke-width="2.5"/><path d="M53 42 C50 36 56 32 56 26 C59 32 62 36 58 42 Z" fill="url(#g-fire)"/>`,
+                cerberus: `
+                    <circle cx="32" cy="40" r="30" fill="url(#g-glow-fire)" opacity=".6"/>
+                    <g transform="translate(-2 14) scale(.52)">${wolfHead('#2b2522', '#4a3f3a', '#ff1744', true)}</g>
+                    <g transform="translate(32 14) scale(.52)">${wolfHead('#2b2522', '#4a3f3a', '#ff1744', true)}</g>
+                    <g transform="translate(12 0) scale(.62)">${wolfHead('#3b3330', '#5a4f4a', '#ff3d00', true)}</g>
+                    <path d="M20 58 C24 54 40 54 44 58" fill="none" stroke="url(#g-steel)" stroke-width="3"/>
+                    <circle cx="32" cy="58" r="2.5" fill="url(#g-steel)"/>`,
+                stymphalian: `
+                    <path d="M32 34 C20 20 6 20 0 28 C8 28 10 32 4 36 C12 36 14 40 8 44 C18 42 26 42 32 44 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>
+                    <path d="M32 34 C44 20 58 20 64 28 C56 28 54 32 60 36 C52 36 50 40 56 44 C46 42 38 42 32 44 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>
+                    <path d="M6 30 L16 32 M8 38 L18 38 M58 30 L48 32 M56 38 L46 38" stroke="#fbe3b8" stroke-opacity=".6"/>
+                    <path d="M22 44 C22 58 42 58 42 44 C42 36 22 36 22 44 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>
+                    <path d="M24 46 L40 46 M25 50 L39 50 M27 54 L37 54" stroke="#6b3f16" stroke-width=".8"/>
+                    <circle cx="32" cy="24" r="10" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.2"/>
+                    <path d="M28 26 L32 40 L36 26 Z" fill="url(#g-steel)" stroke="#2f3439"/>
+                    <circle cx="27" cy="21" r="2" fill="#ff1744"/><circle cx="37" cy="21" r="2" fill="#ff1744"/>
+                    <path d="M26 14 L24 6 L30 12 M38 14 L40 6 L34 12" fill="url(#g-bronze)" stroke="#4a2e10"/>`,
+                nemean: `
+                    ${Array.from({ length: 16 }, (_, i) => { const a = i / 16 * Math.PI * 2; return `<ellipse cx="${(32 + 21 * Math.cos(a)).toFixed(1)}" cy="${(34 + 21 * Math.sin(a)).toFixed(1)}" rx="9" ry="6" fill="${i % 2 ? '#b8741a' : '#d4912a'}" transform="rotate(${(a * 180 / Math.PI).toFixed(0)} ${(32 + 21 * Math.cos(a)).toFixed(1)} ${(34 + 21 * Math.sin(a)).toFixed(1)})"/>`; }).join('')}
+                    <circle cx="32" cy="34" r="16" fill="#e8b04a" stroke="#8a5a1a"/>
+                    <circle cx="20" cy="22" r="4" fill="#e8b04a" stroke="#8a5a1a"/><circle cx="44" cy="22" r="4" fill="#e8b04a" stroke="#8a5a1a"/>
+                    <path d="M26 30 Q28 28 30 30 M34 30 Q36 28 38 30" fill="none" stroke="#3b2410" stroke-width="2.4"/>
+                    <circle cx="28" cy="31" r="1.2" fill="#ffd54f"/><circle cx="36" cy="31" r="1.2" fill="#ffd54f"/>
+                    <ellipse cx="32" cy="41" rx="7" ry="5.5" fill="#f5deb3"/>
+                    <path d="M29 37 H35 L32 40 Z" fill="#5d4037"/>
+                    <path d="M32 40 V43 M32 43 Q29 45 27 43 M32 43 Q35 45 37 43" fill="none" stroke="#3b2410"/>
+                    <path d="M16 20 L48 48" stroke="#fff" stroke-opacity=".0"/>`,
+                titan: `
+                    <circle cx="32" cy="32" r="28" fill="url(#g-glow-blue)" opacity=".5"/>
+                    <path d="M4 64 C6 50 16 44 32 44 C48 44 58 50 60 64 Z" fill="url(#g-stone)"/>
+                    <path d="M12 34 C10 12 22 4 32 4 C42 4 54 12 52 34 C50 48 42 54 32 54 C22 54 14 48 12 34 Z" fill="url(#g-stone)" stroke="#2e2a25" stroke-width="1.4"/>
+                    <path d="M16 20 L22 26 L20 34 M48 18 L42 24 M34 48 L30 54 M22 42 L26 46" fill="none" stroke="#2e2a25" stroke-width="1.2"/>
+                    <path d="M18 24 Q24 20 30 25 M34 25 Q40 20 46 24" fill="none" stroke="#2e2a25" stroke-width="2.5"/>
+                    ${glowEyes(29, '#40c4ff', 7, 2)}
+                    <path d="M30 32 L29 40 H35 L34 32" fill="none" stroke="#2e2a25" stroke-width="1.3"/>
+                    <path d="M18 42 C18 60 46 60 46 42 C42 48 22 48 18 42 Z" fill="#6a6258" stroke="#2e2a25"/>
+                    ${[22, 28, 34, 40].map(x => `<path d="M${x} 46 q2 4 0 8" fill="none" stroke="#4a4239" stroke-width="1.2"/>`).join('')}`,
+                siren: `
+                    <path d="M32 34 C22 22 10 22 4 28 C10 30 12 34 8 38 C16 38 22 40 32 42 Z" fill="#5e8f8a" stroke="#2c4a47"/>
+                    <path d="M32 34 C42 22 54 22 60 28 C54 30 52 34 56 38 C48 38 42 40 32 42 Z" fill="#5e8f8a" stroke="#2c4a47"/>
+                    <path d="M20 22 C14 38 12 52 18 62 L26 40 Z M44 22 C50 38 52 52 46 62 L38 40 Z" fill="#1de9b6" opacity=".85"/>
+                    <path d="M24 40 C22 56 42 56 40 40 Z" fill="#80cbc4"/>
+                    <ellipse cx="32" cy="28" rx="9" ry="10.5" fill="#e8cfc0"/>
+                    <path d="M22 26 C20 12 44 12 42 26 C38 18 26 18 22 26 Z" fill="#1de9b6"/>
+                    <path d="M24 16 L27 10 L30 15 L33 9 L36 15 L39 10 L41 16" fill="#fce4ec" stroke="#f48fb1"/>
+                    ${eyes(27, '#00695c', 3.5, 1.2)}
+                    <ellipse cx="32" cy="34" rx="2" ry="2.5" fill="#8e2a4a"/>
+                    <path d="M46 10 V18 M46 10 L50 11 V19" fill="none" stroke="#fff" stroke-width="1.2"/><circle cx="45" cy="18" r="1.5" fill="#fff"/><circle cx="49" cy="19" r="1.5" fill="#fff"/>`,
+                triton: bust({ skin: '#6fb3a8', body: '#2c6e66', beard: '#1d4f47', glow: '#18ffff',
+                    face: `<path d="M20 30 L14 24 L20 34 Z M44 30 L50 24 L44 34 Z" fill="#4a8f85"/>`,
+                    head: `<path d="M20 28 C18 14 46 14 44 28 C40 20 24 20 20 28 Z" fill="#1d4f47"/><path d="M24 16 C22 10 28 8 30 12 M40 16 C42 10 36 8 34 12" fill="none" stroke="#1d4f47" stroke-width="3" stroke-linecap="round"/>`,
+                    bodyExtra: `<path d="M10 58 C18 52 26 50 32 52 C38 50 46 52 54 58" fill="none" stroke="#80cbc4" stroke-width="2"/>`,
+                    extra: `<path d="M54 64 V14" stroke="url(#g-gold)" stroke-width="2.5"/><path d="M48 16 V6 M60 16 V6 M54 14 V2 M48 16 H60" stroke="url(#g-gold)" stroke-width="2.2" stroke-linecap="round"/>` }),
+                scylla: `
+                    <circle cx="32" cy="32" r="28" fill="url(#g-glow-sea)"/>
+                    ${[[4, 56, 14, 40], [60, 56, 50, 40], [10, 64, 22, 50], [54, 64, 42, 50]].map(([x1, y1, x2, y2]) => `<path d="M${x1} ${y1} Q${(x1 + x2) / 2 + 6} ${(y1 + y2) / 2 - 8} ${x2} ${y2} T32 44" fill="none" stroke="#2e7d6b" stroke-width="5" stroke-linecap="round"/>`).join('')}
+                    <g transform="translate(-6 30) scale(.4)">${wolfHead('#37474f', '#546e7a', '#ffea00', true)}</g>
+                    <g transform="translate(44 30) scale(.4)">${wolfHead('#37474f', '#546e7a', '#ffea00', true)}</g>
+                    <path d="M24 38 C22 50 42 50 40 38 Z" fill="#4db6ac"/>
+                    <ellipse cx="32" cy="26" rx="9" ry="10.5" fill="#9ccfc0"/>
+                    <path d="M20 26 C16 8 48 8 44 26 C40 16 24 16 20 26 Z" fill="#004d40"/>
+                    ${glowEyes(25, '#ffea00', 3.5, 1.2)}
+                    <path d="M28 31 Q32 34 36 31" fill="none" stroke="#1b1b1b" stroke-width="1.3"/>`,
+                mummy: `
+                    <circle cx="32" cy="32" r="26" fill="url(#g-glow-green)" opacity=".4"/>
+                    <path d="M6 64 C8 50 18 46 32 46 C46 46 56 50 58 64 Z" fill="#d7c9a8"/>
+                    <path d="M8 58 C20 52 44 52 56 58 M10 54 C22 50 42 50 54 54" fill="none" stroke="url(#g-gold)" stroke-width="3"/>
+                    <path d="M20 32 C20 14 44 14 44 32 C44 44 38 52 32 52 C26 52 20 44 20 32 Z" fill="#e3d6b8" stroke="#8a7d60"/>
+                    ${[20, 25, 30, 35, 40, 45].map((y, i) => `<path d="M${i % 2 ? 19 : 21} ${y} Q32 ${y + (i % 2 ? 3 : -2)} ${i % 2 ? 45 : 43} ${y + 1}" fill="none" stroke="#a89a78" stroke-width="1.4"/>`).join('')}
+                    ${glowEyes(31, '#76ff03', 5, 1.5)}
+                    <path d="M56 64 V26" stroke="url(#g-gold)" stroke-width="2.5"/><ellipse cx="56" cy="20" rx="4" ry="5.5" fill="none" stroke="url(#g-gold)" stroke-width="2.5"/><path d="M51 26 H61" stroke="url(#g-gold)" stroke-width="2.5"/>`,
+                scarab: `
+                    <path d="M18 18 L8 10 M46 18 L56 10 M16 30 L4 28 M48 30 L60 28 M16 42 L6 50 M48 42 L58 50 M20 50 L14 60 M44 50 L50 60" stroke="#1b1b1b" stroke-width="2.6" stroke-linecap="round"/>
+                    <path d="M24 16 C24 8 40 8 40 16 Z" fill="#263238" stroke="#0e1114"/>
+                    <path d="M26 10 L24 3 M38 10 L40 3" stroke="#263238" stroke-width="2" stroke-linecap="round"/>
+                    <ellipse cx="32" cy="36" rx="18" ry="22" fill="#0e5c63" stroke="#06282c" stroke-width="1.4"/>
+                    <path d="M32 14 V58" stroke="#06282c" stroke-width="1.4"/>
+                    <path d="M18 28 C24 32 28 30 32 26 C36 30 40 32 46 28 M17 40 C24 44 28 42 32 38 C36 42 40 44 47 40" fill="none" stroke="url(#g-gold)" stroke-width="1.8"/>
+                    <ellipse cx="25" cy="24" rx="4" ry="6" fill="#4dd0e1" opacity=".35"/>
+                    <circle cx="32" cy="14" r="4" fill="url(#g-gold)" stroke="#5a4210"/>`,
+                pharaoh: `
+                    <circle cx="32" cy="32" r="28" fill="url(#g-glow-fire)" opacity=".45"/>
+                    <path d="M8 64 L14 26 C14 8 50 8 50 26 L56 64 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <path d="M14 30 H50 M13 37 H51 M12 44 H52 M11 51 H53 M10 58 H54" stroke="#1e5fb3" stroke-width="2.4"/>
+                    <path d="M22 22 H42 V40 C42 50 22 50 22 40 Z" fill="url(#g-gold)" stroke="#8a6410"/>
+                    <path d="M24 29 Q27 26.5 30 29 Q27 31 24 29 Z M34 29 Q37 26.5 40 29 Q37 31 34 29 Z" fill="#1e5fb3"/>
+                    <circle cx="27" cy="29" r="1.1" fill="#fff59d"/><circle cx="37" cy="29" r="1.1" fill="#fff59d"/>
+                    <path d="M32 30 V38 L30 39 H34 M28 43 Q32 45 36 43" fill="none" stroke="#8a6410" stroke-width="1.3"/>
+                    <rect x="29.5" y="48" width="5" height="10" rx="1" fill="#1e5fb3" stroke="#0d2c5e"/>
+                    <path d="M32 11 C29 13 30 17 32 18 C35 17 35 13 32 11 Z" fill="#1e5fb3" stroke="#e0b030"/>
+                    <path d="M4 62 L22 44 M60 62 L42 44" stroke="url(#g-gold)" stroke-width="3"/>
+                    <path d="M18 44 C14 40 18 36 22 40" fill="none" stroke="url(#g-gold)" stroke-width="2.5"/>
+                    <path d="M44 46 L50 40 M44 46 L52 44 M44 46 L50 48" stroke="#1e5fb3" stroke-width="2"/>`,
+                lamia: `
+                    <path d="M4 60 C16 48 20 62 32 56 C44 50 48 64 60 54" fill="none" stroke="#33691e" stroke-width="9" stroke-linecap="round"/>
+                    <path d="M4 60 C16 48 20 62 32 56 C44 50 48 64 60 54" fill="none" stroke="#9ccc65" stroke-width="3" stroke-dasharray="3 3"/>
+                    <path d="M18 24 C14 40 16 52 22 56 L28 38 Z M46 24 C50 40 48 52 42 56 L36 38 Z" fill="#1b1b1b"/>
+                    <path d="M24 38 C22 52 42 52 40 38 Z" fill="#7cb342"/>
+                    <ellipse cx="32" cy="28" rx="10" ry="12" fill="#aed581" stroke="#558b2f"/>
+                    <path d="M22 26 C20 12 44 12 42 26 C38 18 26 18 22 26 Z" fill="#1b1b1b"/>
+                    <path d="M25.5 27 Q28 25 30.5 27 Q28 29 25.5 27 Z M33.5 27 Q36 25 38.5 27 Q36 29 33.5 27 Z" fill="#ffeb3b"/>
+                    <ellipse cx="28" cy="27" rx=".6" ry="1.8" fill="#111"/><ellipse cx="36" cy="27" rx=".6" ry="1.8" fill="#111"/>
+                    <path d="M27 34 Q32 38 37 34" fill="#5c1a1a"/><path d="M29 34.5 L30 37 L31 35 M33 35 L34 37 L35 34.5" fill="#fff"/>
+                    <path d="M26 20 L28 22 L30 20 L32 22 L34 20 L36 22 L38 20" fill="none" stroke="#558b2f"/>`,
+                hundredhand: `
+                    ${[-70, -45, -20, 20, 45, 70, 110, 135, 160, 200, 225, 250].map((a, i) => { const r = a * Math.PI / 180; const x = 32 + 30 * Math.sin(r), y = 36 - 30 * Math.cos(r); return `<path d="M32 36 L${x.toFixed(1)} ${y.toFixed(1)}" stroke="#8d6e63" stroke-width="5" stroke-linecap="round"/><circle cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" r="3.5" fill="#a1887f"/>`; }).join('')}
+                    <path d="M8 64 C10 50 20 46 32 46 C44 46 54 50 56 64 Z" fill="#5d4037"/>
+                    <ellipse cx="32" cy="32" rx="14" ry="16" fill="#a1887f" stroke="#4e342e" stroke-width="1.3"/>
+                    ${glowEyes(29, '#ff6d00', 5.5, 1.8)}${brows(25, 5.5)}
+                    <path d="M25 40 Q32 36 39 40 Q32 44 25 40 Z" fill="#3e1c1c"/>
+                    <path d="M22 18 C24 12 40 12 42 18" fill="none" stroke="#4e342e" stroke-width="3"/>
+                    <path d="M2 50 L14 56 M62 50 L50 56" stroke="url(#g-steel)" stroke-width="2" stroke-dasharray="3 1.5"/>`,
+                hades: `
+                    <circle cx="32" cy="30" r="30" fill="url(#g-glow-blue)"/>
+                    <path d="M18 22 C16 8 24 0 26 8 C28 0 34 -2 34 6 C38 -2 46 4 44 12 C50 8 50 18 46 22 Z" fill="#40c4ff" opacity=".85"/>
+                    <path d="M22 20 C22 10 30 6 32 12 C34 6 42 10 42 20 Z" fill="#e1f5fe" opacity=".8"/>
+                    <path d="M4 64 C6 46 18 42 32 42 C46 42 58 46 60 64 Z" fill="#12101a"/>
+                    <path d="M18 64 C20 52 26 46 32 46 C38 46 44 52 46 64" fill="none" stroke="url(#g-purple)" stroke-width="3"/>
+                    <ellipse cx="32" cy="30" rx="11" ry="13.5" fill="#9e9eb0" stroke="#4a4a5a"/>
+                    ${glowEyes(28, '#40c4ff', 4.5, 1.5)}${brows(25, 4.5)}
+                    <path d="M21 34 C21 52 43 52 43 34 C39 40 25 40 21 34 Z" fill="#1c1a24"/>
+                    <path d="M20 20 L22 12 L26 18 L29 10 L32 17 L35 10 L38 18 L42 12 L44 20 Z" fill="#212121" stroke="#40c4ff" stroke-width=".8"/>
+                    <path d="M56 64 V8" stroke="#37474f" stroke-width="3"/><path d="M52 12 V2 M60 12 V2 M52 12 H60" stroke="#90a4ae" stroke-width="2.4" stroke-linecap="round"/>`,
+            });
+            Object.assign(PORTRAIT_BY_NAME, {
+                'Dock Thug': 'dockthug', 'Cilician Pirate': 'pirate', 'Rat King': 'ratking',
+                'Pictish Raider': 'pict', 'Caledonian Bear': 'bear', 'Druid of the Grove': 'druid',
+                'Parthian Horse Archer': 'horsearcher', 'Cataphract': 'cataphract', 'Sand Wraith': 'sandwraith',
+                'Germanic Warlord': 'warlord', 'Great Aurochs': 'aurochs', 'Ghost of the Lost Legion': 'ghostlegion',
+                'Shade of Charon': 'charon', 'Fury of Tisiphone': 'fury', 'Cerberus': 'cerberus',
+                'Stymphalian Bird': 'stymphalian', 'Nemean Lion': 'nemean', 'Titan Sentinel': 'titan',
+                'Siren': 'siren', 'Triton Guard': 'triton', 'Scylla': 'scylla',
+                'Mummy Priest': 'mummy', 'Scarab Colossus': 'scarab', 'Pharaoh Ascendant': 'pharaoh',
+                'Lamia': 'lamia', 'Hundred-Handed Warden': 'hundredhand', 'Hades, Lord of the Dead': 'hades'
+            });
+
             function portrait(key, cls = 'art art-portrait') {
                 const inner = portraits[key] || portraits[PORTRAIT_BY_NAME[key]] || portraits.gladiator_1;
                 return svg(`<circle cx="32" cy="32" r="31" fill="url(#g-portrait-bg)"/>
@@ -1636,7 +2034,100 @@
                     <path d="M150 12 C140 0 160 -4 150 -12 M170 10 C182 0 164 -6 176 -14" fill="none" stroke="#5d4037" stroke-width="6" opacity=".6"/>
                     <path d="M0 90 V74 Q40 68 80 76 L60 90 Z M320 90 V72 Q280 66 250 76 L260 90 Z" fill="#1a0f0c"/>
                     <path d="M26 86 H58 V82 H66 C62 76 52 74 46 74 H22 V80 H26 Z" fill="#37474f" stroke="#111"/>
-                    <rect x="36" y="86" width="12" height="4" fill="#263238"/>`
+                    <rect x="36" y="86" width="12" height="4" fill="#263238"/>`,
+                region_7: `
+                    <rect width="320" height="90" fill="url(#g-sky-day)"/>
+                    <ellipse cx="60" cy="18" rx="26" ry="6" fill="#fff" opacity=".7"/><ellipse cx="220" cy="12" rx="34" ry="5" fill="#fff" opacity=".6"/>
+                    <rect y="52" width="320" height="38" fill="url(#g-sea)"/>
+                    ${Array.from({ length: 14 }, (_, i) => `<path d="M${i * 24 + (i % 2) * 8} ${60 + (i % 3) * 8} q4 -2 8 0" fill="none" stroke="#bfe6f5" stroke-opacity=".6"/>`).join('')}
+                    <path d="M250 52 V34 h6 v-6 h4 v6 h6 V52 Z" fill="#d8c8a4"/><circle cx="260" cy="22" r="7" fill="url(#g-glow-fire)"/><path d="M257 26 L260 18 L263 26 Z" fill="url(#g-fire)"/>
+                    <path d="M200 58 H320 V52 H200 Z" fill="#a89572"/>
+                    ${[208, 222, 236, 290, 304].map(x => `<rect x="${x}" y="40" width="10" height="12" fill="#c9b48c"/><path d="M${x - 1} 40 h12 l-6 -4 Z" fill="#9c4a2a"/>`).join('')}
+                    <path d="M60 66 Q100 76 140 66 L134 58 H66 Z" fill="#5d3a1a"/><path d="M66 58 H134" stroke="#3b2410" stroke-width="2"/>
+                    <path d="M100 58 V20" stroke="#3b2410" stroke-width="2.5"/><path d="M84 24 Q100 30 116 24 V46 Q100 52 84 46 Z" fill="#e8dcc0"/><path d="M100 24 V48" stroke="#b71c1c" stroke-width="3"/>
+                    ${Array.from({ length: 6 }, (_, i) => `<path d="M${72 + i * 11} 64 l-4 8" stroke="#3b2410" stroke-width="1.5"/>`).join('')}
+                    <path d="M0 90 V74 H40 L52 90 Z" fill="#6b5a3e"/>`,
+                region_8: `
+                    <rect width="320" height="90" fill="url(#g-sky-moor)"/>
+                    <ellipse cx="80" cy="22" rx="80" ry="10" fill="#566268" opacity=".5"/><ellipse cx="250" cy="16" rx="90" ry="9" fill="#566268" opacity=".45"/>
+                    ${Array.from({ length: 24 }, (_, i) => `<path d="M${i * 14} ${10 + R(i, 11) * 30} l-3 8" stroke="#e8eef0" stroke-opacity=".35"/>`).join('')}
+                    <path d="M0 62 Q70 46 150 58 T320 50 V90 H0 Z" fill="#5f6f52"/>
+                    ${[[120, 16], [140, 18], [160, 17], [180, 18], [200, 16]].map(([x, h]) => `<rect x="${x - 5}" y="${60 - h}" width="10" height="${h}" fill="#8b8b85"/><rect x="${x + 1}" y="${60 - h}" width="4" height="${h}" fill="#6a6a64"/>`).join('')}
+                    <rect x="133" y="40" width="34" height="5" fill="#8b8b85"/><rect x="173" y="40" width="34" height="5" fill="#77776f"/>
+                    <path d="M0 72 Q90 62 180 72 T320 68 V90 H0 Z" fill="#445238"/>
+                    <path d="M0 90 V80 L30 70 L60 78 L100 72 H130 V90 Z" fill="#6e5a42"/>
+                    <path d="M30 70 V58 h3 v-3 h3 v3 h3 v-3 h3 v3 h3 V74" fill="#8b7a5e"/>
+                    <path d="M200 90 Q260 78 320 84 V90 Z" fill="#2f3a26"/>`,
+                region_9: `
+                    <rect width="320" height="90" fill="url(#g-sky-steppe)"/>
+                    <circle cx="160" cy="62" r="20" fill="#ffd59a" opacity=".9"/>
+                    <path d="M0 64 Q80 58 160 62 T320 60 V90 H0 Z" fill="#b08a55"/>
+                    <path d="M0 74 Q100 66 200 74 T320 70 V90 H0 Z" fill="#8e6c3c"/>
+                    ${[[60, 60], [90, 62], [240, 60], [268, 61]].map(([x, y]) => `<g transform="translate(${x} ${y})"><path d="M-8 0 C-8 -6 6 -6 8 -2 L12 -8 L13 -6 L10 0 L10 6 M-7 0 V6 M-3 0 V6 M6 0 V6" fill="#2a160c" stroke="#2a160c" stroke-width="1.6"/><path d="M-1 -5 V-12 M-1 -12 L4 -16" stroke="#2a160c" stroke-width="2"/><path d="M-4 -12 A6 6 0 0 1 -4 -4" fill="none" stroke="#2a160c"/></g>`).join('')}
+                    ${Array.from({ length: 30 }, (_, i) => `<path d="M${i * 11} 90 l2 -${4 + (i % 3) * 2} l2 ${4 + (i % 3) * 2}" fill="#5b4424"/>`).join('')}
+                    <path d="M120 40 L200 34" stroke="#2a160c" stroke-width=".8" opacity=".6"/><path d="M130 30 L210 26" stroke="#2a160c" stroke-width=".8" opacity=".5"/>`,
+                region_10: `
+                    <rect width="320" height="90" fill="#0f1a10"/>
+                    <path d="M140 0 H180 L200 90 H120 Z" fill="#e0e8c8" opacity=".07"/>
+                    ${Array.from({ length: 16 }, (_, i) => `<rect x="${i * 21 - 4}" y="0" width="${6 + R(i, 12) * 5}" height="90" fill="#1d2a17"/>`).join('')}
+                    ${Array.from({ length: 10 }, (_, i) => `<rect x="${i * 34 + 6}" y="0" width="${9 + R(i, 13) * 6}" height="90" fill="#141c10"/>`).join('')}
+                    <ellipse cx="160" cy="70" rx="200" ry="12" fill="#b6c7b0" opacity=".18"/>
+                    ${[[90, 76], [230, 78]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="4" fill="#cfc9b5"/><circle cx="${x - 1.4}" cy="${y - .5}" r="1" fill="#111"/><circle cx="${x + 1.4}" cy="${y - .5}" r="1" fill="#111"/>`).join('')}
+                    <path d="M150 88 L156 60 M156 60 L168 56 L156 52 L144 56 Z" stroke="#6b5a3e" stroke-width="1.5" fill="#b39a2a"/>
+                    <path d="M156 60 l-8 -2 l8 -6 l8 6 Z" fill="#c9a227"/>
+                    ${Array.from({ length: 5 }, (_, i) => `<circle cx="${40 + i * 60}" cy="${30 + R(i, 14) * 30}" r="1" fill="#ffecb3" opacity=".7"/><circle cx="${43 + i * 60}" cy="${30 + R(i, 14) * 30}" r="1" fill="#ffecb3" opacity=".7"/>`).join('')}
+                    <path d="M0 90 V84 Q160 78 320 84 V90 Z" fill="#0a120a"/>`,
+                region_11: `
+                    <rect width="320" height="90" fill="url(#g-sky-underworld)"/>
+                    <path d="M0 0 H320 V14 Q280 26 240 14 Q200 30 160 16 Q120 28 80 14 Q40 26 0 14 Z" fill="#050305"/>
+                    <path d="M0 56 L40 40 L80 50 L110 36 L140 50 H180 L210 34 L250 48 L290 38 L320 50 V90 H0 Z" fill="#1a0c12"/>
+                    <path d="M0 60 H320 V90 H0 Z" fill="#1d2a2a"/>
+                    ${Array.from({ length: 10 }, (_, i) => `<path d="M${i * 34} ${66 + (i % 2) * 8} q6 -2 12 0" fill="none" stroke="#6fa3a0" stroke-opacity=".35"/>`).join('')}
+                    <path d="M130 70 L186 70 L178 76 H138 Z" fill="#2a1a10"/><path d="M168 70 V50" stroke="#3b2410" stroke-width="1.5"/><path d="M168 50 L196 78" stroke="#3b2410" stroke-width="1.5"/>
+                    <path d="M150 70 C148 60 152 52 156 50 C160 52 162 60 160 70 Z" fill="#0b0708"/><circle cx="155" cy="56" r="2.2" fill="#d8d2bf"/>
+                    <rect x="146" y="58" width="2" height="5" fill="#8bc34a"/><circle cx="147" cy="58" r="6" fill="url(#g-glow-green)"/>
+                    ${[[40, 34], [270, 30], [100, 30]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="5" ry="8" fill="url(#g-glow-ghost)"/>`).join('')}
+                    <circle cx="300" cy="80" r="14" fill="url(#g-glow-fire)" opacity=".5"/>`,
+                region_12: `
+                    <rect width="320" height="90" fill="url(#g-sky-olympus)"/>
+                    <circle cx="160" cy="18" r="22" fill="url(#g-aura-gold)"/>
+                    <path d="M0 80 L70 40 L110 56 L160 10 L210 52 L250 36 L320 76 V90 H0 Z" fill="#8f9bb0"/>
+                    <path d="M160 10 L178 26 L168 24 L160 30 L152 24 L142 26 Z M70 40 L82 48 L72 47 L62 49 Z M250 36 L260 44 L250 43 L242 45 Z" fill="#fff"/>
+                    <path d="M140 22 H180 V20 L160 12 L140 20 Z" fill="#fff4d6"/>${[143, 150, 157, 164, 171, 177].map(x => `<rect x="${x}" y="22" width="2" height="8" fill="#fff4d6"/>`).join('')}<rect x="140" y="30" width="40" height="2" fill="#fff4d6"/>
+                    <ellipse cx="60" cy="66" rx="90" ry="12" fill="#fff" opacity=".85"/><ellipse cx="170" cy="72" rx="100" ry="12" fill="#fff" opacity=".9"/><ellipse cx="280" cy="64" rx="80" ry="12" fill="#fff" opacity=".85"/>
+                    <path d="M0 90 V78 Q80 70 160 80 T320 76 V90 Z" fill="#fff" opacity=".95"/>
+                    <path d="M238 4 L230 16 H236 L228 30 L244 12 H238 L246 4 Z" fill="#fff59d" stroke="#ffb300" stroke-width=".6"/>`,
+                dungeon_4: `
+                    <rect width="320" height="90" fill="url(#g-deep)"/>
+                    <path d="M100 0 L140 0 L120 90 L70 90 Z M190 0 L210 0 L230 90 L200 90 Z" fill="#b2ebf2" opacity=".06"/>
+                    <path d="M110 80 V44 H210 V80 Z" fill="#2c5a5e"/><path d="M104 44 L160 24 L216 44 Z" fill="#3a6e70"/>
+                    ${[120, 140, 160, 180, 200].map(x => `<rect x="${x - 4}" y="46" width="8" height="34" fill="#4e8a88"/>`).join('')}
+                    <path d="M150 80 V62 A10 10 0 0 1 170 62 V80 Z" fill="#021a26"/>
+                    <circle cx="160" cy="58" r="16" fill="url(#g-glow-sea)"/>
+                    ${[[40, 60, 22], [70, 70, 18], [270, 64, 24], [300, 72, 16]].map(([x, b, h]) => `<path d="M${x} 90 C${x - 6} ${b} ${x + 6} ${b - h / 2} ${x} ${b - h}" fill="none" stroke="#2e7d5b" stroke-width="3"/>`).join('')}
+                    ${Array.from({ length: 12 }, (_, i) => `<circle cx="${20 + R(i, 15) * 280}" cy="${10 + R(i, 16) * 60}" r="${1 + R(i, 17) * 1.5}" fill="none" stroke="#b2ebf2" stroke-opacity=".6"/>`).join('')}
+                    <path d="M0 90 V82 Q160 76 320 82 V90 Z" fill="#c9b48c" opacity=".55"/>`,
+                dungeon_5: `
+                    <rect width="320" height="90" fill="#1a1208"/>
+                    <path d="M0 0 H320 V90 H0 Z" fill="url(#p-brick)" opacity=".6"/>
+                    <path d="M40 0 V90 M280 0 V90" stroke="#3a2a12" stroke-width="18"/>
+                    ${[0, 1, 2, 3].map(i => `<rect x="${60 + i * 60}" y="10" width="40" height="3" fill="#c9a227"/>${Array.from({ length: 4 }, (_, j) => `<path d="M${64 + i * 60 + j * 9} 18 h4 v6 h-4 Z M${66 + i * 60 + j * 9} 26 v4" stroke="#c9a227" stroke-width="1" fill="none"/>`).join('')}`).join('')}
+                    <path d="M130 84 V52 Q160 34 190 52 V84 Z" fill="url(#g-gold)"/><path d="M142 60 H178 V74 H142 Z" fill="#1e5fb3"/><path d="M150 50 h20 v6 h-20 Z" fill="#1a1208"/>
+                    <circle cx="154" cy="52" r="1.6" fill="#1a1208"/><circle cx="166" cy="52" r="1.6" fill="#1a1208"/>
+                    ${[80, 240].map(x => `<rect x="${x - 1.5}" y="58" width="3" height="20" fill="#5b3a1d"/><circle cx="${x}" cy="54" r="14" fill="url(#g-glow-fire)"/><path d="M${x - 3} 58 C${x - 4} 52 ${x} 50 ${x} 46 C${x + 2} 50 ${x + 4} 52 ${x + 3} 58 Z" fill="url(#g-fire)"/>`).join('')}
+                    ${[[100, 84], [214, 86], [226, 83]].map(([x, y]) => `<ellipse cx="${x}" cy="${y}" rx="6" ry="4" fill="#c9a227"/><circle cx="${x}" cy="${y - 1}" r="1.5" fill="#fff59d"/>`).join('')}
+                    <path d="M0 90 V86 H320 V90 Z" fill="#3a2a12"/>`,
+                dungeon_6: `
+                    <rect width="320" height="90" fill="url(#g-abyss)"/>
+                    ${stars(18, 21, 40)}
+                    <path d="M0 0 L60 0 L30 40 Z M320 0 L260 0 L290 44 Z M110 0 L140 0 L125 22 Z M190 0 L220 0 L205 26 Z" fill="#0a050c"/>
+                    <path d="M0 90 V60 L50 70 L90 56 L120 90 Z M320 90 V58 L270 70 L230 54 L200 90 Z" fill="#0f0810"/>
+                    <ellipse cx="160" cy="92" rx="90" ry="28" fill="url(#g-glow-fire)"/>
+                    <path d="M120 90 C130 70 150 76 160 60 C170 76 190 70 200 90 Z" fill="#1a0808"/>
+                    ${[[140, 44], [180, 44]].map(([x, y]) => `<path d="M${x} ${y} v18" stroke="#6b5f52" stroke-width="1" stroke-dasharray="2 1.5"/>`).join('')}
+                    <path d="M136 30 H184 L180 40 H140 Z" fill="#3a3029"/>
+                    <circle cx="150" cy="35" r="1.5" fill="#ff1744"/><circle cx="170" cy="35" r="1.5" fill="#ff1744"/>
+                    ${Array.from({ length: 14 }, (_, i) => `<circle cx="${100 + R(i, 22) * 120}" cy="${50 + R(i, 23) * 36}" r="${.6 + R(i, 24)}" fill="#ffab40" opacity="${(.4 + R(i, 25) * .6).toFixed(2)}"/>`).join('')}`
             };
 
             function scene(key, cls = 'art art-scene') {
@@ -1851,6 +2342,8 @@
         function donateToGuild(i) { playAudio('click'); call('donate', i); }
         function upgradeGuildBuilding(key) { playAudio('click'); call('upgrade_building', key); }
         function claimQuest(i) { playAudio('click'); call('claim_quest', i); }
+        function buyBlessing(key) { playAudio('click'); call('buy_blessing', key); }
+        function buyHonor(key) { playAudio('click'); call('buy_honor', key); }
         function rubyRefillEnergy() { playAudio('click'); call('ruby_refill_energy'); }
         function rubySkipArena() { playAudio('click'); call('ruby_skip_arena'); }
         function rubyRestockVendor() { playAudio('click'); call('ruby_restock', currentVendor); }
@@ -1864,6 +2357,7 @@
             const item = view.state.Player.Inventory[i];
             if (!item) return;
             if (item.Upgrade > 0 && !confirm(`Sell ${displayName(item)}? Its enhancements will be lost.`)) return;
+            if ((item.Rarity === 'Mythic' || item.SetId) && !confirm(`Sell ${displayName(item)}? ${item.Rarity === 'Mythic' ? 'Mythic treasures' : 'Set pieces'} are rare.`)) return;
             selectedInventoryIndex = -1;
             call('sell', i);
         }
@@ -2002,14 +2496,29 @@
             if (item.HealAmount) lines.push(`Restores: +${item.HealAmount} HP (before Intelligence bonus)`);
             if (item.EnergyAmount) lines.push(`Restores: +${item.EnergyAmount} Energy`);
             const meta = item.Type === 'Potion' ? 'Potion' : `${item.Rarity} ${item.Type} · Req. level ${item.LevelRequirement}`;
+            const effects = effectLines(item.Effects).map(l => `<div class="effect-line">✦ ${esc(l)}</div>`).join('');
             return `<div class="item-head">
                     <div class="item-icon">${getIcon(item.IconSvg)}</div>
                     <div>
                         <div class="item-name rt-${esc(item.Rarity)}">${esc(displayName(item))}</div>
                         <div class="item-meta">${esc(meta)}</div>
-                        <div class="item-stats">${lines.map(esc).join('<br>')}</div>
+                        <div class="item-stats">${lines.map(esc).join('<br>')}${effects}</div>
+                        ${setInfoHtml(item.SetId)}
                     </div>
                 </div>`;
+        }
+
+        function effectLines(effects) {
+            return Object.keys(effects || {}).filter(k => view.effectText[k] && effects[k])
+                .map(k => view.effectText[k].replace('{v}', effects[k]));
+        }
+
+        function setInfoHtml(setId) {
+            const set = setId && view.sets[setId];
+            if (!set) return '';
+            const worn = view.player.setCounts[setId] || 0;
+            return `<div class="set-label">🧩 ${esc(set.Name)} (${worn}/${set.Pieces.length} worn)</div>` + set.Bonuses.map(b =>
+                `<div class="set-bonus ${worn >= b.pieces ? 'on' : ''}">(${b.pieces}) ${esc(b.effects.join(', '))}</div>`).join('');
         }
 
         function renderSidebar() {
@@ -2031,6 +2540,9 @@
             document.getElementById('statDmg').innerText = `${d.minDamage} - ${d.maxDamage}`;
             document.getElementById('statArmor').innerText = d.armor;
             document.getElementById('statRank').innerText = `#${p.ArenaRank}`;
+            const b = view.temple.active;
+            document.getElementById('sidebarBlessing').innerHTML = b
+                ? `<span class="blessing-chip" title="${esc(((view.temple.blessings.find(x => x.key === b.Key) || {}).effects || []).join(', '))}">${b.Icon} ${esc(b.Name)} · ${b.FightsLeft} fight${b.FightsLeft === 1 ? '' : 's'}</span>` : '';
         }
 
         function renderEquipment() {
@@ -2065,7 +2577,9 @@
             document.getElementById('ovXpFill').style.width = `${clamp(p.XP / p.MaxXP * 100, 0, 100)}%`;
         }
 
-        const OVERVIEW_SUBTABS = { base: 'Base', hidden: 'Hidden', chronicle: 'Chronicle' };
+        const OVERVIEW_SUBTABS = { base: 'Base', hidden: 'Hidden', chronicle: 'Chronicle', sets: 'Sets', bestiary: 'Bestiary', laurels: 'Laurels' };
+        const SUBTAB_RENDER = { hidden: () => renderHiddenStats(), chronicle: () => renderChronicle(), sets: () => renderSets(),
+                                bestiary: () => renderBestiary(), laurels: () => renderLaurels() };
 
         function switchOverviewSubtab(subId) {
             if (!OVERVIEW_SUBTABS[subId]) return;
@@ -2074,8 +2588,7 @@
                 document.getElementById('ovSubtabBtn' + OVERVIEW_SUBTABS[id]).classList.toggle('active', id === subId);
                 document.getElementById('ovSubtab-' + id).style.display = id === subId ? 'block' : 'none';
             });
-            if (subId === 'hidden') renderHiddenStats();
-            if (subId === 'chronicle') renderChronicle();
+            if (SUBTAB_RENDER[subId]) SUBTAB_RENDER[subId]();
         }
 
         function isSubtabVisible(id) { return document.getElementById('ovSubtab-' + id).style.display !== 'none'; }
@@ -2083,6 +2596,46 @@
         function renderChronicle() {
             document.getElementById('chronicleGrid').innerHTML = view.chronicle.map(r =>
                 `<div class="monster-row"><span>${esc(r[0])}</span><strong>${esc(r[1])}</strong></div>`).join('');
+        }
+
+        function renderSets() {
+            const lines = view.player.effectLines;
+            document.getElementById('activeEffects').innerHTML = `<div class="monster-row"><span>Active special effects</span><strong>${
+                lines.length ? lines.map(esc).join(' · ') : '<span class="muted">none yet</span>'}</strong></div>`;
+            document.getElementById('setsGrid').innerHTML = Object.keys(view.sets).map(key => {
+                const set = view.sets[key];
+                const worn = view.player.setCounts[key] || 0;
+                return `<div class="exp-card">
+                    <h4 style="color:#4dd0e1;">🧩 ${esc(set.Name)} <span class="muted">${worn}/${set.Pieces.length} worn</span></h4>
+                    <div style="font-size:12px;">${set.Pieces.map(esc).join(' · ')}</div>
+                    ${set.Bonuses.map(b => `<div class="set-bonus ${worn >= b.pieces ? 'on' : ''}" style="font-size:12px;">${worn >= b.pieces ? '✔' : '○'} ${b.pieces} pieces: ${esc(b.effects.join(', '))}</div>`).join('')}
+                    <div class="hint-line">Found in: ${esc(set.Sources)}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderBestiary() {
+            const known = view.bestiary.filter(b => b.kills).length;
+            document.getElementById('bestiarySummary').textContent =
+                `You have slain ${known} of ${view.bestiary.length} kinds of foe. Unknown creatures appear as shadows.`;
+            document.getElementById('bestiaryGrid').innerHTML = view.bestiary.map(b => `<div class="exp-card beast-card ${b.kills ? '' : 'unknown'}">
+                    ${ART.portrait(b.name)}
+                    <div><strong>${b.kills ? esc(b.name) : '???'}</strong><br>
+                    <span class="muted">${esc(b.area)}</span><br>
+                    <span style="font-size:11px; color:var(--text-accent);">${b.kills ? `Slain ${fmt(b.kills)}×` : 'Not yet slain'}</span></div>
+                </div>`).join('');
+        }
+
+        function renderLaurels() {
+            const done = view.achievements.filter(a => a.done).length;
+            document.getElementById('laurelsSummary').textContent =
+                `${done} of ${view.achievements.length} laurels earned. Each laurel is rewarded with rubies.`;
+            document.getElementById('laurelsGrid').innerHTML = view.achievements.map(a => `<div class="exp-card ach-card ${a.done ? 'done' : ''}">
+                    <h4 style="color:var(--text-gold);">${a.done ? '🏅' : '🔒'} ${esc(a.Name)}</h4>
+                    <div style="font-size:12px;">${esc(a.Desc)} · <span class="muted">💎 ${a.Rubies}</span></div>
+                    <div class="stat-bar"><div class="stat-fill fill-xp" style="width:${a.goal ? clamp(a.value / a.goal * 100, 0, 100) : 0}%"></div></div>
+                    <div class="progress-text" style="font-size:11px;">${fmt(a.value)} / ${fmt(a.goal)}</div>
+                </div>`).join('');
         }
 
         function renderHiddenStats() {
@@ -2167,6 +2720,7 @@
                     <h3 style="color:var(--text-accent); font-family:'Cinzel',serif;">${esc(loc.Name)}${loc.locked ? ' 🔒' : ''}</h3>
                     <p style="font-size:12px;">${esc(loc.Description)}</p>
                     <div style="font-size:12px; color:var(--text-accent);">Req. Level: ${loc.ReqLevel} | Energy Cost: ${loc.EnergyCost}</div>
+                    ${loc.sets.length ? `<div class="hint-line">🧩 Set pieces: ${esc(loc.sets.join(', '))}</div>` : ''}
                     <div class="monster-list">${monsters}</div>
                 </div>`;
             }).join('');
@@ -2193,6 +2747,25 @@
                 </div>`;
             }).join('');
             arenaWasCooling = cooling;
+            const honor = view.state.Player.Honor;
+            document.getElementById('honorShopContainer').innerHTML = view.honorShop.map(w => `<div class="exp-card">
+                    <h4 style="color:var(--text-gold);">${w.Icon} ${esc(w.Name)}${w.max ? ` <span class="muted">${w.bought}/${w.max}</span>` : ''}</h4>
+                    <div style="font-size:12px;">${esc(w.Desc)}</div>
+                    ${w.soldOut ? '<div class="muted">Sold out</div>'
+                                : `<button class="btn-roman btn-gold" onclick="buyHonor('${w.key}')" ${honor < w.cost ? 'disabled' : ''}>Buy (${fmt(w.cost)} Honor)</button>`}
+                </div>`).join('');
+        }
+
+        function renderTemple() {
+            const t = view.temple;
+            const gold = view.state.Player.Gold;
+            document.getElementById('templeInfo').innerHTML = `Make an offering of <strong>${fmt(t.cost)} gold</strong> for a blessing that lasts a number of fights. ` +
+                (t.active ? `Currently: <strong>${t.active.Icon} ${esc(t.active.Name)}</strong> (${t.active.FightsLeft} fights left). A new offering replaces it.` : 'No god watches over you right now.');
+            document.getElementById('templeContainer').innerHTML = t.blessings.map(b => `<div class="exp-card ${t.active && t.active.Key === b.key ? 'quest-card done' : ''}">
+                    <h4 style="color:var(--text-gold);">${b.Icon} ${esc(b.Name)}</h4>
+                    <div style="font-size:12px;">${esc(b.effects.join(', '))} · <span class="muted">${b.Fights} fights</span></div>
+                    <button class="btn-roman btn-gold" onclick="buyBlessing('${b.key}')" ${gold < t.cost ? 'disabled' : ''}>Offer ${fmt(t.cost)} Gold 🙏</button>
+                </div>`).join('');
         }
 
         function renderDungeons() {
@@ -2205,13 +2778,15 @@
                     const m = d.monster;
                     body = `<div style="font-size:12px; color:var(--text-accent);">Floor ${d.floor} / ${d.floors}: ${esc(d.stageName)}</div>
                         <div class="monster-row"><div class="portrait-row ${d.isBoss ? 'portrait-lg' : ''}">${ART.portrait(m.Name)}<div><strong>${esc(m.Name)}</strong>${d.isBoss ? ' 👑' : ''}<br><span style="font-size:11px; color:var(--text-accent);">LVL ${m.Level} · ${m.MaxHP} HP</span></div></div></div>
-                        <button class="btn-roman btn-gold" onclick="enterDungeon(${di})" ${d.locked ? 'disabled' : ''}>Enter Floor (${view.dungeonEnergyCost} Energy) ⚔️</button>`;
+                        <button class="btn-roman btn-gold" onclick="enterDungeon(${di})" ${d.locked ? 'disabled' : ''}>Enter Floor (${d.energy} Energy) ⚔️</button>`;
                 }
                 return `<div class="exp-card ${d.locked ? 'locked' : ''}">
                     <div class="scene-banner">${ART.scene('dungeon_' + d.Id)}</div>
                     <h3 style="color:var(--text-accent); font-family:'Cinzel',serif;">${esc(d.Name)}${d.locked ? ' 🔒' : ''}</h3>
                     <p style="font-size:12px;">${esc(d.Description)}</p>
-                    <div style="font-size:12px; color:var(--text-accent);">Req. Level: ${d.ReqLevel}</div>
+                    <div style="font-size:12px; color:var(--text-accent);">Req. Level: ${d.ReqLevel} | Energy per floor: ${d.energy}</div>
+                    ${d.treasure ? `<div class="hint-line">🌟 Boss treasure: <span class="rt-Mythic">${esc(d.treasure)}</span></div>` : ''}
+                    ${d.sets.length ? `<div class="hint-line">🧩 Set pieces: ${esc(d.sets.join(', '))}</div>` : ''}
                     ${body}
                 </div>`;
             }).join('');
@@ -2406,10 +2981,10 @@
             renderWork();
             renderGuild();
             renderQuests();
+            renderTemple();
             renderSettings();
             renderAudioButton();
-            if (isSubtabVisible('hidden')) renderHiddenStats();
-            if (isSubtabVisible('chronicle')) renderChronicle();
+            Object.keys(SUBTAB_RENDER).forEach(id => { if (isSubtabVisible(id)) SUBTAB_RENDER[id](); });
             renderTimers();
         }
 

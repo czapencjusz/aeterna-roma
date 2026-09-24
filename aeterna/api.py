@@ -56,6 +56,7 @@ class Api:
         with self._lock:
             try:
                 result = action(*args)
+                self._game.check_achievements()
                 return self._respond(result if isinstance(result, dict) else None)
             except Exception as exc:  # never let one bad call break the window
                 traceback.print_exc(file=sys.stderr)
@@ -76,6 +77,8 @@ class Api:
         """Called by the UI every second. Only sends the full view back when something changed."""
         with self._lock:
             change = self._game.tick()
+            if change != 'none' and self._game.check_achievements():
+                change = 'all'
             if change == 'none':
                 return {'change': 'none'}
             response = self._respond(save=change == 'all')
@@ -157,6 +160,12 @@ class Api:
 
     def abandon_quest(self, slot_index):
         return self._run(self._game.abandon_quest, slot_index)
+
+    def buy_blessing(self, key):
+        return self._run(self._game.buy_blessing, key)
+
+    def buy_honor(self, key):
+        return self._run(self._game.buy_honor, key)
 
     def ruby_refill_energy(self):
         return self._run(self._game.ruby_refill_energy)

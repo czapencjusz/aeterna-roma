@@ -63,7 +63,7 @@ class NewGameTests(unittest.TestCase):
         self.assertTrue(all(i['Type'] in ('Weapon', 'Shield') for i in vendors['Weaponsmith']['Items']))
         self.assertTrue(all(i['Type'] in ('Armor', 'Helmet', 'Gloves', 'Shoes') for i in vendors['Armorer']['Items']))
         self.assertTrue(all(i['Type'] in ('Ring', 'Amulet') for i in vendors['General']['Items']))
-        self.assertEqual(len(vendors['Alchemist']['Items']), 3)
+        self.assertEqual(len(vendors['Alchemist']['Items']), len(data.ALCHEMIST_ITEMS))
 
     def test_state_is_json_serializable(self):
         game, _ = make_game()
@@ -260,7 +260,7 @@ class CharacterTests(unittest.TestCase):
     def test_apothecary_never_runs_out(self):
         game, _ = make_game()
         game.buy('Alchemist', 0)
-        self.assertEqual(len(game.state['Vendors']['Alchemist']['Items']), 3)
+        self.assertEqual(len(game.state['Vendors']['Alchemist']['Items']), len(data.ALCHEMIST_ITEMS))
         self.assertEqual(game.player['Inventory'][-1]['Name'], 'Small Health Potion')
 
     def test_sell_junk_keeps_rares_and_potions(self):
@@ -539,6 +539,178 @@ class ApiTests(unittest.TestCase):
         api._game.player['CurrentHP'] = 10
         clock.now += 120000
         self.assertEqual(api.tick()['change'], 'sidebar')
+
+
+class SetAndTreasureTests(unittest.TestCase):
+    def test_set_bonuses_apply_when_enough_pieces_are_worn(self):
+        from aeterna.items import make_set_piece
+        from aeterna.rules import all_effects, set_counts, recalc_stats
+        game, _ = make_game()
+        p = game.player
+        armor_before = total_armor(p)
+        pieces = data.SETS['legion']['Pieces']
+        for item_type in sorted(pieces):
+            piece = make_set_piece('legion', 5, item_type)
+            self.assertEqual((piece['SetId'], piece['Rarity'], piece['Name']), ('legion', 'Epic', pieces[item_type][0]))
+            p['Equipment'][data.SLOT_FOR_TYPE[item_type]] = piece
+        recalc_stats(p)
+        self.assertEqual(set_counts(p), {'legion': 4})
+        effects = all_effects(game.state)
+        self.assertEqual((effects['ArmorPct'], effects['HPPct'], effects['BlockBonus']), (10, 10, 5))
+        raw_armor = sum(i['Armor'] for i in p['Equipment'].values() if i)
+        self.assertEqual(total_armor(p), int(raw_armor * 1.1))
+        self.assertGreater(total_armor(p), armor_before)
+        self.assertEqual(game.achievement_progress(next(a for a in data.ACHIEVEMENTS if a['Stat'] == 'FullSet'))[0], 1)
+
+    def test_every_set_and_unique_is_obtainable(self):
+        sources = {k for area in LOCATIONS + DUNGEONS for k in area.get('Sets', [])} | {'murmillo'}
+        self.assertEqual(sources, set(data.SETS))
+        bosses = {d['Stages'][-1]['Monster']['Name'] for d in DUNGEONS}
+        self.assertTrue(set(data.UNIQUES) <= bosses)
+        for set_id, definition in data.SETS.items():
+            for item_type, (name, icon) in definition['Pieces'].items():
+                self.assertIn(item_type, data.SLOT_FOR_TYPE)
+            for needed, effects in definition['Bonuses']:
+                self.assertTrue(set(effects) <= set(data.EFFECTS))
+                self.assertLessEqual(needed, len(definition['Pieces']))
+
+    def test_mythic_treasure_first_conquest_and_life_steal(self):
+        from aeterna import combat
+        from aeterna.rules import all_effects
+        game, _ = make_game(3)
+        make_strong(game)
+        game.player['Level'] = 20
+        game.player['CurrentEnergy'] = 999
+        game.player['Inventory'] = []
+        dungeon = next(i for i, d in enumerate(DUNGEONS) if d['Stages'][-1]['Monster']['Name'] == 'Lich Lord Cassius')
+        for _ in DUNGEONS[dungeon]['Stages']:
+            game.player['CurrentHP'] = game.player['MaxHP']
+            game.enter_dungeon(dungeon)
+        crowns = [i for i in game.player['Inventory'] if i['Rarity'] == 'Mythic']
+        self.assertEqual([c['Name'] for c in crowns], ['Crown of Cassius'])
+        self.assertEqual(game.state['Stats']['UniquesFound'], 1)
+        game.player['Equipment']['Head'] = crowns[0]
+        self.assertEqual(all_effects(game.state)['LifeSteal'], 5)
+        # Life steal heals the attacker during a fight.
+        game.player['CurrentHP'] = game.player['MaxHP'] // 2
+        monster = combat.scale_monster(LOCATIONS[0]['Monsters'][0], 20, 1)
+        result = combat.run_fight(game.state, 't', combat.monster_combatant(monster))
+        self.assertTrue(result['IsVictory'])
+        self.assertGreater(game.player['CurrentHP'], game.player['MaxHP'] // 2)
+
+    def test_effect_caps(self):
+        from aeterna.rules import all_effects
+        game, _ = make_game()
+        for slot in SLOTS:
+            item = generate_item(5, next(t for t, s in data.SLOT_FOR_TYPE.items() if s == slot), 'Mythic')
+            item['Effects'] = {'LifeSteal': 20, 'CritBonus': 20}
+            game.player['Equipment'][slot] = item
+        effects = all_effects(game.state)
+        self.assertEqual(effects['LifeSteal'], data.EFFECT_CAPS['LifeSteal'])
+        self.assertEqual(effects['CritBonus'], data.EFFECT_CAPS['CritBonus'])
+
+
+class TempleHonorLaurelTests(unittest.TestCase):
+    def test_blessing_costs_gold_and_wears_off(self):
+        from aeterna.rules import all_effects
+        game, _ = make_game()
+        make_strong(game)
+        game.player['Gold'] = 10_000
+        game.player['CurrentEnergy'] = 99
+        game.buy_blessing('mars')
+        self.assertEqual(game.player['Gold'], 10_000 - data.blessing_cost(1))
+        self.assertEqual(all_effects(game.state)['DamagePct'], 15)
+        for _ in range(data.BLESSINGS['mars']['Fights']):
+            game.player['CurrentHP'] = game.player['MaxHP']
+            game.start_expedition(0, 0)
+        self.assertIsNone(game.state['Blessing'])
+        self.assertNotIn('DamagePct', all_effects(game.state))
+        game.player['Gold'] = 0
+        game.buy_blessing('mars')
+        self.assertIsNone(game.state['Blessing'])
+        game.buy_blessing('nope')
+
+    def test_gold_blessing_increases_fight_gold(self):
+        game, _ = make_game()
+        result = {'GoldGained': 0, 'XPGained': 0, 'LevelsGained': 0, 'Notes': []}
+        game.grant_rewards(result, 0, 100, {'GoldPct': 30})
+        self.assertEqual(result['GoldGained'], 130)
+
+    def test_honor_shop(self):
+        game, _ = make_game()
+        p = game.player
+        p['Honor'] = 100_000
+        capacity = p['InventoryCapacity']
+        for _ in range(data.HONOR_SHOP['satchel']['Max'] + 2):
+            game.buy_honor('satchel')
+        self.assertEqual(p['InventoryCapacity'], capacity + data.HONOR_SHOP['satchel']['Max'] * data.SATCHEL_SLOTS)
+        strength = p['BaseStrength']
+        game.buy_honor('favor')
+        self.assertEqual(p['BaseStrength'], strength + 1)
+        game.buy_honor('tribute')
+        self.assertEqual(p['Inventory'][-1]['SetId'], 'murmillo')
+        rubies = p['Rubies']
+        game.buy_honor('ruby')
+        self.assertEqual(p['Rubies'], rubies + 1)
+        self.assertGreater(game.state['Stats']['HonorSpent'], 0)
+        p['Honor'] = 0
+        game.buy_honor('ruby')
+        self.assertEqual(p['Rubies'], rubies + 1)
+
+    def test_achievements_unlock_once_and_pay_rubies(self):
+        game, _ = make_game()
+        make_strong(game)
+        game.player['CurrentEnergy'] = 99
+        rubies = game.player['Rubies']
+        game.start_expedition(0, 0)
+        unlocked = game.check_achievements()
+        self.assertIn('first_blood', [a['Id'] for a in unlocked])
+        self.assertGreaterEqual(game.player['Rubies'], rubies + 1)
+        self.assertEqual(game.check_achievements(), [])
+        self.assertEqual(game.state['Bestiary'][LOCATIONS[0]['Monsters'][0]['Name']], 1)
+
+    def test_view_has_new_sections(self):
+        game, _ = make_game()
+        v = build_view(game)
+        self.assertEqual(len(v['bestiary']), len(data.BESTIARY))
+        self.assertEqual(len(v['achievements']), len(data.ACHIEVEMENTS))
+        self.assertEqual({w['key'] for w in v['honorShop']}, set(data.HONOR_SHOP))
+        self.assertEqual({b['key'] for b in v['temple']['blessings']}, set(data.BLESSINGS))
+        self.assertTrue(all('energy' in d and 'treasure' in d for d in v['dungeons']))
+        json.dumps(v)
+
+
+class ProgressionTests(unittest.TestCase):
+    def test_xp_curve(self):
+        from aeterna.rules import xp_to_next
+        self.assertEqual([xp_to_next(n) for n in (1, 2, 3)], [100, 150, 225])
+        needs = [xp_to_next(n) for n in range(1, 60)]
+        self.assertTrue(all(b > a for a, b in zip(needs, needs[1:])))
+        self.assertLess(xp_to_next(50), 1_000_000)  # late levels stay reachable
+
+    def test_bestiary_covers_every_monster(self):
+        names = {m['Name'] for l in LOCATIONS for m in l['Monsters']} | {s['Monster']['Name'] for d in DUNGEONS for s in d['Stages']}
+        self.assertEqual(names, set(data.BESTIARY))
+
+    def test_version_3_save_migrates(self):
+        game, _ = make_game()
+        raw = json.loads(json.dumps(game.state))
+        for key in ('Blessing', 'HonorShop', 'Achievements', 'Bestiary'):
+            raw.pop(key, None)
+        raw['SaveVersion'] = 3
+        raw['Player']['Equipment']['Weapon']['Effects'] = {'LifeSteal': 999, 'Bogus': 3}
+        state = normalize_state(raw, START)
+        self.assertEqual(state['HonorShop'], {k: 0 for k in data.HONOR_SHOP})
+        self.assertEqual((state['Achievements'], state['Bestiary'], state['Blessing']), ([], {}, None))
+        self.assertEqual(state['Player']['Equipment']['Weapon']['Effects'], {'LifeSteal': data.EFFECT_CAPS['LifeSteal']})
+
+    def test_balance_entry_level_is_winnable(self):
+        from aeterna import balance
+        util.rng.seed(2)
+        for location in LOCATIONS:
+            for monster in location['Monsters']:
+                rate = balance.win_rate(monster, location['ReqLevel'], location['ReqLevel'], 30)
+                self.assertGreater(rate, 0.4, '%s in %s' % (monster['Name'], location['Name']))
 
 
 class ContentTests(unittest.TestCase):

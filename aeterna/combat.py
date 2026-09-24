@@ -2,8 +2,8 @@
 
 import math
 
-from .data import MAX_TURNS, SHIELD_BLOCK_BONUS
-from .rules import has_shield, max_damage, min_damage, total_armor, total_stat
+from .data import MAX_TURNS, MONSTER_SCALING, SHIELD_BLOCK_BONUS
+from .rules import all_effects, has_shield, max_damage, min_damage, total_armor, total_stat
 from .util import clamp, rand_int, roll
 
 
@@ -39,21 +39,27 @@ def double_strike_chance(att_cha, def_cha):
 
 # --- Combatants -------------------------------------------------------------------
 
-def player_combatant(player):
+def player_combatant(state):
+    """The player as a fighter, including gear-set, Mythic and blessing effects."""
+    player = state['Player']
+    effects = all_effects(state)
     return {
-        'name': player['Name'], 'is_player': True, 'hp': player['CurrentHP'],
+        'name': player['Name'], 'is_player': True, 'hp': player['CurrentHP'], 'max_hp': player['MaxHP'],
         'str': total_stat(player, 'Strength'), 'dex': total_stat(player, 'Dexterity'),
         'agi': total_stat(player, 'Agility'), 'cha': total_stat(player, 'Charisma'),
         'int': total_stat(player, 'Intelligence'),
-        'armor': total_armor(player), 'min_dmg': min_damage(player), 'max_dmg': max_damage(player),
-        'shield_bonus': SHIELD_BLOCK_BONUS if has_shield(player) else 0,
+        'armor': total_armor(player, effects), 'min_dmg': min_damage(player, effects),
+        'max_dmg': max_damage(player, effects),
+        'shield_bonus': (SHIELD_BLOCK_BONUS if has_shield(player) else 0) + effects.get('BlockBonus', 0) / 100,
+        'crit_bonus': effects.get('CritBonus', 0) / 100,
+        'life_steal': effects.get('LifeSteal', 0) / 100,
     }
 
 
 def monster_combatant(monster):
     level = monster['Level']
     return {
-        'name': monster['Name'], 'is_player': False, 'hp': monster['MaxHP'],
+        'name': monster['Name'], 'is_player': False, 'hp': monster['MaxHP'], 'max_hp': monster['MaxHP'],
         'str': level * 3, 'dex': monster['Dexterity'] or level * 3, 'agi': monster['Agility'] or level * 3,
         'cha': level * 2, 'int': level * 2,
         'armor': monster['Armor'], 'min_dmg': monster['MinDamage'], 'max_dmg': monster['MaxDamage'],
@@ -63,7 +69,7 @@ def monster_combatant(monster):
 
 def arena_combatant(opponent):
     return {
-        'name': opponent['Name'], 'is_player': False, 'hp': opponent['MaxHP'],
+        'name': opponent['Name'], 'is_player': False, 'hp': opponent['MaxHP'], 'max_hp': opponent['MaxHP'],
         'str': opponent['Strength'], 'dex': opponent['Dexterity'], 'agi': opponent['Agility'],
         'cha': opponent['Charisma'], 'int': opponent['Intelligence'],
         'armor': opponent['Armor'], 'min_dmg': opponent['MinDamage'], 'max_dmg': opponent['MaxDamage'],
@@ -77,18 +83,10 @@ def scale_monster(monster, player_level, area_req_level):
     scaled = dict(monster)
     if delta == 0:
         return scaled
-    scaled.update({
-        'Level': monster['Level'] + delta,
-        'MaxHP': math.floor(monster['MaxHP'] * (1 + delta * 0.22)),
-        'MinDamage': monster['MinDamage'] + delta * 3,
-        'MaxDamage': monster['MaxDamage'] + delta * 5,
-        'Armor': monster['Armor'] + delta * 3,
-        'Dexterity': monster['Dexterity'] + delta * 2,
-        'Agility': monster['Agility'] + delta * 2,
-        'XPReward': monster['XPReward'] + delta * 12,
-        'MinGold': monster['MinGold'] + delta * 10,
-        'MaxGold': monster['MaxGold'] + delta * 20,
-    })
+    scaled['Level'] = monster['Level'] + delta
+    scaled['MaxHP'] = math.floor(monster['MaxHP'] * (1 + delta * MONSTER_SCALING['HP']))
+    for key in ('MinDamage', 'MaxDamage', 'Armor', 'Dexterity', 'Agility', 'XPReward', 'MinGold', 'MaxGold'):
+        scaled[key] = monster[key] + delta * MONSTER_SCALING[key]
     return scaled
 
 
@@ -97,8 +95,8 @@ def arena_opponent_stats(opponent, player):
     level = max(1, player['Level'] + 6 - opponent['Rank'])
     return {
         'Name': opponent['Name'], 'Rank': opponent['Rank'], 'Level': level,
-        'Strength': 5 + level * 3, 'Dexterity': 5 + level * 3, 'Agility': 5 + level * 3,
-        'Constitution': 5 + level * 3, 'Charisma': level * 3, 'Intelligence': level * 2,
+        'Strength': 5 + level * 5 // 2, 'Dexterity': 5 + level * 5 // 2, 'Agility': 5 + level * 5 // 2,
+        'Constitution': 5 + level * 5 // 2, 'Charisma': level * 3, 'Intelligence': level * 2,
         'MaxHP': 100 + level * 35, 'MinDamage': 4 + level * 4, 'MaxDamage': 8 + level * 5, 'Armor': level * 5,
     }
 
@@ -123,7 +121,7 @@ def execute_turn(turn_num, att, dfn, turns):
         return
 
     damage = rand_int(att['min_dmg'], att['max_dmg'])
-    is_crit = roll() < crit_chance(att['dex'], dfn['agi'], att['int'])
+    is_crit = roll() < crit_chance(att['dex'], dfn['agi'], att['int']) + att.get('crit_bonus', 0)
     if is_crit:
         damage = math.floor(damage * crit_multiplier(att['int']))
 
@@ -131,22 +129,35 @@ def execute_turn(turn_num, att, dfn, turns):
     reduction = mitigation(effective_armor)
     final = max(1, math.floor(damage * reduction))
     dfn['hp'] -= final
+    healed = _life_steal(att, final)
+    drain = ' (drains %d HP)' % healed if healed else ''
     if is_crit:
-        log('Critical', final, '💥 CRITICAL HIT! %s strikes %s for %d damage!' % (att['name'], dfn['name'], final))
+        log('Critical', final, '💥 CRITICAL HIT! %s strikes %s for %d damage!%s' % (att['name'], dfn['name'], final, drain))
     else:
-        log('Hit', final, '⚔️ %s hits %s for %d damage.' % (att['name'], dfn['name'], final))
+        log('Hit', final, '⚔️ %s hits %s for %d damage.%s' % (att['name'], dfn['name'], final, drain))
 
     if dfn['hp'] > 0 and roll() < double_strike_chance(att['cha'], dfn['cha']):
         extra = max(1, math.floor(rand_int(att['min_dmg'], att['max_dmg']) * reduction))
         dfn['hp'] -= extra
+        _life_steal(att, extra)
         log('DoubleStrike', extra,
             "⚡ %s's high Charisma triggers a DOUBLE STRIKE dealing %d extra damage!" % (att['name'], extra))
+
+
+def _life_steal(att, damage):
+    """Heals the attacker by their life-steal share of `damage`. Returns the HP healed."""
+    share = att.get('life_steal', 0)
+    if not share or att['hp'] <= 0:
+        return 0
+    healed = min(math.floor(damage * share), att['max_hp'] - att['hp'])
+    att['hp'] += max(0, healed)
+    return max(0, healed)
 
 
 def run_fight(state, title, enemy):
     """Plays out a whole fight. Updates the player's HP and win/loss statistics."""
     player = state['Player']
-    pc = player_combatant(player)
+    pc = player_combatant(state)
     result = {
         'Title': title, 'PlayerName': player['Name'], 'EnemyName': enemy['name'], 'EnemyArt': '', 'Turns': [],
         'PlayerMaxHP': player['MaxHP'], 'PlayerStartHP': pc['hp'], 'EnemyMaxHP': enemy['hp'],

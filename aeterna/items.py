@@ -2,8 +2,8 @@
 
 import math
 
-from .data import (AFFIX_CHANCE, EQUIP_TYPES, ICON_BY_NAME, ITEM_TYPES, MAX_ENHANCE, PREFIXES, RARITIES,
-                   SELL_RATIO, SLOT_FOR_TYPE, SUFFIXES)
+from .data import (AFFIX_CHANCE, BASE_NAMES, EFFECT_CAPS, EFFECTS, EQUIP_TYPES, ICON_BY_NAME, ITEM_TYPES, MAX_ENHANCE,
+                   PREFIXES, RARITIES, SELL_RATIO, SETS, SLOT_FOR_TYPE, SUFFIXES, UNIQUES)
 from .util import clamp, is_number, pick, rand_int, roll, text, to_int, uid
 
 ITEM_TEMPLATE = {
@@ -12,6 +12,8 @@ ITEM_TEMPLATE = {
     'Strength': 0, 'Dexterity': 0, 'Agility': 0, 'Constitution': 0, 'Charisma': 0, 'Intelligence': 0,
     'HealAmount': 0, 'EnergyAmount': 0, 'IconSvg': '', 'Upgrade': 0,
     'SmeltIron': 0, 'SmeltBronze': 0, 'SmeltRuby': 0, 'SmeltLeather': 0,
+    'SetId': '',     # gear set this item belongs to (see data.SETS), '' for none
+    'Effects': {},   # special effects of Mythic items (see data.EFFECTS)
 }
 ITEM_NUMERIC_FIELDS = [k for k, v in ITEM_TEMPLATE.items() if isinstance(v, int)]
 
@@ -19,6 +21,7 @@ ITEM_NUMERIC_FIELDS = [k for k, v in ITEM_TEMPLATE.items() if isinstance(v, int)
 def blank_item():
     item = dict(ITEM_TEMPLATE)
     item['Id'] = uid()
+    item['Effects'] = {}
     return item
 
 
@@ -53,7 +56,7 @@ def roll_rarity():
     if r > 0.95:
         return 'Legendary'
     if r > 0.85:
-        return 'Epic'
+        return 'Epic'  # Mythic is never rolled: it is reserved for boss treasures
     if r > 0.65:
         return 'Rare'
     if r > 0.35:
@@ -72,41 +75,33 @@ def generate_item(level, item_type=None, rarity=None):
     item['Rarity'] = rarity
     item['LevelRequirement'] = level
 
-    base_name = 'Roman Gear'
+    base_name = pick(BASE_NAMES[item_type]) if item_type in BASE_NAMES else 'Roman Gear'
     if item_type == 'Weapon':
-        base_name = pick(['Gladius', 'Spatha', 'Pugio Dagger', 'Trident', 'Halberd', 'Centurion Sword'])
         item['MinDamage'] = level * 3 + rand_int(1, 4) * mult
         item['MaxDamage'] = item['MinDamage'] + rand_int(3, 7) * mult
         item['IconSvg'] = 'weapon_%d' % rand_int(1, 3)
     elif item_type == 'Helmet':
-        base_name = pick(['Galea Helmet', 'Centurion Crest', 'Legionary Helm', 'Gladiator Mask'])
         item['Armor'] = level * 4 + rand_int(2, 5) * mult
         item['IconSvg'] = 'helmet_%d' % rand_int(1, 2)
     elif item_type == 'Armor':
-        base_name = pick(['Lorica Segmentata', 'Lorica Hamata', 'Gladiator Cuirass', 'Bronze Breastplate'])
         item['Armor'] = level * 8 + rand_int(5, 11) * mult
         item['IconSvg'] = 'armor_%d' % rand_int(1, 2)
     elif item_type == 'Shield':
-        base_name = pick(['Scutum Shield', 'Parma Round Shield', 'Tower Shield', 'Gladiator Buckler'])
         item['Armor'] = level * 5 + rand_int(3, 6) * mult
         item['IconSvg'] = 'shield_%d' % rand_int(1, 2)
     elif item_type == 'Ring':
-        base_name = 'Signet Ring'
         item['Strength'] = rand_int(1, 2) * mult
         item['Agility'] = rand_int(1, 2) * mult
         item['IconSvg'] = 'ring_1'
     elif item_type == 'Amulet':
-        base_name = 'Imperial Amulet'
         item['Constitution'] = rand_int(1, 3) * mult
         item['Charisma'] = rand_int(1, 3) * mult
         item['IconSvg'] = 'amulet_1'
     elif item_type == 'Gloves':
-        base_name = 'Leather Gauntlets'
         item['Armor'] = level * 2 + mult
         item['Dexterity'] = rand_int(1, 2) * mult
         item['IconSvg'] = 'gloves_1'
     elif item_type == 'Shoes':
-        base_name = 'Caligae Sandals'
         item['Armor'] = level * 2 + mult
         item['Agility'] = rand_int(1, 2) * mult
         item['IconSvg'] = 'shoes_1'
@@ -127,6 +122,25 @@ def generate_item(level, item_type=None, rarity=None):
     item['SmeltBronze'] = rand_int(1, 2) * mult
     item['SmeltRuby'] = rand_int(1, 2) if RARITIES.index(rarity) >= RARITIES.index('Rare') else 0
     item['SmeltLeather'] = rand_int(1, 3) * mult
+    return item
+
+
+def make_set_piece(set_id, level, item_type=None):
+    """A piece of a gear set: Epic stats, no random affixes, set name and icon."""
+    pieces = SETS[set_id]['Pieces']
+    item_type = item_type if item_type in pieces else pick(sorted(pieces))
+    item = generate_item(level, item_type, 'Epic')
+    name, icon = pieces[item_type]
+    item.update(Name=name, Prefix='', Suffix='', IconSvg=icon, SetId=set_id)
+    item['Price'] = math.floor(item['Price'] * 1.5)
+    return item
+
+
+def make_unique(boss_name, level):
+    """A boss's Mythic treasure: Mythic-strength stats plus its special effects."""
+    unique = UNIQUES[boss_name]
+    item = generate_item(level, unique['Type'], 'Mythic')
+    item.update(Name=unique['Name'], Prefix='', Suffix='', IconSvg=unique['IconSvg'], Effects=dict(unique['Effects']))
     return item
 
 
@@ -153,6 +167,10 @@ def normalize_item(raw):
     item['Rarity'] = _enum_value(raw.get('Rarity'), RARITIES) or 'Common'
     item['LevelRequirement'] = max(1, item['LevelRequirement'])
     item['Upgrade'] = clamp(item['Upgrade'], 0, MAX_ENHANCE)
+    item['SetId'] = raw.get('SetId') if raw.get('SetId') in SETS else ''
+    raw_effects = raw.get('Effects') if isinstance(raw.get('Effects'), dict) else {}
+    item['Effects'] = {key: clamp(to_int(value, 0), 0, EFFECT_CAPS.get(key, 100))
+                       for key, value in raw_effects.items() if key in EFFECTS and to_int(value, 0) > 0}
     if not item['Name']:
         item['Name'] = 'Unknown Item'
     return item
