@@ -5,6 +5,8 @@ An offline, single-player ancient Roman RPG written in Python. The game runs ent
 
 ![Expeditions screen](docs/screenshot-expeditions.png)
 
+![Colosseum arena ladder](docs/screenshot-arena.png)
+
 ## Features
 
 - **Dynamic Level Scaling**: Colosseum Arena ladder opponents and Expedition/Dungeon monsters scale their stats, HP, damage, and rewards to match the player's level.
@@ -37,7 +39,13 @@ python aeterna_roma.py
 
 On Windows you can also double-click `run.bat`, which installs the one dependency the first time and starts the game.
 
-The window is drawn by [pywebview](https://pywebview.flowrl.com/), which uses the web view already built into your system (Edge WebView2 on Windows 10/11, WebKit on macOS, GTK WebKit or Qt on Linux). The interface is loaded straight into the window, so no local web server is involved.
+The window is drawn by [pywebview](https://pywebview.flowrl.com/), which uses the web view already built into your system. The interface is loaded straight into the window, so no local web server is involved.
+
+- **Windows 10/11**: works out of the box (uses Microsoft Edge WebView2). On older or stripped-down systems, install the [WebView2 Runtime](https://developer.microsoft.com/microsoft-edge/webview2/) if the window stays blank.
+- **macOS**: works out of the box (uses WebKit).
+- **Linux**: needs a GTK or Qt web view, for example `sudo apt install python3-gi gir1.2-webkit2-4.1` on Ubuntu/Debian, or `python -m pip install "pywebview[qt]"`.
+
+To check that everything is in place without opening a window, run `python aeterna_roma.py --check`.
 
 ### Building a standalone `AeternaRoma.exe`
 
@@ -54,7 +62,9 @@ Run `build.bat` on Windows. It installs PyInstaller and packs Python, the game a
 - Saves are written to a temporary file and then swapped in, so a crash can't leave a half-written save. If a save ever can't be read, it is kept as `save.corrupt-<time>.json` and a new game starts.
 - Only one copy of the game can run at a time, so two windows can't overwrite each other's progress.
 - **Settings → Export / Import Save File** backs up your gladiator or moves it to another computer.
-- **Coming from an older version?** Saves exported from the earlier browser version (Settings → Export Save File) import directly, and so do `savegame.json` files from the original C# version.
+- **Coming from an older version?**
+  - *Browser version* (`game.html`): its progress lived in the browser's storage, which the Python version can't read. Open that version one last time, use **Settings → Export Save File**, then **Import Save File** here. If you no longer have it, download `game.html` from commit [`4df4255`](https://github.com/czapencjusz/aeterna-roma/blob/4df4255/game.html).
+  - *Original C# version*: import its `savegame.json` (it sits next to the old `AeternaRoma.exe`).
 
 ## Project layout
 
@@ -77,3 +87,19 @@ tests/
 ```
 
 All game rules live in Python. The page never changes the game itself: it shows what Python sends back and passes your clicks to Python.
+
+## Running the tests
+
+```cmd
+python -m unittest discover -s tests
+```
+
+This runs the rule tests (combat, items, quests, guild, saving and loading every save format). They need nothing beyond Python.
+
+The interface test loads the real page in Chromium and sends every click to the Python game. It needs [Node.js](https://nodejs.org/) and Playwright:
+
+```cmd
+npm install playwright
+npx playwright install chromium
+node tests/e2e/ui_test.js
+```
