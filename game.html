@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Aeterna Roma - Hero of Rome</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Ccircle cx='32' cy='32' r='30' fill='%23800000' stroke='%23e0b030' stroke-width='4'/%3E%3Cpath d='M18 40 C18 22 25 14 32 14 C39 14 46 22 46 40 Z' fill='%23e0b030'/%3E%3Cpath d='M12 18 C18 6 46 6 52 18' fill='none' stroke='%23ff5252' stroke-width='5'/%3E%3Crect x='14' y='38' width='36' height='5' fill='%23e0b030'/%3E%3C/svg%3E">
     <!-- Optional web fonts: when offline the game falls back to local serif/sans-serif fonts. -->
     <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&family=Philosopher:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
     <style>
@@ -168,8 +169,9 @@
         }
 
         .avatar-svg {
-            width: 120px;
-            height: 120px;
+            width: 110px;
+            height: 132px;
+            margin: 0 auto;
             filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.3));
         }
 
@@ -636,6 +638,40 @@
         .stat-diff-up { color: #66bb6a; }
         .stat-diff-down { color: #ef5350; }
 
+        /* GAME ART */
+        .art { display: block; }
+        .brand-logo svg { width: 46px; height: 46px; }
+        header::after {
+            content: '';
+            position: absolute;
+            left: 0; right: 0; bottom: -12px;
+            height: 10px;
+            background: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='20' height='10'%3E%3Cpath d='M0 9.5 H20 M15.5 9.5 V0.5 H4.5 V6.5 H11.5 V3.5 H8' fill='none' stroke='%23c5a059' stroke-width='1'/%3E%3C/svg%3E") repeat-x;
+            opacity: 0.55;
+            pointer-events: none;
+        }
+        .inv-slot .art-item { width: 54px; height: 54px; }
+        .equip-slot .art-item { width: 46px; height: 46px; }
+        .item-icon .art-item { width: 46px; height: 46px; }
+        .art-portrait { width: 44px; height: 44px; flex-shrink: 0; }
+        .portrait-row { display: flex; align-items: center; gap: 10px; }
+        .monster-row > .btn-roman { white-space: nowrap; flex-shrink: 0; }
+        .portrait-lg .art-portrait { width: 64px; height: 64px; }
+        .scene-banner {
+            margin: -15px -15px 0;
+            height: 84px;
+            border-radius: 5px 5px 0 0;
+            overflow: hidden;
+            border-bottom: 1px solid var(--border-gold);
+        }
+        .scene-banner .art-scene { width: 100%; height: 100%; }
+        .exp-card.locked .scene-banner, .exp-card.locked .art-portrait { filter: grayscale(0.85); }
+        .mat-icon { display: inline-block; vertical-align: middle; }
+        .mat-icon .art { width: 22px; height: 22px; }
+        .arena-avatar .avatar-svg { width: 38px; height: 44px; filter: none; }
+        .fighter-portrait .art-portrait, .fighter-portrait .avatar-svg { width: 56px; height: 56px; filter: none; }
+        .fighter-head { display: flex; align-items: center; gap: 10px; }
+
         /* TOAST NOTIFICATIONS */
         .toast-container {
             position: fixed;
@@ -665,10 +701,48 @@
     </style>
 </head>
 <body>
+    <!-- Shared gradients and patterns used by the game's SVG art (see ART in the script). -->
+    <svg id="artDefs" width="0" height="0" style="position:absolute; width:0; height:0; overflow:hidden;" aria-hidden="true" focusable="false">
+        <defs>
+            <linearGradient id="g-steel" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f4f6f8"/><stop offset=".5" stop-color="#aab1b9"/><stop offset="1" stop-color="#5a616a"/></linearGradient>
+            <linearGradient id="g-gold" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#fff3b0"/><stop offset=".5" stop-color="#e0b030"/><stop offset="1" stop-color="#8a6410"/></linearGradient>
+            <linearGradient id="g-bronze" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#f6cf94"/><stop offset=".5" stop-color="#b87333"/><stop offset="1" stop-color="#6b3f16"/></linearGradient>
+            <linearGradient id="g-wood" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#a8753f"/><stop offset=".5" stop-color="#7a4f28"/><stop offset="1" stop-color="#452a13"/></linearGradient>
+            <linearGradient id="g-leather" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#c48a52"/><stop offset=".55" stop-color="#8a5a2c"/><stop offset="1" stop-color="#4f3016"/></linearGradient>
+            <linearGradient id="g-red" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ef5350"/><stop offset=".5" stop-color="#b71c1c"/><stop offset="1" stop-color="#5c0a0a"/></linearGradient>
+            <linearGradient id="g-blue" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#64b5f6"/><stop offset=".5" stop-color="#1e5fb3"/><stop offset="1" stop-color="#0d2c5e"/></linearGradient>
+            <linearGradient id="g-purple" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#ce93d8"/><stop offset=".5" stop-color="#7b1fa2"/><stop offset="1" stop-color="#38104a"/></linearGradient>
+            <radialGradient id="g-potion-red" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#ff8a80"/><stop offset=".5" stop-color="#d50000"/><stop offset="1" stop-color="#5c0000"/></radialGradient>
+            <radialGradient id="g-potion-blue" cx=".4" cy=".35" r=".8"><stop offset="0" stop-color="#b3e5fc"/><stop offset=".5" stop-color="#1e88e5"/><stop offset="1" stop-color="#0b3470"/></radialGradient>
+            <radialGradient id="g-glass" cx=".35" cy=".3" r=".9"><stop offset="0" stop-color="#ffffff" stop-opacity=".45"/><stop offset="1" stop-color="#b3e5fc" stop-opacity=".08"/></radialGradient>
+            <radialGradient id="g-gem-red" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#ffcdd2"/><stop offset=".45" stop-color="#e53935"/><stop offset="1" stop-color="#6b0000"/></radialGradient>
+            <radialGradient id="g-gem-green" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#ccff90"/><stop offset=".5" stop-color="#43a047"/><stop offset="1" stop-color="#0d3b12"/></radialGradient>
+            <radialGradient id="g-fire" cx=".5" cy=".6" r=".6"><stop offset="0" stop-color="#fff59d"/><stop offset=".45" stop-color="#ff9800"/><stop offset="1" stop-color="#b71c1c" stop-opacity=".9"/></radialGradient>
+            <radialGradient id="g-glow-fire" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffcc80" stop-opacity=".95"/><stop offset=".5" stop-color="#ff6f00" stop-opacity=".45"/><stop offset="1" stop-color="#ff6f00" stop-opacity="0"/></radialGradient>
+            <radialGradient id="g-glow-arcane" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e1bee7" stop-opacity=".8"/><stop offset=".55" stop-color="#8e24aa" stop-opacity=".45"/><stop offset="1" stop-color="#4a148c" stop-opacity="0"/></radialGradient>
+            <radialGradient id="g-glow-ghost" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#e0f7fa" stop-opacity=".7"/><stop offset="1" stop-color="#4dd0e1" stop-opacity="0"/></radialGradient>
+            <radialGradient id="g-portrait-bg" cx=".5" cy=".4" r=".7"><stop offset="0" stop-color="#4a3326"/><stop offset="1" stop-color="#140c08"/></radialGradient>
+            <radialGradient id="g-aura-gold" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ffd700" stop-opacity=".5"/><stop offset="1" stop-color="#ffd700" stop-opacity="0"/></radialGradient>
+            <radialGradient id="g-aura-purple" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#ce93d8" stop-opacity=".5"/><stop offset="1" stop-color="#ce93d8" stop-opacity="0"/></radialGradient>
+            <linearGradient id="g-sky-sunset" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3b2a5c"/><stop offset=".55" stop-color="#d9764a"/><stop offset="1" stop-color="#f6c177"/></linearGradient>
+            <linearGradient id="g-sky-mist" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5d7085"/><stop offset="1" stop-color="#b8c6d3"/></linearGradient>
+            <linearGradient id="g-sky-forest" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1d3322"/><stop offset="1" stop-color="#6f8f55"/></linearGradient>
+            <linearGradient id="g-sky-dusk" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1c1030"/><stop offset=".6" stop-color="#7a1f2b"/><stop offset="1" stop-color="#d9542b"/></linearGradient>
+            <linearGradient id="g-sky-desert" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#e98b2a"/><stop offset=".6" stop-color="#f7c65e"/><stop offset="1" stop-color="#fbe3a1"/></linearGradient>
+            <linearGradient id="g-sky-night" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#070b1c"/><stop offset="1" stop-color="#2c3e63"/></linearGradient>
+            <linearGradient id="g-sky-cave" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0d0b0a"/><stop offset="1" stop-color="#3a3029"/></linearGradient>
+            <linearGradient id="g-sky-lava" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#1a0505"/><stop offset=".6" stop-color="#6d1208"/><stop offset="1" stop-color="#e2461b"/></linearGradient>
+            <linearGradient id="g-stone" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8a7e70"/><stop offset="1" stop-color="#4a4239"/></linearGradient>
+            <pattern id="p-mail" width="4" height="4" patternUnits="userSpaceOnUse"><circle cx="2" cy="2" r="1.4" fill="none" stroke="#5a616a" stroke-width=".8"/></pattern>
+            <pattern id="p-scale" width="6" height="5" patternUnits="userSpaceOnUse"><path d="M0 0 Q3 5 6 0" fill="none" stroke="#5a4210" stroke-width=".8"/></pattern>
+            <pattern id="p-brick" width="24" height="12" patternUnits="userSpaceOnUse"><path d="M0 0 H24 M0 6 H24 M12 0 V6 M0 6 V12 M24 6 V12" fill="none" stroke="#000" stroke-opacity=".35" stroke-width="1"/></pattern>
+            <clipPath id="c-portrait" clipPathUnits="userSpaceOnUse"><circle cx="32" cy="32" r="30"/></clipPath>
+        </defs>
+    </svg>
 
     <header>
         <div class="brand-title">
-            🦅 <span>Aeterna Roma</span>
+            <span id="brandLogo" class="brand-logo"></span> <span>Aeterna Roma</span>
         </div>
         <div class="resource-bar">
             <div class="res-item res-gold" title="Gold">💰 <span id="resGold">0</span></div>
@@ -910,10 +984,10 @@
             </div>
             <div class="modal-body">
                 <div class="combat-result-banner" id="modalCombatResultBanner">VICTORY!</div>
-                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;">
-                    <span id="modalFighter1Name" style="color:#2196f3;">Player</span>
-                    <span style="color:#888;">VS</span>
-                    <span id="modalFighter2Name" style="color:#f44336;">Enemy</span>
+                <div style="display:flex; justify-content:space-between; align-items:center; font-weight:bold; font-size:14px;">
+                    <span class="fighter-head"><span class="fighter-portrait" id="modalPortrait1"></span><span id="modalFighter1Name" style="color:#2196f3;">Player</span></span>
+                    <span style="color:#888; font-family:'Cinzel Decorative',serif;">VS</span>
+                    <span class="fighter-head"><span id="modalFighter2Name" style="color:#f44336;">Enemy</span><span class="fighter-portrait" id="modalPortrait2"></span></span>
                 </div>
                 <div class="fighter-bars">
                     <div class="stat-bar-container">
@@ -932,6 +1006,744 @@
     </div>
 
     <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        'use strict';
+        // =====================================================================
+        //  GAME ART — hand-drawn SVG graphics (no external image files needed)
+        //  Shared gradients/patterns live in the hidden <svg id="artDefs"> at the top of <body>.
+        // =====================================================================
+        const ART = (() => {
+            const svg = (inner, vb = '0 0 64 64', cls = 'art') =>
+                `<svg class="${cls}" viewBox="${vb}" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">${inner}</svg>`;
+            const rot = inner => `<g transform="rotate(45 32 32)">${inner}</g>`;
+            const mirror = inner => `<g transform="translate(64 0) scale(-1 1)">${inner}</g>`;
+            const both = inner => inner + mirror(inner);
+            const INK = '#2a1a0e';
+
+            // ---------------------------------------------------------------- items
+            const items = {
+                weapon_1: rot(`
+                    <path d="M32 3 L36.5 11 L37.5 26 L36 41 H28 L26.5 26 L27.5 11 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width="1.2" stroke-linejoin="round"/>
+                    <path d="M32 7 V39" stroke="#fff" stroke-opacity=".6" stroke-width="1.2"/>
+                    <rect x="21" y="41" width="22" height="4.5" rx="2.2" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <rect x="29" y="45.5" width="6" height="11" rx="1.5" fill="url(#g-wood)" stroke="#3b2410"/>
+                    <path d="M29 49 H35 M29 52.5 H35" stroke="#3b2410" stroke-width=".8"/>
+                    <circle cx="32" cy="59" r="4" fill="url(#g-gold)" stroke="#5a4210"/>`),
+                weapon_2: rot(`
+                    <path d="M32 1.5 L35 7 V44 H29 V7 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width="1.1" stroke-linejoin="round"/>
+                    <path d="M32 6 V42" stroke="#fff" stroke-opacity=".6"/>
+                    <path d="M22 44 H42 L40 48 H24 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <rect x="29.5" y="48" width="5" height="10" rx="1.5" fill="url(#g-leather)" stroke="#3b2410"/>
+                    <path d="M29.5 51 L34.5 53 M29.5 54 L34.5 56" stroke="#3b2410" stroke-width=".7"/>
+                    <ellipse cx="32" cy="60" rx="4" ry="3" fill="url(#g-gold)" stroke="#5a4210"/>`),
+                weapon_3: rot(`
+                    <path d="M32 12 C38.5 20 38.5 31 36 41 H28 C25.5 31 25.5 20 32 12 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width="1.2"/>
+                    <path d="M32 15 V40" stroke="#5d646c" stroke-width="1.4"/>
+                    <path d="M32 15 V40" stroke="#fff" stroke-opacity=".5" stroke-width=".6" transform="translate(-.8 0)"/>
+                    <rect x="23" y="41" width="18" height="4" rx="2" fill="url(#g-bronze)" stroke="#4a2e10"/>
+                    <path d="M28.5 45 H35.5 L34.5 50 L35.5 55 H28.5 L29.5 50 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>
+                    <circle cx="32" cy="47.5" r="1" fill="#fff3b0"/><circle cx="32" cy="52.5" r="1" fill="#fff3b0"/>
+                    <ellipse cx="32" cy="58" rx="6.5" ry="3.5" fill="url(#g-bronze)" stroke="#4a2e10"/>
+                    <circle cx="28.5" cy="58" r=".9" fill="#fff3b0"/><circle cx="35.5" cy="58" r=".9" fill="#fff3b0"/>`),
+                weapon_4: rot(`
+                    <rect x="30.3" y="20" width="3.4" height="42" rx="1.5" fill="url(#g-wood)" stroke="#3b2410" stroke-width=".8"/>
+                    <path d="M21 25 C21 21 43 21 43 25" fill="none" stroke="#33383d" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M21 25 C21 21 43 21 43 25" fill="none" stroke="#c9ced4" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M22 24 V10 M42 24 V10 M32 23 V6" stroke="#33383d" stroke-width="3.4" stroke-linecap="round"/>
+                    <path d="M22 24 V10 M42 24 V10 M32 23 V6" stroke="#dde1e5" stroke-width="1.6" stroke-linecap="round"/>
+                    <path d="M19 12 L22 3 L25 12 Z M39 12 L42 3 L45 12 Z M29 8 L32 0.5 L35 8 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width=".9" stroke-linejoin="round"/>
+                    <rect x="29.5" y="24" width="5" height="4" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width=".8"/>`),
+                weapon_5: rot(`
+                    <rect x="30.3" y="8" width="3.4" height="55" rx="1.5" fill="url(#g-wood)" stroke="#3b2410" stroke-width=".8"/>
+                    <path d="M32 1 L35 9 H29 Z" fill="url(#g-steel)" stroke="#33383d" stroke-linejoin="round"/>
+                    <path d="M34 12 C46 9 51 17 51 24 C51 31 46 38 34 35 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width="1.2"/>
+                    <path d="M46 14 C49 19 49 29 46 34" fill="none" stroke="#fff" stroke-opacity=".6"/>
+                    <path d="M30 18 L18 23 L30 27 Z" fill="url(#g-steel)" stroke="#33383d" stroke-linejoin="round"/>
+                    <rect x="29" y="11" width="6" height="3" fill="url(#g-bronze)"/><rect x="29" y="33" width="6" height="3" fill="url(#g-bronze)"/>`),
+
+                helmet_1: `
+                    <path d="M13 38 C13 20 21 9 32 9 C43 9 51 20 51 38 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.5"/>
+                    <path d="M27 12 C23 18 22 28 23 36" fill="none" stroke="#fbe3b8" stroke-opacity=".55" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M18 23 Q32 15 46 23" fill="none" stroke="#4a2e10" stroke-width="1.4"/>
+                    <path d="M8 37 H56 L58 44 C44 41 20 41 6 44 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.3"/>
+                    <path d="M17 41 V53 C19 58 25 58 27 52 V41 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.3"/>
+                    <path d="M47 41 V53 C45 58 39 58 37 52 V41 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.3"/>
+                    <circle cx="22" cy="46" r="1.3" fill="#4a2e10"/><circle cx="42" cy="46" r="1.3" fill="#4a2e10"/>
+                    <circle cx="32" cy="8.5" r="3" fill="url(#g-gold)" stroke="#4a2e10"/>`,
+                helmet_2: `
+                    <path d="M5 23 C12 3 52 3 59 23 L55 25 C47 11 17 11 9 25 Z" fill="url(#g-red)" stroke="#3d0707" stroke-width="1.2"/>
+                    <path d="M12 16 L14 20 M18 11 L19 16 M25 8 L25.5 13 M32 7 V12 M39 8 L38.5 13 M46 11 L45 16 M52 16 L50 20" stroke="#ff8a80" stroke-opacity=".7"/>
+                    <path d="M14 40 C14 24 22 14 32 14 C42 14 50 24 50 40 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.5"/>
+                    <path d="M27 17 C23 23 22 31 23 38" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M9 39 H55 L57 45 C44 42 20 42 7 45 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.3"/>
+                    <path d="M18 43 V54 C20 58 25 58 27 53 V43 Z M46 43 V54 C44 58 39 58 37 53 V43 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.3"/>
+                    <path d="M19 26 Q32 19 45 26" fill="none" stroke="url(#g-gold)" stroke-width="3"/>`,
+                helmet_3: `
+                    <path d="M25 11 C27 1 40 -1 45 9 C39 6 32 7 25 11 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <path d="M14 34 C14 17 22 9 32 9 C42 9 50 17 50 34 V50 C50 57 43 61 32 61 C21 61 14 57 14 50 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.5"/>
+                    <path d="M5 34 C5 29 59 29 59 34 C59 39 5 39 5 34 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.3"/>
+                    <rect x="20" y="39" width="24" height="16" rx="3" fill="#15181b" stroke="#2f3439"/>
+                    <path d="M24 39 V55 M28 39 V55 M32 39 V55 M36 39 V55 M40 39 V55 M20 43.5 H44 M20 48 H44 M20 52 H44" stroke="#b8bec5" stroke-width="1.3"/>
+                    <path d="M24 14 C21 19 20 25 20 30" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>`,
+
+                armor_1: `
+                    <path d="M18 9 H46 L53 21 L49 57 H15 L11 21 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M26 9 Q32 16 38 9" fill="#2f3439"/>
+                    <path d="M12.3 29 H51.7 M13.2 36 H50.8 M14 43 H50 M14.8 50 H49.2" stroke="#3d4349" stroke-width="1.6"/>
+                    <path d="M12.3 30.2 H51.7 M13.2 37.2 H50.8 M14 44.2 H50 M14.8 51.2 H49.2" stroke="#fff" stroke-opacity=".45"/>
+                    <path d="M32 18 V57" stroke="#3d4349" stroke-width="1.2"/>
+                    <path d="M11 21 C9 13 16 7 23 9 L21 22 Z M53 21 C55 13 48 7 41 9 L43 22 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.3"/>
+                    <circle cx="26" cy="24" r="1.3" fill="url(#g-gold)"/><circle cx="38" cy="24" r="1.3" fill="url(#g-gold)"/>
+                    <path d="M16 57 V62 M22 57 V62 M28 57 V62 M34 57 V62 M40 57 V62 M46 57 V62" stroke="url(#g-leather)" stroke-width="4"/>`,
+                armor_2: `
+                    <path d="M18 9 H46 L53 21 L49 55 H15 L11 21 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M18 9 H46 L53 21 L49 55 H15 L11 21 Z" fill="url(#p-mail)"/>
+                    <path d="M26 9 Q32 16 38 9" fill="#2f3439"/>
+                    <path d="M11 21 C11 14 17 9 23 10 L25 24 C19 25 14 24 11 21 Z M53 21 C53 14 47 9 41 10 L39 24 C45 25 50 24 53 21 Z" fill="url(#g-steel)" stroke="#2f3439"/>
+                    <path d="M11 21 C11 14 17 9 23 10 L25 24 C19 25 14 24 11 21 Z M53 21 C53 14 47 9 41 10 L39 24 C45 25 50 24 53 21 Z" fill="url(#p-mail)"/>
+                    <path d="M15 55 H49" stroke="url(#g-leather)" stroke-width="3"/>
+                    <path d="M17 57 V63 M22 57 V63 M27 57 V63 M32 57 V63 M37 57 V63 M42 57 V63 M47 57 V63" stroke="url(#g-leather)" stroke-width="3.5"/>
+                    <circle cx="32" cy="24" r="2.5" fill="url(#g-gold)" stroke="#5a4210"/>`,
+                armor_3: `
+                    <path d="M18 9 H46 L53 21 L49 55 H15 L11 21 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M26 9 Q32 16 38 9" fill="#4a2e10"/>
+                    <path d="M18 25 Q25 32 32 27 Q39 32 46 25" fill="none" stroke="#6b3f16" stroke-width="1.6"/>
+                    <path d="M32 28 V50 M24 37 Q32 39.5 40 37 M25 44 Q32 46.5 39 44" fill="none" stroke="#6b3f16" stroke-width="1.3"/>
+                    <circle cx="32" cy="50" r="1.2" fill="#6b3f16"/>
+                    <path d="M20 15 C18 20 17 30 18 40" fill="none" stroke="#fbe3b8" stroke-opacity=".5" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M16 56 V63 M21 56 V63 M26 56 V63 M31 56 V63 M36 56 V63 M41 56 V63 M46 56 V63" stroke="url(#g-red)" stroke-width="4"/>`,
+
+                shield_1: `
+                    <rect x="14" y="4" width="36" height="56" rx="7" fill="url(#g-red)" stroke="url(#g-gold)" stroke-width="3"/>
+                    <rect x="18" y="8" width="28" height="48" rx="4" fill="none" stroke="#e0b030" stroke-opacity=".6"/>
+                    <path d="M32 25 L28 18 L33 17 L29 9 M32 39 L36 46 L31 47 L35 55" fill="none" stroke="url(#g-gold)" stroke-width="2.2" stroke-linejoin="round" stroke-linecap="round"/>
+                    <path d="M25 32 C19 28 18 24 20 18 M25 32 C19 36 18 40 20 46 M39 32 C45 28 46 24 44 18 M39 32 C45 36 46 40 44 46" fill="none" stroke="#e0b030" stroke-width="1.6"/>
+                    <circle cx="32" cy="32" r="7.5" fill="url(#g-gold)" stroke="#5a4210" stroke-width="1.2"/>
+                    <circle cx="30" cy="30" r="2.2" fill="#fff" fill-opacity=".6"/>`,
+                shield_2: `
+                    <circle cx="32" cy="32" r="28" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.5"/>
+                    <circle cx="32" cy="32" r="23" fill="url(#g-blue)" stroke="#4a2e10"/>
+                    <path d="M32 11 L35 26 L50 20 L38 31 L52 38 L37 37 L40 52 L32 40 L24 52 L27 37 L12 38 L26 31 L14 20 L29 26 Z" fill="url(#g-gold)" fill-opacity=".85"/>
+                    <circle cx="32" cy="32" r="7" fill="url(#g-steel)" stroke="#2f3439"/>
+                    <circle cx="30" cy="30" r="2" fill="#fff" fill-opacity=".7"/>`,
+                shield_3: `
+                    <circle cx="32" cy="32" r="22" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.5"/>
+                    <circle cx="32" cy="32" r="17" fill="none" stroke="#5d646c" stroke-width="1.5"/>
+                    ${[0, 45, 90, 135, 180, 225, 270, 315].map(a => `<circle cx="${32 + 19.5 * Math.cos(a * Math.PI / 180)}" cy="${32 + 19.5 * Math.sin(a * Math.PI / 180)}" r="1.4" fill="url(#g-gold)"/>`).join('')}
+                    <circle cx="32" cy="32" r="8" fill="url(#g-gold)" stroke="#5a4210" stroke-width="1.2"/>
+                    <path d="M18 22 A17 17 0 0 1 30 15" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="2" stroke-linecap="round"/>`,
+
+                ring_1: `
+                    <ellipse cx="32" cy="40" rx="17" ry="15" fill="none" stroke="#5a4210" stroke-width="8"/>
+                    <ellipse cx="32" cy="40" rx="17" ry="15" fill="none" stroke="url(#g-gold)" stroke-width="5.5"/>
+                    <path d="M22 45 A12 11 0 0 0 30 52" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="1.5" stroke-linecap="round"/>
+                    <path d="M23 22 H41 L38 30 H26 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <path d="M25 13 H39 L43 19 L32 29 L21 19 Z" fill="url(#g-gem-red)" stroke="#5c0a0a" stroke-linejoin="round"/>
+                    <path d="M21 19 H43 M28 13 L32 19 L36 13 M32 19 V29" stroke="#fff" stroke-opacity=".45" stroke-width=".8"/>`,
+                amulet_1: `
+                    <path d="M13 4 C13 30 51 30 51 4" fill="none" stroke="#5a4210" stroke-width="3.2"/>
+                    <path d="M13 4 C13 30 51 30 51 4" fill="none" stroke="#f3d27a" stroke-width="2" stroke-dasharray="2.5 1.5"/>
+                    <rect x="29" y="23" width="6" height="6" rx="1.5" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <circle cx="32" cy="43" r="15" fill="url(#g-gold)" stroke="#5a4210" stroke-width="1.3"/>
+                    <circle cx="32" cy="43" r="11" fill="none" stroke="#8a6410" stroke-dasharray="1.5 1.5"/>
+                    <path d="M32 35 L34.5 40.5 L40.5 41 L36 45 L37.5 51 L32 48 L26.5 51 L28 45 L23.5 41 L29.5 40.5 Z" fill="url(#g-gem-red)" stroke="#5c0a0a" stroke-width=".8" stroke-linejoin="round"/>
+                    <path d="M22 36 A12 12 0 0 1 30 31" fill="none" stroke="#fff" stroke-opacity=".7" stroke-width="1.5" stroke-linecap="round"/>`,
+                gloves_1: `
+                    <rect x="21" y="14" width="5.2" height="20" rx="2.6" fill="url(#g-leather)" stroke="${INK}"/>
+                    <rect x="26.6" y="10" width="5.2" height="24" rx="2.6" fill="url(#g-leather)" stroke="${INK}"/>
+                    <rect x="32.2" y="11" width="5.2" height="23" rx="2.6" fill="url(#g-leather)" stroke="${INK}"/>
+                    <rect x="37.8" y="15" width="5.2" height="19" rx="2.6" fill="url(#g-leather)" stroke="${INK}"/>
+                    <rect x="12" y="31" width="6" height="16" rx="3" transform="rotate(-38 15 39)" fill="url(#g-leather)" stroke="${INK}"/>
+                    <rect x="20" y="29" width="24" height="23" rx="5" fill="url(#g-leather)" stroke="${INK}" stroke-width="1.2"/>
+                    <path d="M21 32 H43" stroke="${INK}" stroke-opacity=".5" stroke-width="2"/>
+                    <path d="M25 38 Q32 42 39 38" fill="none" stroke="${INK}" stroke-opacity=".4"/>
+                    <rect x="18" y="50" width="28" height="11" rx="2" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.2"/>
+                    <path d="M18 55.5 H46" stroke="#4a2e10"/>
+                    <circle cx="23" cy="53" r="1" fill="#fff3b0"/><circle cx="32" cy="53" r="1" fill="#fff3b0"/><circle cx="41" cy="53" r="1" fill="#fff3b0"/>`,
+                shoes_1: `
+                    <path d="M9 50 C9 44 13 40 20 38 C24 37 27 35 28 31 L29 13 H41 L42 33 C46 38 54 42 57 47 C58 49 58 50 57 50 Z" fill="#5b3a1d" stroke="${INK}" stroke-width="1.3" stroke-linejoin="round"/>
+                    <path d="M30 15 L40 21 M40 15 L30 21 M30 21 L40 27 M40 21 L30 27 M29.5 27 L41 33 M40.5 27 L29 33" stroke="#c48a52" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M14 45 L22 38.5 M20 48 L30 37 M28 49 L37 38 M36 49 L44 40.5 M44 49.5 L51 44" stroke="#c48a52" stroke-width="2.6" stroke-linecap="round"/>
+                    <rect x="27.5" y="10" width="15" height="4.5" rx="1.5" fill="url(#g-leather)" stroke="${INK}"/>
+                    <path d="M6.5 50 H57 C60.5 50 60.5 56 57 56 H8 C4.5 56 4 50 6.5 50 Z" fill="#2e1d0e" stroke="${INK}"/>
+                    ${[11, 17, 23, 29, 35, 41, 47, 53].map(x => `<circle cx="${x}" cy="57.3" r="1.3" fill="#c0c5cb"/>`).join('')}`,
+                potion_red: potion('g-potion-red'),
+                potion_blue: potion('g-potion-blue'),
+
+                // crafting materials
+                mat_iron: ingot('g-steel', '#2f3439'),
+                mat_bronze: ingot('g-bronze', '#4a2e10'),
+                mat_ruby: `
+                    <path d="M20 14 H44 L54 26 L32 54 L10 26 Z" fill="url(#g-gem-red)" stroke="#4a0606" stroke-width="1.5" stroke-linejoin="round"/>
+                    <path d="M10 26 H54 M20 14 L26 26 L32 14 L38 26 L44 14 M26 26 L32 54 L38 26" fill="none" stroke="#fff" stroke-opacity=".45"/>`,
+                mat_leather: `
+                    <path d="M14 12 C22 16 26 8 32 12 C38 8 42 16 50 12 C48 22 56 28 52 36 C56 44 48 50 50 56 C42 52 38 58 32 54 C26 58 22 52 14 56 C16 50 8 44 12 36 C8 28 16 22 14 12 Z" fill="url(#g-leather)" stroke="${INK}" stroke-width="1.3"/>
+                    <path d="M20 20 C26 24 38 24 44 20 M18 34 H46 M20 46 C26 42 38 42 44 46" fill="none" stroke="${INK}" stroke-opacity=".35" stroke-dasharray="2 2"/>`,
+                unknown: `
+                    <rect x="12" y="16" width="40" height="36" rx="3" fill="url(#g-wood)" stroke="#3b2410" stroke-width="1.5"/>
+                    <path d="M12 28 H52 M12 40 H52 M24 16 V52 M40 16 V52" stroke="#3b2410"/>`
+            };
+
+            function potion(liquid) {
+                return `
+                    <path d="M16.5 44 A15.5 15.5 0 1 0 47.5 44 A15.5 15.5 0 1 0 16.5 44 Z" fill="url(#g-glass)" stroke="#cfd8dc" stroke-width="1.5"/>
+                    <path d="M16.9 40 Q24 36.5 32 40 T47.1 40 A15.5 15.5 0 1 1 16.9 40 Z" fill="url(#${liquid})"/>
+                    <rect x="27" y="15" width="10" height="14" fill="url(#g-glass)" stroke="#cfd8dc" stroke-width="1.5"/>
+                    <rect x="25.5" y="7" width="13" height="9" rx="2.5" fill="url(#g-wood)" stroke="#3b2410"/>
+                    <ellipse cx="24.5" cy="37" rx="3.5" ry="6" fill="#fff" fill-opacity=".35" transform="rotate(25 24.5 37)"/>
+                    <circle cx="36" cy="48" r="1.6" fill="#fff" fill-opacity=".5"/><circle cx="40" cy="44" r="1" fill="#fff" fill-opacity=".5"/><circle cx="31" cy="52" r="1.2" fill="#fff" fill-opacity=".4"/>`;
+            }
+
+            function ingot(grad, ink) {
+                return `
+                    <path d="M8 44 L16 26 H48 L56 44 Z" fill="url(#${grad})" stroke="${ink}" stroke-width="1.4" stroke-linejoin="round"/>
+                    <path d="M8 44 H56 V50 H8 Z" fill="url(#${grad})" stroke="${ink}" stroke-width="1.4" opacity=".75"/>
+                    <path d="M18 29 H40" stroke="#fff" stroke-opacity=".6" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M14 34 L24 18 H52 L58 32" fill="none" stroke="${ink}" stroke-opacity="0"/>`;
+            }
+
+            // Map item base names to the matching icon, so a "Trident" looks like a trident.
+            const ICON_BY_NAME = {
+                'Gladius': 'weapon_1', 'Centurion Gladius': 'weapon_1', 'Spatha': 'weapon_2', 'Centurion Sword': 'weapon_2', 'Spatha of Victory': 'weapon_2',
+                'Pugio Dagger': 'weapon_3', 'Trident': 'weapon_4', 'Halberd': 'weapon_5',
+                'Galea Helmet': 'helmet_1', 'Legionary Helm': 'helmet_1', 'Golden Galea Helmet': 'helmet_1', 'Centurion Crest': 'helmet_2', 'Gladiator Mask': 'helmet_3',
+                'Lorica Segmentata': 'armor_1', 'Imperial Lorica Segmentata': 'armor_1', 'Lorica Hamata': 'armor_2', 'Gladiator Cuirass': 'armor_3', 'Bronze Breastplate': 'armor_3',
+                'Scutum Shield': 'shield_1', 'Tower Shield': 'shield_1', 'Scutum of Mars': 'shield_1', 'Parma Round Shield': 'shield_2', 'Aegis of Minerva': 'shield_2', 'Gladiator Buckler': 'shield_3'
+            };
+
+            function item(key, cls = 'art art-item') {
+                return svg(items[key] || items[fallbackKey(key)] || items.unknown, '0 0 64 64', cls);
+            }
+            function fallbackKey(key) {
+                const k = String(key || '');
+                if (k.startsWith('potion')) return 'potion_red';
+                const base = k.split('_')[0];
+                return items[base + '_1'] ? base + '_1' : null;
+            }
+
+            // ------------------------------------------------------------ portraits
+            // Each portrait is drawn in a 64x64 box, then framed in a round medallion.
+            const SKIN = '#d9a77a', SKIN_DARK = '#b98256';
+            const eyes = (y, color = '#1b1b1b', dx = 7, r = 1.8) =>
+                `<ellipse cx="${32 - dx}" cy="${y}" rx="${r * 1.3}" ry="${r}" fill="${color}"/><ellipse cx="${32 + dx}" cy="${y}" rx="${r * 1.3}" ry="${r}" fill="${color}"/>`;
+            const glowEyes = (y, color, dx = 7, r = 2) =>
+                `<circle cx="${32 - dx}" cy="${y}" r="${r * 2.2}" fill="${color}" opacity=".25"/><circle cx="${32 + dx}" cy="${y}" r="${r * 2.2}" fill="${color}" opacity=".25"/>` + eyes(y, color, dx, r);
+            const brows = (y, dx = 7, angry = true) =>
+                `<path d="M${32 - dx - 5} ${y - (angry ? 2 : 0)} L${32 - dx + 4} ${y + (angry ? 1.5 : 0)} M${32 + dx + 5} ${y - (angry ? 2 : 0)} L${32 + dx - 4} ${y + (angry ? 1.5 : 0)}" stroke="#2a1a0e" stroke-width="2" stroke-linecap="round"/>`;
+
+            function barbarian(o) {
+                return `
+                    <path d="M8 64 C10 50 20 46 32 46 C44 46 54 50 56 64 Z" fill="${o.cloak}"/>
+                    <path d="M12 64 C14 54 20 50 32 50 C44 50 50 54 52 64" fill="none" stroke="${o.fur}" stroke-width="6" stroke-linecap="round" stroke-dasharray="3 2"/>
+                    <path d="M17 30 C13 44 15 56 20 60 L26 44 Z M47 30 C51 44 49 56 44 60 L38 44 Z" fill="${o.hair}"/>
+                    <ellipse cx="32" cy="33" rx="12" ry="14" fill="${SKIN}"/>
+                    ${o.paint ? `<rect x="19" y="27" width="26" height="5" fill="#1e5fb3" opacity=".75"/>` : ''}
+                    ${eyes(30, '#1b1b1b', 5, 1.5)}${brows(27, 5)}
+                    <path d="M20 35 C20 56 44 56 44 35 C40 41 24 41 20 35 Z" fill="${o.hair}"/>
+                    <path d="M25 38 Q32 35 39 38 Q32 41 25 38 Z" fill="${o.hair}" stroke="#2a1a0e" stroke-opacity=".4"/>
+                    <ellipse cx="32" cy="42" rx="3" ry="2" fill="#5c1a1a"/>
+                    <path d="M19 27 C19 12 45 12 45 27 Z" fill="url(#${o.helm})" stroke="#2a1a0e" stroke-width="1.2"/>
+                    <path d="M19 26 H45" stroke="#2a1a0e" stroke-width="2.5"/>
+                    <path d="M20 23 C11 22 6 14 8 5 C12 13 16 17 22 17 Z M44 23 C53 22 58 14 56 5 C52 13 48 17 42 17 Z" fill="#efe6d0" stroke="#6b5a40"/>
+                    ${o.crown ? `<path d="M22 16 L25 9 L28 15 L32 7 L36 15 L39 9 L42 16 Z" fill="url(#g-gold)" stroke="#5a4210"/>` : ''}`;
+            }
+
+            const portraits = {
+                boar: `<g transform="translate(8 5) scale(.82)">
+                    <path d="M4 64 V52 H60 V64 Z" fill="#3b4a26"/>
+                    <ellipse cx="38" cy="38" rx="20" ry="13" fill="#5d4030"/>
+                    <path d="M20 29 L24 22 L28 27 L32 20 L36 25 L40 20 L44 25 L48 22 L53 30" fill="#2e1f15"/>
+                    <path d="M24 29 C14 28 9 35 6 42 L10 47 C15 47 19 45 24 45 Z" fill="#6d4a36" stroke="#2e1f15"/>
+                    <ellipse cx="7" cy="44" rx="3.2" ry="3.8" fill="#c48b73" stroke="#2e1f15"/>
+                    <circle cx="6.2" cy="43" r=".8" fill="#2e1f15"/><circle cx="8" cy="45" r=".8" fill="#2e1f15"/>
+                    <path d="M11 45 C8 40 10 36 14 37 C12 39 12 42 13 45 Z" fill="#f5f0e0" stroke="#8a8069" stroke-width=".6"/>
+                    <circle cx="16" cy="36" r="1.8" fill="#ff5252"/>
+                    <path d="M20 31 L24 23 L26 32 Z" fill="#2e1f15"/>
+                    <rect x="24" y="46" width="4.5" height="11" fill="#2e1f15"/><rect x="31" y="47" width="4.5" height="10" fill="#2e1f15"/>
+                    <rect x="44" y="46" width="4.5" height="11" fill="#2e1f15"/><rect x="51" y="45" width="4.5" height="11" fill="#2e1f15"/>
+                    <path d="M58 35 q5 -3 3 4" fill="none" stroke="#2e1f15" stroke-width="1.5"/></g>`,
+                hound: wolfHead('#8a8f96', '#b7bcc2', '#ffb300', false),
+                werewolf: wolfHead('#3b3530', '#5a524b', '#ff1744', true),
+                bandit: `
+                    <path d="M10 64 C10 34 18 10 32 10 C46 10 54 34 54 64 Z" fill="#4e3b2a"/>
+                    <path d="M16 64 C16 40 22 20 32 20 C42 20 48 40 48 64 Z" fill="#2e2218"/>
+                    <ellipse cx="32" cy="36" rx="11" ry="13" fill="${SKIN}"/>
+                    ${eyes(33, '#1b1b1b', 5, 1.5)}${brows(30, 5)}
+                    <path d="M20 37 C26 43 38 43 44 37 V47 C38 53 26 53 20 47 Z" fill="#7b1f1f"/>
+                    <path d="M22 44 C28 47 36 47 42 44" stroke="#4a0f0f" fill="none"/>
+                    <path d="M46 62 L56 44 L58 46 L49 63 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width=".8"/>
+                    <rect x="44" y="60" width="7" height="3" fill="url(#g-wood)" transform="rotate(-60 47 61)"/>`,
+                lynx: `
+                    <path d="M13 30 L15 7 L27 22 Z M51 30 L49 7 L37 22 Z" fill="#8d6538" stroke="#3b2410"/>
+                    <path d="M15 7 L14 1 M49 7 L50 1" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M16 12 L18 25 L24 22 Z M48 12 L46 25 L40 22 Z" fill="#e8c9a0"/>
+                    <path d="M8 40 C8 22 20 16 32 16 C44 16 56 22 56 40 C56 50 50 56 44 58 L32 54 L20 58 C14 56 8 50 8 40 Z" fill="#c29563" stroke="#3b2410"/>
+                    <path d="M8 40 L14 50 L10 54 M56 40 L50 50 L54 54" fill="none" stroke="#e8c9a0" stroke-width="3"/>
+                    <circle cx="20" cy="26" r="1.5" fill="#6b4a26"/><circle cx="44" cy="26" r="1.5" fill="#6b4a26"/><circle cx="32" cy="22" r="1.5" fill="#6b4a26"/><circle cx="26" cy="21" r="1.2" fill="#6b4a26"/><circle cx="38" cy="21" r="1.2" fill="#6b4a26"/>
+                    <path d="M18 34 Q23 29 28 34 Q23 37 18 34 Z M36 34 Q41 29 46 34 Q41 37 36 34 Z" fill="#cddc39"/>
+                    <ellipse cx="23" cy="33.5" rx="1" ry="2.6" fill="#111"/><ellipse cx="41" cy="33.5" rx="1" ry="2.6" fill="#111"/>
+                    <ellipse cx="32" cy="46" rx="9" ry="7" fill="#f1dcc0"/>
+                    <path d="M29 42 H35 L32 45 Z" fill="#c2716b"/>
+                    <path d="M32 45 V48 M32 48 Q29 50 27 48 M32 48 Q35 50 37 48" fill="none" stroke="#3b2410" stroke-width="1"/>
+                    <path d="M24 46 L8 44 M24 48 L9 50 M40 46 L56 44 M40 48 L55 50" stroke="#fff" stroke-opacity=".7" stroke-width=".7"/>`,
+                harpy: `
+                    <path d="M32 30 C20 14 8 12 1 19 C9 21 11 25 6 29 C13 29 15 33 10 38 C18 36 25 38 32 42 Z" fill="#5a4a6b" stroke="#2b1b33"/>
+                    <path d="M32 30 C44 14 56 12 63 19 C55 21 53 25 58 29 C51 29 49 33 54 38 C46 36 39 38 32 42 Z" fill="#5a4a6b" stroke="#2b1b33"/>
+                    <path d="M6 22 L18 27 M8 31 L20 33 M50 27 L58 22 M44 33 L56 31" stroke="#8a78a0" stroke-width="1"/>
+                    <path d="M25 38 C24 52 40 52 39 38 Z" fill="#7d6b8a"/>
+                    <path d="M27 50 L25 60 M30 51 L30 61 M37 50 L39 60 M34 51 L34 61" stroke="#e0b030" stroke-width="1.8" stroke-linecap="round"/>
+                    <path d="M22 26 C18 14 26 8 32 8 C40 8 47 14 42 28 C46 20 40 32 32 34 C24 32 18 22 22 26 Z" fill="#2b1b33"/>
+                    <ellipse cx="32" cy="25" rx="7" ry="8" fill="#c9a88a"/>
+                    ${glowEyes(24, '#ff1744', 3, 1.1)}
+                    <path d="M29 30 Q32 28 35 30" stroke="#5c1a1a" fill="none"/>`,
+                troll: `
+                    <path d="M4 36 L12 30 L10 42 Z M60 36 L52 30 L54 42 Z" fill="#5d6b48"/>
+                    <path d="M10 40 C8 20 20 8 32 8 C44 8 56 20 54 40 C52 54 44 60 32 60 C20 60 12 54 10 40 Z" fill="#6f7f5a" stroke="#3a4430" stroke-width="1.3"/>
+                    <path d="M16 28 Q32 20 48 28 L46 32 Q32 26 18 32 Z" fill="#4e5a3c"/>
+                    <circle cx="24" cy="33" r="2.8" fill="#fff59d"/><circle cx="40" cy="33" r="2.8" fill="#fff59d"/>
+                    <circle cx="24.5" cy="33.3" r="1.3" fill="#111"/><circle cx="40.5" cy="33.3" r="1.3" fill="#111"/>
+                    <path d="M28 33 C25 45 39 45 36 33" fill="#5d6b48" stroke="#3a4430"/>
+                    <path d="M20 48 Q32 55 44 48" fill="none" stroke="#2a3020" stroke-width="2"/>
+                    <path d="M23 49 L25 41 L27 50 Z M41 49 L39 41 L37 50 Z" fill="#f5f0e0"/>
+                    <circle cx="18" cy="22" r="1.6" fill="#56643f"/><circle cx="46" cy="44" r="2" fill="#56643f"/><circle cx="42" cy="16" r="1.3" fill="#56643f"/>`,
+                centaur: `<g transform="translate(6 7) scale(.84)">
+                    <path d="M4 64 V56 H60 V64 Z" fill="#3b4a26"/>
+                    <path d="M52 34 C60 36 62 46 58 52" fill="none" stroke="#3a2412" stroke-width="3" stroke-linecap="round"/>
+                    <ellipse cx="38" cy="40" rx="17" ry="9" fill="#8d5a2b" stroke="#3a2412"/>
+                    <rect x="24" y="44" width="4" height="14" fill="#6b4220"/><rect x="31" y="45" width="4" height="13" fill="#6b4220"/>
+                    <rect x="44" y="44" width="4" height="14" fill="#6b4220"/><rect x="50" y="43" width="4" height="15" fill="#6b4220"/>
+                    <path d="M18 42 L20 22 H29 L31 40 Z" fill="${SKIN}" stroke="${SKIN_DARK}"/>
+                    <path d="M20 26 L31 36" stroke="#6b3f16" stroke-width="2.5"/>
+                    <circle cx="24.5" cy="16" r="5.5" fill="${SKIN}"/>
+                    <path d="M19 15 C19 8 30 8 30 14 C28 11 22 11 19 15 Z M29 13 C33 16 32 22 30 24" fill="#3a2412"/>
+                    <path d="M12 6 Q2 20 12 36" fill="none" stroke="url(#g-wood)" stroke-width="2.5"/>
+                    <path d="M12 6 L12 36" stroke="#eee" stroke-width=".6"/>
+                    <path d="M21 24 L12 21" stroke="${SKIN}" stroke-width="3" stroke-linecap="round"/></g>`,
+                treant: `
+                    <path d="M20 18 L9 6 M26 18 L23 3 M38 18 L41 3 M44 18 L55 6" stroke="#5b4128" stroke-width="3.5" stroke-linecap="round"/>
+                    ${[[9, 6, 6], [23, 4, 5], [41, 4, 5], [55, 6, 6], [15, 10, 4], [49, 10, 4], [32, 6, 5]].map(([x, y, r]) => `<circle cx="${x}" cy="${y}" r="${r}" fill="#4e7d3a"/><circle cx="${x - 1.5}" cy="${y - 1.5}" r="${r * .55}" fill="#78a855"/>`).join('')}
+                    <path d="M18 64 C20 46 15 30 20 16 H44 C49 30 44 46 46 64 Z" fill="#6b4c2e" stroke="#3a2818" stroke-width="1.3"/>
+                    <path d="M24 20 C22 30 26 40 23 60 M40 20 C42 32 38 44 41 60 M32 44 C31 52 33 56 32 64" fill="none" stroke="#3a2818" stroke-width="1.2"/>
+                    <ellipse cx="26" cy="31" rx="4" ry="3" fill="#1a120a"/><ellipse cx="38" cy="31" rx="4" ry="3" fill="#1a120a"/>
+                    <circle cx="26" cy="31" r="1.5" fill="#b2ff59"/><circle cx="38" cy="31" r="1.5" fill="#b2ff59"/>
+                    <path d="M24 42 L28 39 L31 43 L34 39 L37 43 L40 40 L39 45 L25 45 Z" fill="#1a120a"/>
+                    <path d="M18 50 C22 48 22 54 19 55 Z M44 24 C47 22 48 27 45 28 Z" fill="#78a855"/>`,
+                berserker: barbarian({ hair: '#b5651d', cloak: '#5d4a3a', fur: '#8d8d8d', helm: 'g-steel', paint: true }),
+                chieftain: barbarian({ hair: '#5d3a1a', cloak: '#7f1010', fur: '#c9c2b5', helm: 'g-gold', crown: true }),
+                scorpion: `
+                    <path d="M4 64 V50 C20 46 44 46 60 50 V64 Z" fill="#c8a25a"/>
+                    <path d="M22 34 L8 26 M21 38 L6 38 M22 42 L8 50 M24 45 L14 56 M42 34 L56 26 M43 38 L58 38 M42 42 L56 50 M40 45 L50 56" stroke="#6b4210" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M26 30 L16 18 M38 30 L48 18" stroke="#8a5a1a" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M16 18 C8 16 6 8 12 5 C12 10 15 12 19 12 C18 8 20 6 22 7 C22 12 20 17 16 18 Z M48 18 C56 16 58 8 52 5 C52 10 49 12 45 12 C46 8 44 6 42 7 C42 12 44 17 48 18 Z" fill="#c68a2e" stroke="#5a3508"/>
+                    <ellipse cx="32" cy="38" rx="10" ry="11" fill="#c68a2e" stroke="#5a3508" stroke-width="1.3"/>
+                    <path d="M23 36 H41 M23 41 H41" stroke="#5a3508"/>
+                    ${[50, 55, 59].map((y, i) => `<ellipse cx="${32 + i * 2}" cy="${y}" rx="${5 - i}" ry="3" fill="#c68a2e" stroke="#5a3508"/>`).join('')}
+                    <path d="M37 60 C44 62 48 56 46 50 L50 48 L47 45 C44 50 42 54 38 57 Z" fill="#8a1c1c" stroke="#3a0808"/>
+                    <circle cx="29" cy="31" r="1.3" fill="#111"/><circle cx="35" cy="31" r="1.3" fill="#111"/>`,
+                anubis: `
+                    <path d="M12 64 L16 30 C16 16 48 16 48 30 L52 64 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <path d="M16 36 H48 M15.3 42 H48.7 M14.6 48 H49.4 M13.9 54 H50.1 M13.2 60 H50.8" stroke="#1e5fb3" stroke-width="2.5"/>
+                    <path d="M22 22 L23 1 L31 17 Z M42 22 L41 1 L33 17 Z" fill="#1a1a1a"/>
+                    <path d="M24 5 L25 16 L29 16 Z M40 5 L39 16 L35 16 Z" fill="#8a6410"/>
+                    <path d="M21 20 C21 12 43 12 43 20 L40 34 L36 50 C34 54 30 54 28 50 L24 34 Z" fill="#1f1f1f" stroke="#000"/>
+                    <path d="M22.5 25 Q26 22 29.5 25 Q26 27.5 22.5 25 Z M34.5 25 Q38 22 41.5 25 Q38 27.5 34.5 25 Z" fill="#ffd54f"/>
+                    <path d="M21 25 H23 M41 25 H43" stroke="#ffd54f"/>
+                    <ellipse cx="32" cy="50" rx="3" ry="2" fill="#000"/>
+                    <path d="M14 58 C22 52 42 52 50 58" fill="none" stroke="#e53935" stroke-width="3"/>`,
+                sphinx: `
+                    <path d="M8 64 L14 26 C14 8 50 8 50 26 L56 64 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <path d="M14 30 H50 M13 37 H51 M12 44 H52 M11 51 H53 M10 58 H54 M20 12 L28 22 M44 12 L36 22 M32 9 V20" stroke="#1e5fb3" stroke-width="2.4"/>
+                    <path d="M22 22 H42 V40 C42 50 22 50 22 40 Z" fill="#d7b47a" stroke="#8a6a3a"/>
+                    <path d="M24 29 Q27 26.5 30 29 Q27 31 24 29 Z M34 29 Q37 26.5 40 29 Q37 31 34 29 Z" fill="#1b1b1b"/>
+                    <path d="M22 29 H24 M40 29 H42 M30 29 L31 30 M34 29 L33 30" stroke="#1b1b1b"/>
+                    <path d="M32 30 V38 L30 39 H34" fill="none" stroke="#8a6a3a"/>
+                    <path d="M28 43 Q32 45 36 43" stroke="#7a4a2a" fill="none" stroke-width="1.3"/>
+                    <rect x="29.5" y="48" width="5" height="12" rx="1" fill="#1e5fb3" stroke="#0d2c5e"/>
+                    <path d="M29.5 51 H34.5 M29.5 54 H34.5 M29.5 57 H34.5" stroke="#e0b030"/>
+                    <path d="M32 11 C29 13 30 17 32 18 C34 17 35 13 32 11 Z" fill="#1e5fb3" stroke="#e0b030"/>`,
+                falxman: `
+                    <path d="M8 64 C10 50 20 46 32 46 C44 46 54 50 56 64 Z" fill="#4a5a3a"/>
+                    <path d="M8 64 C10 50 20 46 32 46 C44 46 54 50 56 64 Z" fill="url(#p-scale)" opacity=".7"/>
+                    <ellipse cx="32" cy="32" rx="11" ry="13" fill="${SKIN}"/>
+                    ${eyes(30, '#1b1b1b', 5, 1.5)}${brows(27, 5)}
+                    <path d="M21 34 C21 54 43 54 43 34 C39 40 25 40 21 34 Z" fill="#4a2c14"/>
+                    <path d="M26 38 Q32 36 38 38" stroke="#2a1608" stroke-width="2" fill="none"/>
+                    <path d="M19 27 C17 13 26 6 34 5 C40 4 45 8 45 14 C47 20 46 24 45 27 Z" fill="#8e2a2a" stroke="#3d0f0f"/>
+                    <path d="M34 5 C28 2 24 6 25 10" fill="#8e2a2a" stroke="#3d0f0f"/>
+                    <path d="M4 60 L18 46" stroke="url(#g-wood)" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M17 47 C28 30 48 24 60 32 C50 30 34 36 21 50 Z" fill="url(#g-steel)" stroke="#33383d"/>`,
+                wolfpriest: `
+                    <path d="M6 64 C8 40 16 26 32 26 C48 26 56 40 58 64 Z" fill="#4a4a52"/>
+                    <path d="M14 64 C16 46 22 36 32 36 C42 36 48 46 50 64 Z" fill="#2c2c33"/>
+                    <ellipse cx="32" cy="41" rx="8" ry="9" fill="#a88468"/>
+                    ${glowEyes(40, '#80deea', 3.5, 1.2)}
+                    <path d="M16 30 L18 10 L25 19 H39 L46 10 L48 30 C42 22 22 22 16 30 Z" fill="#6b6f78" stroke="#2c2c33"/>
+                    <path d="M19 14 L20 21 L24 20 Z M45 14 L44 21 L40 20 Z" fill="#3a3a42"/>
+                    <path d="M26 22 L32 34 L38 22 Z" fill="#5a5e66" stroke="#2c2c33"/>
+                    <circle cx="27.5" cy="23" r="1.2" fill="#fff"/><circle cx="36.5" cy="23" r="1.2" fill="#fff"/>
+                    <path d="M31 34 L32 36.5 L33 34 Z" fill="#fff"/>
+                    <path d="M54 64 V14" stroke="url(#g-wood)" stroke-width="3"/>
+                    <circle cx="54" cy="11" r="5" fill="#e8e2cf" stroke="#6b6352"/>
+                    <circle cx="52.3" cy="10.5" r="1.2" fill="#111"/><circle cx="55.7" cy="10.5" r="1.2" fill="#111"/>`,
+                champion: `
+                    <path d="M50 64 V6" stroke="url(#g-wood)" stroke-width="2.5"/>
+                    <path d="M50 12 C56 8 62 12 64 16 C58 16 58 22 64 26 C56 28 54 22 50 22 Z" fill="#b71c1c"/>
+                    <path d="M44 6 C44 0 56 0 56 6 L54 12 C52 14 48 14 46 12 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <circle cx="48" cy="6" r=".9" fill="#111"/>
+                    <path d="M4 64 C6 50 16 45 28 45 C40 45 48 50 50 64 Z" fill="url(#g-steel)"/>
+                    <path d="M4 64 C6 50 16 45 28 45 C40 45 48 50 50 64 Z" fill="url(#p-scale)"/>
+                    <ellipse cx="28" cy="32" rx="11" ry="13" fill="${SKIN}"/>
+                    <circle cx="24" cy="30" r="1.5" fill="#111"/><circle cx="32" cy="30" r="1.5" fill="#111"/>
+                    <path d="M19 27 L27 28.5 M37 27 L29 28.5" stroke="#1a1a1a" stroke-width="2" stroke-linecap="round"/>
+                    <path d="M17 35 C17 56 39 56 39 35 C35 41 21 41 17 35 Z" fill="#1a1a1a"/>
+                    <path d="M15 28 L28 4 L41 28 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.3"/>
+                    <path d="M14 27 H42" stroke="url(#g-gold)" stroke-width="3"/>
+                    <path d="M16 28 V40 L20 42 V28 Z M40 28 V40 L36 42 V28 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width=".8"/>`,
+                skeleton: `
+                    <path d="M10 64 C12 52 20 48 32 48 C44 48 52 52 54 64 Z" fill="#7f1010"/>
+                    <path d="M20 29 C20 16 44 16 44 29 V38 C44 42 41 44 39 44 V51 H25 V44 C23 44 20 42 20 38 Z" fill="#e8e2cf" stroke="#7a7160"/>
+                    <ellipse cx="26.5" cy="33" rx="4" ry="4.5" fill="#1a1a1a"/><ellipse cx="37.5" cy="33" rx="4" ry="4.5" fill="#1a1a1a"/>
+                    <circle cx="26.5" cy="33.5" r="1.3" fill="#ff5252"/><circle cx="37.5" cy="33.5" r="1.3" fill="#ff5252"/>
+                    <path d="M32 37 L30 41 H34 Z" fill="#1a1a1a"/>
+                    <path d="M26 45 H38 M28 44 V50 M31 44 V51 M34 44 V51 M37 44 V50" stroke="#7a7160"/>
+                    <path d="M15 31 C15 14 23 7 32 7 C41 7 49 14 49 31 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.3"/>
+                    <path d="M11 30 H53 L54 35 C44 33 20 33 10 35 Z" fill="url(#g-steel)" stroke="#2f3439"/>
+                    <path d="M17 33 V44 L22 42 V33 Z M47 33 V44 L42 42 V33 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width=".8"/>
+                    <path d="M25 11 C22 15 21 21 21 27" fill="none" stroke="#fff" stroke-opacity=".5" stroke-width="2"/>`,
+                wight: `
+                    <circle cx="32" cy="32" r="26" fill="url(#g-glow-ghost)"/>
+                    <path d="M12 62 C8 40 14 12 32 10 C50 12 56 40 52 62 L46 56 L40 62 L34 56 L28 62 L22 56 Z" fill="#b3c7d6" fill-opacity=".9" stroke="#e0f7fa" stroke-opacity=".6"/>
+                    <path d="M22 30 C22 24 30 24 30 31 C30 36 22 36 22 30 Z M34 31 C34 24 42 24 42 30 C42 36 34 36 34 31 Z" fill="#0d1b24"/>
+                    <circle cx="26" cy="30" r="1.6" fill="#18ffff"/><circle cx="38" cy="30" r="1.6" fill="#18ffff"/>
+                    <ellipse cx="32" cy="44" rx="4" ry="6" fill="#0d1b24"/>
+                    <path d="M8 26 C4 20 8 14 12 16 M56 26 C60 20 56 14 52 16" fill="none" stroke="#e0f7fa" stroke-opacity=".6" stroke-width="1.5"/>`,
+                lich: `
+                    <circle cx="32" cy="32" r="30" fill="url(#g-glow-arcane)"/>
+                    <path d="M8 64 C8 36 16 18 32 18 C48 18 56 36 56 64 Z" fill="#2a0f3d"/>
+                    <path d="M22 32 C22 22 42 22 42 32 V40 C42 43 40 45 38 45 V50 H26 V45 C24 45 22 43 22 40 Z" fill="#d8d2bf" stroke="#6b6352"/>
+                    <ellipse cx="27.5" cy="35" rx="3.2" ry="3.8" fill="#111"/><ellipse cx="36.5" cy="35" rx="3.2" ry="3.8" fill="#111"/>
+                    <circle cx="27.5" cy="35.3" r="1.5" fill="#76ff03"/><circle cx="36.5" cy="35.3" r="1.5" fill="#76ff03"/>
+                    <path d="M32 38 L30.5 41.5 H33.5 Z" fill="#111"/>
+                    <path d="M27 46 H37 M29 45 V50 M32 45 V50 M35 45 V50" stroke="#6b6352"/>
+                    <path d="M21 26 L22 14 L26.5 21 L32 9 L37.5 21 L42 14 L43 26 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <circle cx="32" cy="20" r="2.2" fill="url(#g-gem-green)"/>`,
+                gorgon: `
+                    ${[[14, 30, 4, 12], [10, 18, 16, 6], [22, 12, 24, 2], [42, 12, 40, 2], [54, 18, 48, 6], [50, 30, 60, 12], [12, 42, 2, 38], [52, 42, 62, 38]].map(([x1, y1, x2, y2]) =>
+                        `<path d="M32 26 Q${(x1 + 32) / 2 + 6} ${(y1 + 26) / 2 - 6} ${x1} ${y1} T${x2} ${y2}" fill="none" stroke="#2e7d32" stroke-width="4" stroke-linecap="round"/>
+                         <ellipse cx="${x2}" cy="${y2}" rx="3.2" ry="2.4" fill="#43a047" stroke="#1b5e20"/><circle cx="${x2 + .8}" cy="${y2 - .6}" r=".7" fill="#ffeb3b"/>`).join('')}
+                    <path d="M16 64 C18 52 24 48 32 48 C40 48 46 52 48 64 Z" fill="#3a5a2a"/>
+                    <ellipse cx="32" cy="36" rx="12" ry="14" fill="#9ccc65" stroke="#558b2f"/>
+                    ${glowEyes(33, '#ffeb3b', 5, 1.5)}
+                    <path d="M32 35 V41" stroke="#558b2f"/>
+                    <path d="M27 44 Q32 47 37 44" fill="none" stroke="#33691e" stroke-width="1.8"/>`,
+                minotaur: `
+                    <path d="M19 23 C8 21 3 11 7 2 C11 10 16 14 25 16 Z M45 23 C56 21 61 11 57 2 C53 10 48 14 39 16 Z" fill="#efe6d0" stroke="#8a8069"/>
+                    <path d="M14 26 L6 22 L12 32 Z M50 26 L58 22 L52 32 Z" fill="#4a2e18"/>
+                    <path d="M20 16 C20 10 44 10 44 16 L46 34 C46 44 40 54 32 57 C24 54 18 44 18 34 Z" fill="#5d3a1f" stroke="#2e1c0f" stroke-width="1.3"/>
+                    <path d="M26 14 C28 20 36 20 38 14 C36 17 28 17 26 14 Z" fill="#2e1c0f"/>
+                    ${glowEyes(29, '#ff1744', 7, 1.6)}
+                    <ellipse cx="32" cy="47" rx="10" ry="7.5" fill="#8d6e5a" stroke="#2e1c0f"/>
+                    <ellipse cx="28" cy="46" rx="1.8" ry="1.2" fill="#1a0f08"/><ellipse cx="36" cy="46" rx="1.8" ry="1.2" fill="#1a0f08"/>
+                    <circle cx="32" cy="52" r="3.5" fill="none" stroke="url(#g-gold)" stroke-width="1.8"/>`,
+                salamander: `
+                    <circle cx="32" cy="32" r="30" fill="url(#g-glow-fire)"/>
+                    <path d="M32 6 C38 6 40 12 38 18 C44 24 44 34 38 40 C36 48 44 54 52 52 C46 60 34 58 32 50 C28 44 22 36 26 28 C22 22 26 6 32 6 Z" fill="#ff7043" stroke="#8d2a0e" stroke-width="1.3"/>
+                    <path d="M26 22 L14 16 L12 20 M38 22 L50 14 L52 18 M26 34 L14 42 L16 46 M38 36 L48 44 L46 48" stroke="#8d2a0e" stroke-width="3" stroke-linecap="round" fill="none"/>
+                    <circle cx="29" cy="11" r="1.5" fill="#111"/><circle cx="35" cy="11" r="1.5" fill="#111"/>
+                    <circle cx="32" cy="22" r="2" fill="#ffeb3b"/><circle cx="34" cy="30" r="2.5" fill="#ffeb3b"/><circle cx="31" cy="38" r="2" fill="#ffeb3b"/><circle cx="36" cy="46" r="1.6" fill="#ffeb3b"/>
+                    <path d="M30 26 C28 20 32 18 32 14 C34 18 36 20 34 26 Z" fill="url(#g-fire)"/>`,
+                cyclops: `
+                    <path d="M6 64 C8 50 18 46 32 46 C46 46 56 50 58 64 Z" fill="#6b4220"/>
+                    <path d="M50 64 V30" stroke="url(#g-wood)" stroke-width="3.5"/>
+                    <rect x="43" y="22" width="16" height="10" rx="1.5" fill="url(#g-steel)" stroke="#2f3439"/>
+                    <path d="M10 34 C8 16 20 8 32 8 C44 8 56 16 54 34 C52 46 44 52 32 52 C20 52 12 46 10 34 Z" fill="#d6a57c" stroke="#8a5a36" stroke-width="1.3"/>
+                    <path d="M16 22 Q32 12 48 22 L46 26 Q32 18 18 26 Z" fill="#6b4220"/>
+                    <ellipse cx="32" cy="29" rx="8.5" ry="6.5" fill="#fff" stroke="#8a5a36"/>
+                    <circle cx="32" cy="29" r="4.2" fill="#1e88e5"/><circle cx="32" cy="29" r="2" fill="#111"/><circle cx="30.5" cy="27.5" r="1" fill="#fff"/>
+                    <path d="M29 34 C27 41 37 41 35 34" fill="#c48d66" stroke="#8a5a36"/>
+                    <path d="M16 38 C16 58 48 58 48 38 C42 46 22 46 16 38 Z" fill="#6b4220"/>
+                    <path d="M26 44 Q32 42 38 44" stroke="#2a1608" stroke-width="1.8" fill="none"/>`,
+                vulcan: `
+                    <circle cx="32" cy="32" r="30" fill="url(#g-glow-fire)"/>
+                    <path d="M18 12 C20 2 26 8 26 2 C30 8 32 0 34 6 C38 0 40 8 44 4 C44 10 48 8 46 16 Z" fill="url(#g-fire)"/>
+                    <path d="M4 64 C6 48 18 42 32 42 C46 42 58 48 60 64 Z" fill="#3e2723"/>
+                    <path d="M14 56 L22 50 L26 58 M40 50 L46 58 L52 52 M30 46 L33 52 L30 60" fill="none" stroke="#ff9800" stroke-width="1.6"/>
+                    <path d="M18 30 C18 16 46 16 46 30 C46 40 40 46 32 46 C24 46 18 40 18 30 Z" fill="#4e342e" stroke="#1b0f0c"/>
+                    <path d="M22 22 L26 30 L24 38 M42 22 L38 30 L40 38 M32 36 V44" fill="none" stroke="#ff9800" stroke-width="1.3"/>
+                    ${glowEyes(29, '#ffeb3b', 6, 1.8)}
+                    <path d="M26 39 Q32 42 38 39" stroke="#ff6f00" stroke-width="2" fill="none"/>
+                    <path d="M54 64 L58 22" stroke="url(#g-wood)" stroke-width="3"/>
+                    <rect x="50" y="14" width="14" height="9" rx="1.5" fill="#37474f" stroke="#ff9800" stroke-width=".8" transform="rotate(8 57 18)"/>`,
+
+                // arena gladiator archetypes
+                gladiator_1: gladiatorBust(`
+                    <path d="M25 13 C27 2 40 0 46 11 C39 8 32 9 25 13 Z" fill="url(#g-red)" stroke="#3d0707"/>
+                    <path d="M16 34 C16 18 23 11 32 11 C41 11 48 18 48 34 V47 C48 53 42 56 32 56 C22 56 16 53 16 47 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width="1.4"/>
+                    <path d="M7 34 C7 30 57 30 57 34 C57 38 7 38 7 34 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>
+                    <rect x="21" y="38" width="22" height="14" rx="3" fill="#15181b"/>
+                    <path d="M25 38 V52 M29 38 V52 M33 38 V52 M37 38 V52 M41 38 V52 M21 42.5 H43 M21 47 H43" stroke="#e0b030" stroke-width="1.2"/>`, '#7f1010'),
+                gladiator_2: gladiatorBust(`
+                    <path d="M4 64 L20 20" stroke="url(#g-wood)" stroke-width="3"/>
+                    <path d="M16 23 L13 13 M20 20 L20 10 M24 23 L27 13" stroke="#c9ced4" stroke-width="2.4" stroke-linecap="round"/>
+                    <ellipse cx="34" cy="33" rx="11" ry="13" fill="${SKIN}"/>
+                    <path d="M23 29 C21 14 47 14 45 29 C43 22 26 22 23 29 Z" fill="#2a1a0e"/>
+                    ${[24, 28, 32, 36, 40, 44].map(x => `<circle cx="${x}" cy="${20 + Math.abs(x - 34) * .3}" r="2.6" fill="#2a1a0e"/>`).join('')}
+                    <circle cx="29" cy="32" r="1.5" fill="#111"/><circle cx="39" cy="32" r="1.5" fill="#111"/>
+                    <path d="M30 40 Q34 42 38 40" stroke="#7a4a2a" fill="none" stroke-width="1.3"/>
+                    <path d="M44 44 L58 30 L62 40 L50 52 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>`, '#1e5fb3', true),
+                gladiator_3: gladiatorBust(`
+                    <path d="M30 12 C26 4 32 -2 40 2 C44 4 46 10 42 13 C38 9 34 9 30 12 Z" fill="url(#g-steel)" stroke="#2f3439"/>
+                    <path d="M40 2 L46 -1 L44 5 Z" fill="url(#g-steel)"/>
+                    <path d="M14 18 C10 10 14 2 20 4 M50 18 C54 10 50 2 44 4" fill="none" stroke="#e53935" stroke-width="3" stroke-linecap="round"/>
+                    <path d="M16 34 C16 18 23 12 32 12 C41 12 48 18 48 34 V47 C48 53 42 56 32 56 C22 56 16 53 16 47 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.4"/>
+                    <path d="M5 35 C5 29 59 29 59 35 C59 40 5 40 5 35 Z" fill="url(#g-steel)" stroke="#2f3439"/>
+                    <rect x="21" y="40" width="22" height="12" rx="3" fill="#15181b"/>
+                    ${[24, 28, 32, 36, 40].map(x => [43, 47, 50].map(y => `<circle cx="${x}" cy="${y}" r="1.2" fill="#b8bec5"/>`).join('')).join('')}`, '#2e7d32'),
+                gladiator_4: gladiatorBust(`
+                    <path d="M32 6 C34 10 34 16 32 20" stroke="#2f3439" stroke-width="4" stroke-linecap="round"/>
+                    <path d="M15 36 C15 16 24 7 32 7 C40 7 49 16 49 36 C49 50 42 57 32 57 C22 57 15 50 15 36 Z" fill="url(#g-steel)" stroke="#2f3439" stroke-width="1.4"/>
+                    <circle cx="27" cy="33" r="2.2" fill="#111"/><circle cx="37" cy="33" r="2.2" fill="#111"/>
+                    <path d="M22 16 C19 22 18 30 19 38" fill="none" stroke="#fff" stroke-opacity=".6" stroke-width="2.5" stroke-linecap="round"/>
+                    <path d="M15 44 H49" stroke="url(#g-gold)" stroke-width="2"/>`, '#6a1b9a')
+            };
+
+            function wolfHead(fur, light, eye, snarl) {
+                return `
+                    <path d="M18 24 L20 5 L30 16 Z M46 24 L44 5 L34 16 Z" fill="${fur}" stroke="#1b1b1b"/>
+                    <path d="M21 10 L22 20 L27 17 Z M43 10 L42 20 L37 17 Z" fill="#3a2a2a"/>
+                    <path d="M32 13 C44 13 52 22 52 32 C52 40 46 44 42 48 L36 58 H28 L22 48 C18 44 12 40 12 32 C12 22 20 13 32 13 Z" fill="${fur}" stroke="#1b1b1b" stroke-width="1.2"/>
+                    <path d="M12 32 L6 36 L13 38 M52 32 L58 36 L51 38" fill="${fur}"/>
+                    <path d="M25 36 C24 50 40 50 39 36 C36 40 28 40 25 36 Z" fill="${light}"/>
+                    <path d="M32 16 L29 30 H35 Z" fill="${light}" opacity=".6"/>
+                    ${snarl ? `<path d="M22 28 L29 31 M42 28 L35 31" stroke="#111" stroke-width="2.2" stroke-linecap="round"/>` : ''}
+                    ${snarl ? glowEyes(32, eye, 7, 1.7) : `<ellipse cx="25" cy="31" rx="2.6" ry="2" fill="${eye}"/><ellipse cx="39" cy="31" rx="2.6" ry="2" fill="${eye}"/><circle cx="25" cy="31" r="1" fill="#111"/><circle cx="39" cy="31" r="1" fill="#111"/>`}
+                    <ellipse cx="32" cy="41" rx="4" ry="2.8" fill="#111"/>
+                    ${snarl ? `<path d="M25 48 Q32 55 39 48 Q32 51 25 48 Z" fill="#6b0f0f"/><path d="M26 48 L27.5 52 L29 49 M38 48 L36.5 52 L35 49" fill="#fff"/>`
+                        : `<path d="M32 44 V47 M32 47 Q29 49 27 47 M32 47 Q35 49 37 47" fill="none" stroke="#111"/>`}`;
+            }
+
+            function gladiatorBust(head, color, bareShoulder) {
+                return `
+                    <path d="M6 64 C8 52 18 48 32 48 C46 48 56 52 58 64 Z" fill="${color}"/>
+                    ${bareShoulder ? `<path d="M16 64 C18 54 24 50 32 50" fill="none" stroke="${SKIN}" stroke-width="6"/>` : `<path d="M10 58 C14 50 22 48 28 49 L26 58 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>`}
+                    ${head}`;
+            }
+
+            // Which portrait each monster (by name) and arena gladiator uses.
+            const PORTRAIT_BY_NAME = {
+                'Wild Boar': 'boar', 'Stray Hound': 'hound', 'Highway Bandit': 'bandit',
+                'Mountain Lynx': 'lynx', 'Screeching Harpy': 'harpy', 'Mountain Troll': 'troll',
+                'Centaur Scout': 'centaur', 'Timber Werewolf': 'werewolf', 'Corrupted Treant': 'treant',
+                'Barbarian Berserker': 'berserker', 'Warlord Chieftain': 'chieftain',
+                'Giant Scorpion': 'scorpion', 'Tomb Guardian': 'anubis', 'Riddling Sphinx': 'sphinx',
+                'Dacian Falxman': 'falxman', 'Wolf Priest': 'wolfpriest', 'Champion of Decebalus': 'champion',
+                'Skeleton Legionary': 'skeleton', 'Crypt Wight': 'wight', 'Lich Lord Cassius': 'lich',
+                'Gorgon Sentinel': 'gorgon', 'Minotaur Emperor': 'minotaur',
+                'Fire Salamander': 'salamander', 'Cyclops Smith': 'cyclops', 'Avatar of Vulcan': 'vulcan'
+            };
+
+            function portrait(key, cls = 'art art-portrait') {
+                const inner = portraits[key] || portraits[PORTRAIT_BY_NAME[key]] || portraits.gladiator_1;
+                return svg(`<circle cx="32" cy="32" r="31" fill="url(#g-portrait-bg)"/>
+                    <g clip-path="url(#c-portrait)">${inner}</g>
+                    <circle cx="32" cy="32" r="30.5" fill="none" stroke="#c5a059" stroke-width="2"/>`, '0 0 64 64', cls);
+            }
+
+            // --------------------------------------------------------------- scenes
+            // Landscape banners (320x90) for expedition regions and dungeons.
+            const R = (n, seed) => { // tiny deterministic PRNG so scenes look the same every render
+                let x = Math.sin(seed * 9301 + n * 49297) * 233280;
+                return x - Math.floor(x);
+            };
+            const cypress = (x, base, h, c) => `<path d="M${x} ${base} C${x - 4} ${base - h * .5} ${x - 2} ${base - h * .85} ${x} ${base - h} C${x + 2} ${base - h * .85} ${x + 4} ${base - h * .5} ${x} ${base} Z" fill="${c}"/>`;
+            const pine = (x, base, h, c) => `<path d="M${x} ${base - h} L${x - h * .28} ${base - h * .45} H${x - h * .14} L${x - h * .36} ${base - h * .05} H${x + h * .36} L${x + h * .14} ${base - h * .45} H${x + h * .28} Z" fill="${c}"/><rect x="${x - 1}" y="${base - h * .05}" width="2" height="${h * .08}" fill="${c}"/>`;
+            const tree = (x, base, r, c) => `<rect x="${x - 1.5}" y="${base - r}" width="3" height="${r}" fill="#2a1d12"/><circle cx="${x}" cy="${base - r * 1.4}" r="${r}" fill="${c}"/><circle cx="${x - r * .6}" cy="${base - r * 1.1}" r="${r * .7}" fill="${c}"/><circle cx="${x + r * .6}" cy="${base - r * 1.1}" r="${r * .7}" fill="${c}"/>`;
+            const stars = (n, seed, maxY) => Array.from({ length: n }, (_, i) => `<circle cx="${(R(i, seed) * 320).toFixed(1)}" cy="${(R(i + 99, seed) * maxY).toFixed(1)}" r="${(R(i + 7, seed) * .9 + .3).toFixed(2)}" fill="#fff" opacity="${(R(i + 3, seed) * .6 + .3).toFixed(2)}"/>`).join('');
+
+            const scenes = {
+                region_1: `
+                    <rect width="320" height="90" fill="url(#g-sky-sunset)"/>
+                    <circle cx="250" cy="52" r="17" fill="#ffd59a" opacity=".9"/>
+                    <path d="M0 58 Q60 40 120 54 T240 48 T320 56 V90 H0 Z" fill="#7d6b4a"/>
+                    <rect x="36" y="44" width="170" height="4" fill="#b39a72"/>
+                    ${Array.from({ length: 11 }, (_, i) => `<path d="M${38 + i * 16} 48 h12 v20 h-2 a4 6 0 0 0 -8 0 h-2 Z" fill="#b39a72"/>`).join('')}
+                    <path d="M230 62 V44 h8 v-4 h4 v4 h10 v-4 h4 v4 h8 V62 Z M270 62 V38 h6 v-4 h4 v4 h6 V62 Z" fill="#8a7152"/>
+                    ${[20, 28, 214, 222, 300].map((x, i) => cypress(x, 72, 30 + (i % 2) * 8, '#1f3319')).join('')}
+                    <path d="M0 70 Q80 62 160 70 T320 68 V90 H0 Z" fill="#4e5d2f"/>
+                    <path d="M0 80 Q100 74 200 80 T320 78 V90 H0 Z" fill="#3a4722"/>`,
+                region_2: `
+                    <rect width="320" height="90" fill="url(#g-sky-mist)"/>
+                    <path d="M0 60 L30 30 L55 50 L90 14 L125 48 L160 22 L200 52 L235 18 L270 46 L300 26 L320 40 V90 H0 Z" fill="#7a8a9a"/>
+                    <path d="M90 14 L100 26 L94 24 L86 28 Z M235 18 L246 30 L238 28 L228 32 Z M160 22 L168 31 L158 30 Z" fill="#eef3f7"/>
+                    <ellipse cx="80" cy="52" rx="90" ry="7" fill="#fff" opacity=".35"/><ellipse cx="250" cy="48" rx="100" ry="6" fill="#fff" opacity=".3"/>
+                    <path d="M0 72 L40 42 L70 62 L110 36 L150 64 L190 40 L230 66 L270 44 L320 64 V90 H0 Z" fill="#4f5d6b"/>
+                    <ellipse cx="170" cy="70" rx="150" ry="6" fill="#fff" opacity=".25"/>
+                    <path d="M0 90 V78 L50 64 L90 80 L140 66 L200 82 L250 68 L320 80 V90 Z" fill="#2f3943"/>`,
+                region_3: `
+                    <rect width="320" height="90" fill="url(#g-sky-forest)"/>
+                    <path d="M120 0 L160 0 L110 90 L70 90 Z M200 0 L220 0 L190 90 L165 90 Z" fill="#fffde7" opacity=".08"/>
+                    ${Array.from({ length: 12 }, (_, i) => tree(10 + i * 28, 70, 11 + R(i, 3) * 5, '#2f4a2a')).join('')}
+                    ${Array.from({ length: 9 }, (_, i) => tree(i * 38 + 4, 84, 14 + R(i, 4) * 6, '#1c2e19')).join('')}
+                    <path d="M0 90 V84 Q160 78 320 84 V90 Z" fill="#12200f"/>
+                    ${[[60, 50], [180, 44], [250, 58]].map(([x, y]) => `<circle cx="${x}" cy="${y}" r="1.2" fill="#e6ff8a" opacity=".8"/>`).join('')}`,
+                region_4: `
+                    <rect width="320" height="90" fill="url(#g-sky-dusk)"/>
+                    ${stars(20, 5, 30)}
+                    <path d="M0 60 Q80 48 160 58 T320 52 V90 H0 Z" fill="#2b1a1a"/>
+                    ${[[40, 70, 34], [95, 72, 40], [210, 71, 36], [262, 73, 30]].map(([x, b, w]) => `<path d="M${x} ${b - w * .75} L${x + w / 2} ${b} H${x - w / 2} Z" fill="#6b4a32"/><path d="M${x} ${b - w * .75} L${x + w / 2} ${b} H${x} Z" fill="#4a3322"/><path d="M${x} ${b} L${x - 4} ${b} L${x} ${b - 10} Z" fill="#1a0f08"/><path d="M${x - 2} ${b - w * .75} L${x - 5} ${b - w * .75 - 6} M${x + 2} ${b - w * .75} L${x + 5} ${b - w * .75 - 6}" stroke="#4a3322" stroke-width="1.5"/>`).join('')}
+                    <circle cx="155" cy="72" r="26" fill="url(#g-glow-fire)"/>
+                    <path d="M148 78 C146 70 152 66 152 60 C156 66 158 64 158 58 C164 66 164 74 160 78 Z" fill="url(#g-fire)"/>
+                    <path d="M144 80 L166 76 M146 76 L166 80" stroke="#3b2410" stroke-width="2.5"/>
+                    <path d="M150 56 C146 46 156 40 150 28" fill="none" stroke="#9e9e9e" stroke-opacity=".35" stroke-width="3"/>
+                    <path d="M0 90 V80 H320 V90 Z" fill="#1a0f0a"/>
+                    ${Array.from({ length: 16 }, (_, i) => `<path d="M${i * 20 + (i > 7 ? 30 : 0) - 20} 90 V76 l3 -5 l3 5 V90 Z" fill="#3b2410"/>`).join('')}`,
+                region_5: `
+                    <rect width="320" height="90" fill="url(#g-sky-desert)"/>
+                    <circle cx="60" cy="24" r="14" fill="#fffde7" opacity=".9"/>
+                    <path d="M150 64 L190 22 L230 64 Z" fill="#e3b566"/><path d="M190 22 L230 64 H198 Z" fill="#b8883e"/>
+                    <path d="M228 64 L254 36 L280 64 Z" fill="#e3b566"/><path d="M254 36 L280 64 H259 Z" fill="#b8883e"/>
+                    <path d="M110 64 L126 48 L142 64 Z" fill="#d9a857"/><path d="M126 48 L142 64 H130 Z" fill="#b8883e"/>
+                    <path d="M0 66 Q60 56 120 64 T240 62 T320 60 V90 H0 Z" fill="#e8c27a"/>
+                    <path d="M0 78 Q80 66 170 76 T320 72 V90 H0 Z" fill="#d6a95e"/>
+                    <path d="M40 76 C40 64 42 56 38 46" fill="none" stroke="#6b4a26" stroke-width="2.2"/>
+                    <path d="M38 46 C30 42 24 44 20 48 M38 46 C34 38 28 36 24 36 M38 46 C44 38 50 38 54 40 M38 46 C46 44 52 48 54 52" fill="none" stroke="#3d6b2a" stroke-width="3" stroke-linecap="round"/>`,
+                region_6: `
+                    <rect width="320" height="90" fill="url(#g-sky-night)"/>
+                    ${stars(45, 7, 50)}
+                    <circle cx="270" cy="20" r="10" fill="#f1f1e6"/><circle cx="274" cy="17" r="9" fill="url(#g-sky-night)" opacity=".0"/>
+                    <path d="M0 60 L40 26 L70 48 L110 18 L150 50 L190 24 L230 52 L270 30 L320 50 V90 H0 Z" fill="#3a4a66"/>
+                    <path d="M40 26 L50 35 L42 33 L34 37 Z M110 18 L122 30 L112 28 L100 32 Z M190 24 L200 34 L190 32 L182 34 Z M270 30 L280 40 L270 38 L262 40 Z" fill="#e8eef7"/>
+                    ${Array.from({ length: 22 }, (_, i) => pine(i * 15 + 4, 82, 18 + R(i, 8) * 12, '#0f1a24')).join('')}
+                    <path d="M0 90 V82 Q160 78 320 82 V90 Z" fill="#dfe7f0"/>`,
+                dungeon_1: `
+                    <rect width="320" height="90" fill="url(#g-sky-cave)"/>
+                    <rect width="320" height="90" fill="url(#p-brick)"/>
+                    ${[20, 110, 200, 290].map(x => `<path d="M${x - 30} 90 V40 A30 26 0 0 1 ${x + 30} 40 V90 Z" fill="#0a0806"/><path d="M${x - 30} 90 V40 A30 26 0 0 1 ${x + 30} 40 V90" fill="none" stroke="#6b5f52" stroke-width="3"/>`).join('')}
+                    ${[65, 155, 245].map(x => `<rect x="${x - 9}" y="30" width="18" height="16" rx="8" fill="#0a0806"/><circle cx="${x}" cy="40" r="5" fill="#d8d2bf"/><circle cx="${x - 2}" cy="39" r="1.2" fill="#111"/><circle cx="${x + 2}" cy="39" r="1.2" fill="#111"/>`).join('')}
+                    ${[65, 245].map(x => `<rect x="${x - 1.5}" y="58" width="3" height="14" fill="#5b3a1d"/><circle cx="${x}" cy="54" r="14" fill="url(#g-glow-fire)"/><path d="M${x - 3} 58 C${x - 4} 52 ${x} 50 ${x} 46 C${x + 2} 50 ${x + 4} 52 ${x + 3} 58 Z" fill="url(#g-fire)"/>`).join('')}
+                    <path d="M0 90 V84 H320 V90 Z" fill="#1c1712"/>`,
+                dungeon_2: `
+                    <rect width="320" height="90" fill="#1a1512"/>
+                    <path d="M0 0 H120 L145 30 V62 L120 90 H0 Z" fill="url(#g-stone)"/><path d="M0 0 H120 L145 30 V62 L120 90 H0 Z" fill="url(#p-brick)"/>
+                    <path d="M320 0 H200 L175 30 V62 L200 90 H320 Z" fill="url(#g-stone)"/><path d="M320 0 H200 L175 30 V62 L200 90 H320 Z" fill="url(#p-brick)"/>
+                    <path d="M145 30 H175 V62 H145 Z" fill="#050403"/>
+                    <path d="M150 34 H158 V58 H150 Z" fill="#3a3029"/>
+                    <path d="M120 90 L145 62 H175 L200 90 Z" fill="#2b241e"/>
+                    <path d="M160 46 C156 40 152 40 150 42 M160 46 C164 40 168 40 170 42" fill="none" stroke="#b71c1c" stroke-width="1.2" opacity=".8"/>
+                    <circle cx="157" cy="47" r=".9" fill="#ff1744"/><circle cx="163" cy="47" r=".9" fill="#ff1744"/>
+                    <path d="M0 0 L145 30 M320 0 L175 30 M0 90 L145 62 M320 90 L175 62" stroke="#000" stroke-opacity=".3"/>`,
+                dungeon_3: `
+                    <rect width="320" height="90" fill="url(#g-sky-lava)"/>
+                    <path d="M60 90 L140 20 H180 L260 90 Z" fill="#2b1a14"/>
+                    <path d="M140 20 H180 L172 26 H148 Z" fill="#ff6f00"/>
+                    <ellipse cx="160" cy="18" rx="40" ry="14" fill="url(#g-glow-fire)"/>
+                    <path d="M150 26 C146 40 156 50 148 66 C144 74 150 82 146 90 M168 26 C172 44 164 54 174 70 C178 78 172 84 176 90" fill="none" stroke="#ff9800" stroke-width="3"/>
+                    <path d="M150 26 C146 40 156 50 148 66 C144 74 150 82 146 90 M168 26 C172 44 164 54 174 70 C178 78 172 84 176 90" fill="none" stroke="#fff59d" stroke-width="1"/>
+                    <path d="M150 12 C140 0 160 -4 150 -12 M170 10 C182 0 164 -6 176 -14" fill="none" stroke="#5d4037" stroke-width="6" opacity=".6"/>
+                    <path d="M0 90 V74 Q40 68 80 76 L60 90 Z M320 90 V72 Q280 66 250 76 L260 90 Z" fill="#1a0f0c"/>
+                    <path d="M26 86 H58 V82 H66 C62 76 52 74 46 74 H22 V80 H26 Z" fill="#37474f" stroke="#111"/>
+                    <rect x="36" y="86" width="12" height="4" fill="#263238"/>`
+            };
+
+            function scene(key, cls = 'art art-scene') {
+                return svg(scenes[key] || scenes.region_1, '0 0 320 90', cls).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
+            }
+
+            // ------------------------------------------------------------- avatar
+            // Full-body player figure that changes with the equipped gear.
+            function avatar(eq, cls = 'avatar-svg') {
+                const icon = slot => eq[slot] && eq[slot].IconSvg || '';
+                const rar = RARITY_ORDER => 0;
+                const best = ['Legendary', 'Epic'].find(r => Object.keys(eq).some(k => eq[k] && eq[k].Rarity === r));
+                const head = icon('Head'), chest = icon('Chest'), weapon = icon('Weapon'), shield = icon('Shield');
+                let out = '';
+                if (best) out += `<ellipse cx="50" cy="62" rx="46" ry="58" fill="url(#g-aura-${best === 'Legendary' ? 'gold' : 'purple'})"/>`;
+                // cape
+                out += `<path d="M34 48 L22 108 H78 L66 48 Z" fill="#6b0f0f"/>`;
+                // legs + feet / sandals
+                out += `<rect x="39" y="84" width="9" height="26" rx="3" fill="${SKIN}"/><rect x="52" y="84" width="9" height="26" rx="3" fill="${SKIN}"/>`;
+                if (eq.Shoes) out += `<path d="M39 96 L48 100 M39 102 L48 98 M52 96 L61 100 M52 102 L61 98" stroke="#6b3f16" stroke-width="2"/><rect x="36" y="108" width="13" height="5" rx="2" fill="#3a2614"/><rect x="51" y="108" width="13" height="5" rx="2" fill="#3a2614"/>`;
+                else out += `<ellipse cx="42" cy="111" rx="6" ry="2.5" fill="${SKIN_DARK}"/><ellipse cx="58" cy="111" rx="6" ry="2.5" fill="${SKIN_DARK}"/>`;
+                // tunic skirt
+                out += `<path d="M34 70 H66 L70 90 H30 Z" fill="url(#g-red)"/>`;
+                // arms
+                out += `<rect x="24" y="50" width="9" height="30" rx="4" fill="${SKIN}"/><rect x="67" y="50" width="9" height="30" rx="4" fill="${SKIN}"/>`;
+                if (eq.Gloves) out += `<path d="M24 58 H33 M24 63 H33 M24 68 H33 M24 73 H33" stroke="url(#g-bronze)" stroke-width="3.5"/><rect x="23" y="75" width="11" height="7" rx="2" fill="url(#g-leather)"/>`;
+                // torso
+                const torso = 'M33 48 H67 L69 72 H31 Z';
+                if (chest.startsWith('armor_1')) out += `<path d="${torso}" fill="url(#g-steel)" stroke="#2f3439"/><path d="M32 56 H68 M32 61 H68 M31.5 66 H68.5" stroke="#3d4349" stroke-width="1.4"/><path d="M28 48 C26 42 34 40 38 44 L36 52 Z M72 48 C74 42 66 40 62 44 L64 52 Z" fill="url(#g-steel)" stroke="#2f3439"/>`;
+                else if (chest.startsWith('armor_2')) out += `<path d="${torso}" fill="url(#g-steel)" stroke="#2f3439"/><path d="${torso}" fill="url(#p-mail)"/>`;
+                else if (chest.startsWith('armor_3')) out += `<path d="${torso}" fill="url(#g-bronze)" stroke="#4a2e10"/><path d="M38 55 Q44 59 50 56 Q56 59 62 55 M50 57 V70 M43 63 Q50 65 57 63" fill="none" stroke="#6b3f16"/>`;
+                else if (chest) out += `<path d="${torso}" fill="url(#g-leather)" stroke="#3b2410"/>`;
+                else out += `<path d="${torso}" fill="url(#g-red)"/><path d="M42 48 L50 56 L58 48" fill="none" stroke="#5c0a0a"/>`;
+                if (chest) out += `<path d="M31 72 V82 M36 72 V84 M41 72 V84 M46 72 V84 M51 72 V84 M56 72 V84 M61 72 V84 M66 72 V84 M69 72 V82" stroke="url(#g-leather)" stroke-width="3.5"/>`;
+                if (eq.Amulet) out += `<path d="M44 48 Q50 56 56 48" fill="none" stroke="#e0b030"/><circle cx="50" cy="55" r="3" fill="url(#g-gold)" stroke="#5a4210" stroke-width=".6"/>`;
+                // head
+                out += `<rect x="45" y="38" width="10" height="10" fill="${SKIN_DARK}"/><circle cx="50" cy="30" r="13" fill="${SKIN}"/>`;
+                out += `<circle cx="45.5" cy="30" r="1.5" fill="#1b1b1b"/><circle cx="54.5" cy="30" r="1.5" fill="#1b1b1b"/><path d="M46 36 Q50 38 54 36" fill="none" stroke="#7a4a2a" stroke-width="1.2"/>`;
+                if (!head) out += `<path d="M37 28 C37 14 63 14 63 28 C60 22 40 22 37 28 Z" fill="#2a1a0e"/>`;
+                else if (head.startsWith('helmet_3')) out += `<path d="M37 32 C37 18 42 14 50 14 C58 14 63 18 63 32 V40 C63 44 58 46 50 46 C42 46 37 44 37 40 Z" fill="url(#g-steel)" stroke="#2f3439"/><path d="M31 31 C31 28 69 28 69 31 C69 34 31 34 31 31 Z" fill="url(#g-steel)" stroke="#2f3439"/><rect x="42" y="34" width="16" height="9" rx="2" fill="#15181b"/><path d="M45 34 V43 M48 34 V43 M51 34 V43 M54 34 V43 M42 38.5 H58" stroke="#b8bec5"/><path d="M46 15 C47 8 56 7 59 13 C55 11 50 12 46 15 Z" fill="url(#g-gold)"/>`;
+                else {
+                    const steel = head.startsWith('helmet_2');
+                    const g = steel ? 'g-steel' : 'g-bronze', ink = steel ? '#2f3439' : '#4a2e10';
+                    if (steel) out += `<path d="M31 20 C36 6 64 6 69 20 L66 22 C60 12 40 12 34 22 Z" fill="url(#g-red)" stroke="#3d0707"/>`;
+                    out += `<path d="M36 30 C36 18 42 13 50 13 C58 13 64 18 64 30 Z" fill="url(#${g})" stroke="${ink}"/><path d="M33 29 H67 L68 33 H32 Z" fill="url(#${g})" stroke="${ink}"/><path d="M38 32 V40 L42 42 V32 Z M62 32 V40 L58 42 V32 Z" fill="url(#${g})" stroke="${ink}" stroke-width=".8"/>`;
+                    if (!steel) out += `<circle cx="50" cy="12.5" r="2.2" fill="url(#g-gold)"/>`;
+                }
+                // weapon in the right hand (viewer's left)
+                const hand = 'translate(28 80)';
+                if (weapon.startsWith('weapon_4')) out += `<g transform="${hand}"><rect x="-1.2" y="-66" width="2.4" height="80" fill="url(#g-wood)"/><path d="M-6 -60 V-70 M6 -60 V-70 M0 -60 V-74 M-6 -60 H6" stroke="#c9ced4" stroke-width="2" stroke-linecap="round"/></g>`;
+                else if (weapon.startsWith('weapon_5')) out += `<g transform="${hand}"><rect x="-1.2" y="-64" width="2.4" height="78" fill="url(#g-wood)"/><path d="M1 -58 C10 -60 12 -52 12 -48 C12 -44 10 -38 1 -40 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width=".6"/><path d="M0 -70 L2 -63 H-2 Z" fill="url(#g-steel)"/></g>`;
+                else if (weapon) {
+                    const len = weapon.startsWith('weapon_3') ? 16 : weapon.startsWith('weapon_2') ? 32 : 24;
+                    out += `<g transform="${hand}"><path d="M-2.5 -4 V${-4 - len} L0 ${-8 - len} L2.5 ${-4 - len} V-4 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width=".6"/><rect x="-6" y="-5" width="12" height="3" rx="1.5" fill="url(#g-gold)"/><rect x="-1.5" y="-2" width="3" height="7" fill="url(#g-wood)"/></g>`;
+                }
+                out += `<circle cx="28.5" cy="80" r="4.5" fill="${eq.Gloves ? '#8a5a2c' : SKIN}"/>`;
+                if (eq.Ring) out += `<circle cx="30" cy="81.5" r="1.4" fill="url(#g-gold)"/>`;
+                // shield on the left arm (viewer's right)
+                if (shield.startsWith('shield_2')) out += `<circle cx="76" cy="70" r="15" fill="url(#g-bronze)" stroke="#4a2e10"/><circle cx="76" cy="70" r="11" fill="url(#g-blue)"/><circle cx="76" cy="70" r="3.5" fill="url(#g-steel)"/>`;
+                else if (shield.startsWith('shield_3')) out += `<circle cx="74" cy="72" r="10" fill="url(#g-steel)" stroke="#2f3439"/><circle cx="74" cy="72" r="3.5" fill="url(#g-gold)"/>`;
+                else if (shield) out += `<rect x="64" y="50" width="22" height="42" rx="4" fill="url(#g-red)" stroke="#e0b030" stroke-width="1.8"/><circle cx="75" cy="71" r="4" fill="url(#g-gold)"/><path d="M75 66 L73 58 M75 76 L77 84" stroke="#e0b030" stroke-width="1.5"/>`;
+                else out += `<circle cx="71.5" cy="80" r="4.5" fill="${eq.Gloves ? '#8a5a2c' : SKIN}"/>`;
+                return svg(out, '0 0 100 120', cls);
+            }
+
+            // Laurel wreath logo with SPQR.
+            function logo(cls = 'art art-logo') {
+                // Left laurel branch climbing from the bottom to the upper left; the right one is its mirror.
+                let branch = '';
+                for (let t = 0; t < 9; t++) {
+                    const a = (262 - t * 15) * Math.PI / 180;
+                    const along = Math.atan2(-Math.cos(a), -Math.sin(a)) * 180 / Math.PI;
+                    [[-3.2, -32], [3.2, 32]].forEach(([dr, tilt]) => {
+                        const r = 23 + dr;
+                        const x = 32 + r * Math.cos(a), y = 34 - r * Math.sin(a);
+                        branch += `<ellipse cx="${x.toFixed(1)}" cy="${y.toFixed(1)}" rx="4.6" ry="2" fill="url(#g-gold)" stroke="#5a4210" stroke-width=".45" transform="rotate(${(along + tilt).toFixed(0)} ${x.toFixed(1)} ${y.toFixed(1)})"/>`;
+                    });
+                }
+                branch += `<path d="M31 57.5 A23 23 0 0 1 12 20" fill="none" stroke="#8a6410" stroke-width="1"/>`;
+                return svg(`${branch}${mirror(branch)}
+                    <path d="M24 58 Q32 53 40 58 L37 62 Q32 59 27 62 Z" fill="url(#g-red)"/>
+                    <text x="32" y="38.5" text-anchor="middle" font-family="Cinzel, Georgia, serif" font-weight="700" font-size="11" fill="url(#g-gold)" stroke="#5a4210" stroke-width=".4">SPQR</text>`, '0 0 64 64', cls);
+            }
+
+            function __avatarSamples() {
+                const it = (Type, IconSvg, Rarity = 'Common') => ({ Type, IconSvg, Rarity });
+                const sets = [
+                    ['starter', { Weapon: it('Weapon', 'weapon_1'), Chest: it('Armor', 'armor_1') }],
+                    ['naked', {}],
+                    ['legionary', { Head: it('Helmet', 'helmet_1'), Chest: it('Armor', 'armor_1'), Weapon: it('Weapon', 'weapon_1'), Shield: it('Shield', 'shield_1'), Shoes: it('Shoes', 'shoes_1') }],
+                    ['centurion', { Head: it('Helmet', 'helmet_2'), Chest: it('Armor', 'armor_2'), Weapon: it('Weapon', 'weapon_2'), Shield: it('Shield', 'shield_2'), Gloves: it('Gloves', 'gloves_1'), Amulet: it('Amulet', 'amulet_1', 'Epic') }],
+                    ['murmillo', { Head: it('Helmet', 'helmet_3', 'Legendary'), Chest: it('Armor', 'armor_3'), Weapon: it('Weapon', 'weapon_4'), Shield: it('Shield', 'shield_3'), Gloves: it('Gloves', 'gloves_1'), Shoes: it('Shoes', 'shoes_1'), Ring: it('Ring', 'ring_1') }],
+                    ['halberd', { Weapon: it('Weapon', 'weapon_5'), Chest: it('Armor', 'armor_2') }]
+                ];
+                return sets.map(([label, eq]) => [label, avatar(eq, 'art')]);
+            }
+
+            return { svg, items, item, ICON_BY_NAME, portraits, portrait, PORTRAIT_BY_NAME, scenes, scene, avatar, logo, __avatarSamples };
+        })();
+    </script>
 
     <script>
         'use strict';
@@ -1130,7 +1942,7 @@
         ];
 
         const ARENA_NAMES = [
-            'Tiberius', 'Cassius', 'Brutus', 'Varro', 'Flavius',
+            'Tiberius', 'Cassius', 'Brutus', 'Varro', 'Priscus',
             'Septimius', 'Valerius', 'Hadrian', 'Claudius', 'Lucius',
             'Aurelius', 'Commodus', 'Cornelius', 'Severus', 'Domitian',
             'Titus', 'Vespian', 'Trajan', 'Marcus Antonius', 'Spartacus'
@@ -1260,6 +2072,7 @@
             }
 
             item.Name = baseName;
+            if (ART.ICON_BY_NAME[baseName]) item.IconSvg = ART.ICON_BY_NAME[baseName];
             if (Math.random() < AFFIX_CHANCE) {
                 const prefix = pick(PREFIXES);
                 item.Prefix = prefix.Name;
@@ -1548,7 +2361,10 @@
             if (Array.isArray(raw.ArenaLadder)) {
                 const ladder = raw.ArenaLadder.map(o => o && ({
                     Id: typeof o.Id === 'string' ? o.Id.slice(0, 40) : '',
-                    Name: typeof o.Name === 'string' ? o.Name.slice(0, 40) : '',
+                    // Built-in rivals always use the current roster name (e.g. the old "Flavius" rival is now "Priscus").
+                    Name: /^arena_\d+$/.test(o.Id) && ARENA_NAMES[toInt(o.Id.slice(6), 0) - 1]
+                        ? ARENA_NAMES[toInt(o.Id.slice(6), 0) - 1]
+                        : typeof o.Name === 'string' ? o.Name.slice(0, 40) : '',
                     Rank: toInt(o.Rank, 0),
                     IconSvg: typeof o.IconSvg === 'string' ? o.IconSvg.slice(0, 40) : ''
                 }));
@@ -1969,6 +2785,7 @@
             p.CurrentEnergy -= loc.EnergyCost;
             const m = scaleMonster(base, p.Level, loc.ReqLevel);
             const result = runFight('Expedition: ' + m.Name, monsterCombatant(m));
+            result.EnemyArt = m.Name;
             if (result.IsVictory) {
                 state.Stats.MonstersSlain++;
                 grantRewards(result, m.XPReward, randInt(m.MinGold, m.MaxGold));
@@ -1989,6 +2806,7 @@
             const p = state.Player;
             const o = arenaOpponentStats(opp, p);
             const result = runFight('Arena Challenge: ' + o.Name, arenaCombatant(o));
+            result.EnemyArt = opp.IconSvg;
             state.ArenaCooldownUntil = now + ARENA_COOLDOWN_MS;
 
             if (result.IsVictory) {
@@ -2026,6 +2844,7 @@
             p.CurrentEnergy -= DUNGEON_ENERGY_COST;
             const m = scaleMonster(stage.Monster, p.Level, d.ReqLevel);
             const result = runFight(`${d.Name} — ${stage.Name}`, monsterCombatant(m));
+            result.EnemyArt = m.Name;
             if (result.IsVictory) {
                 state.Stats.MonstersSlain++;
                 state.Stats.DungeonFloorsCleared++;
@@ -2677,36 +3496,7 @@
 
         let selectedInventoryIndex = -1;
 
-        function getIcon(iconType) {
-            const t = iconType || '';
-            if (t.startsWith('weapon')) return `<svg viewBox="0 0 64 64" width="36" height="36"><path d="M20 50 L44 14 L50 20 L26 56 Z" fill="#cccccc" stroke="#ffd700" stroke-width="2"/></svg>`;
-            if (t.startsWith('helmet')) return `<svg viewBox="0 0 64 64" width="36" height="36"><path d="M16 36 C16 18 48 18 48 36 Z" fill="#888888" stroke="#ffd700" stroke-width="2"/></svg>`;
-            if (t.startsWith('armor')) return `<svg viewBox="0 0 64 64" width="36" height="36"><rect x="14" y="16" width="36" height="40" rx="6" fill="#666666" stroke="#ffd700" stroke-width="2"/></svg>`;
-            if (t.startsWith('shield')) return `<svg viewBox="0 0 64 64" width="36" height="36"><path d="M16 12 L48 12 L48 38 C48 50 32 58 32 58 C32 58 16 50 16 38 Z" fill="#aa2222" stroke="#ffd700" stroke-width="2"/></svg>`;
-            if (t.startsWith('ring')) return '💍';
-            if (t.startsWith('amulet')) return '📿';
-            if (t.startsWith('gloves')) return '🧤';
-            if (t.startsWith('shoes')) return '👢';
-            if (t === 'potion_blue') return '🧉';
-            if (t.startsWith('potion')) return '🧪';
-            return '📦';
-        }
-
-        function renderGladiatorAvatar() {
-            return `<svg class="avatar-svg" viewBox="0 0 100 120">
-                <circle cx="50" cy="30" r="18" fill="#dca376"/>
-                <rect x="35" y="48" width="30" height="45" rx="5" fill="#800000"/>
-                <rect x="25" y="50" width="10" height="35" fill="#dca376"/>
-                <rect x="65" y="50" width="10" height="35" fill="#dca376"/>
-                <rect x="38" y="93" width="10" height="20" fill="#dca376"/>
-                <rect x="52" y="93" width="10" height="20" fill="#dca376"/>
-                <path d="M35 50 L65 50 L60 80 L40 80 Z" fill="#707070" stroke="#ffd700" stroke-width="1.5"/>
-                <rect x="38" y="103" width="10" height="10" fill="#573e27"/>
-                <rect x="52" y="103" width="10" height="10" fill="#573e27"/>
-                <path d="M34 32 C34 15 66 15 66 32 Z" fill="#707070" stroke="#ffd700" stroke-width="2"/>
-                <path d="M50 10 L50 25" stroke="#cc0000" stroke-width="5"/>
-            </svg>`;
-        }
+        function getIcon(iconType) { return ART.item(iconType); }
 
         function itemDetailsHtml(item) {
             const lines = [];
@@ -2750,7 +3540,7 @@
 
         function renderEquipment() {
             const p = state.Player;
-            document.getElementById('avatarContainer').innerHTML = renderGladiatorAvatar();
+            document.getElementById('avatarContainer').innerHTML = ART.avatar(p.Equipment);
             SLOTS.forEach(slot => {
                 const el = document.getElementById(`slot-${slot}`);
                 const item = p.Equipment[slot];
@@ -2930,11 +3720,12 @@
                 const monsters = loc.Monsters.map((m, mi) => {
                     const scaled = scaleMonster(m, p.Level, loc.ReqLevel);
                     return `<div class="monster-row">
-                        <div><strong>${esc(m.Name)}</strong> <span style="font-size:11px; color:var(--text-accent);">LVL ${scaled.Level} · ${scaled.MaxHP} HP</span></div>
+                        <div class="portrait-row">${ART.portrait(m.Name)}<div><strong>${esc(m.Name)}</strong><br><span style="font-size:11px; color:var(--text-accent);">LVL ${scaled.Level} · ${scaled.MaxHP} HP</span></div></div>
                         <button class="btn-roman" onclick="startExpedition(${li}, ${mi})" ${locked ? 'disabled' : ''}>Attack ⚔️</button>
                     </div>`;
                 }).join('');
                 return `<div class="exp-card ${locked ? 'locked' : ''}">
+                    <div class="scene-banner">${ART.scene('region_' + loc.Id)}</div>
                     <h3 style="color:var(--text-accent); font-family:'Cinzel',serif;">${esc(loc.Name)}${locked ? ' 🔒' : ''}</h3>
                     <p style="font-size:12px;">${esc(loc.Description)}</p>
                     <div style="font-size:12px; color:var(--text-accent);">Req. Level: ${loc.ReqLevel} | Energy Cost: ${loc.EnergyCost}</div>
@@ -2953,17 +3744,17 @@
             document.getElementById('arenaContainer').innerHTML = rows.map(r => {
                 if (r.player) {
                     return `<div class="monster-row player-row">
-                        <div><span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">#${p.ArenaRank}</span> - <strong>${esc(p.Name)}</strong> <span style="font-size:11px;">(You, LVL ${p.Level}) · ${esc(arenaTitle(p.ArenaRank))}</span></div>
+                        <div class="portrait-row"><span class="arena-avatar">${ART.avatar(p.Equipment)}</span><span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">#${p.ArenaRank}</span> - <strong>${esc(p.Name)}</strong> <span style="font-size:11px;">(You, LVL ${p.Level}) · ${esc(arenaTitle(p.ArenaRank))}</span></span></div>
                     </div>`;
                 }
                 const o = arenaOpponentStats(r.opp, p);
                 const better = r.opp.Rank < p.ArenaRank;
                 return `<div class="monster-row">
-                    <div>
+                    <div class="portrait-row">${ART.portrait(r.opp.IconSvg)}<span>
                         <span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">#${r.opp.Rank}</span> -
                         <strong>${esc(r.opp.Name)}</strong> <span style="font-size:11px;">(LVL ${o.Level})</span>
                         ${better ? '<span class="muted"> · win to take this rank</span>' : ''}
-                    </div>
+                    </span></div>
                     <button class="btn-roman btn-gold" onclick="challengeArena(${r.idx})" ${cooling ? 'disabled' : ''}>Challenge ⚔️</button>
                 </div>`;
             }).join('');
@@ -2983,10 +3774,11 @@
                     const stage = d.Stages[prog.CurrentStage - 1];
                     const m = scaleMonster(stage.Monster, p.Level, d.ReqLevel);
                     body = `<div style="font-size:12px; color:var(--text-accent);">Floor ${prog.CurrentStage} / ${d.Stages.length}: ${esc(stage.Name)}</div>
-                        <div class="monster-row"><div><strong>${esc(m.Name)}</strong>${stage.IsBoss ? ' 👑' : ''} <span style="font-size:11px; color:var(--text-accent);">LVL ${m.Level} · ${m.MaxHP} HP</span></div></div>
+                        <div class="monster-row"><div class="portrait-row ${stage.IsBoss ? 'portrait-lg' : ''}">${ART.portrait(m.Name)}<div><strong>${esc(m.Name)}</strong>${stage.IsBoss ? ' 👑' : ''}<br><span style="font-size:11px; color:var(--text-accent);">LVL ${m.Level} · ${m.MaxHP} HP</span></div></div></div>
                         <button class="btn-roman btn-gold" onclick="enterDungeon(${di})" ${locked ? 'disabled' : ''}>Enter Floor (${DUNGEON_ENERGY_COST} Energy) ⚔️</button>`;
                 }
                 return `<div class="exp-card ${locked ? 'locked' : ''}">
+                    <div class="scene-banner">${ART.scene('dungeon_' + d.Id)}</div>
                     <h3 style="color:var(--text-accent); font-family:'Cinzel',serif;">${esc(d.Name)}${locked ? ' 🔒' : ''}</h3>
                     <p style="font-size:12px;">${esc(d.Description)}</p>
                     <div style="font-size:12px; color:var(--text-accent);">Req. Level: ${d.ReqLevel}</div>
@@ -3017,14 +3809,17 @@
 
         function renderForge() {
             document.getElementById('forgeStashInfo').innerHTML =
-                `Iron: <strong>${state.IronStash}</strong> | Bronze: <strong>${state.BronzeStash}</strong> | Ruby: <strong>${state.RubyStash}</strong> | Leather: <strong>${state.LeatherStash}</strong>
+                [['mat_iron', 'Iron', state.IronStash], ['mat_bronze', 'Bronze', state.BronzeStash], ['mat_ruby', 'Ruby', state.RubyStash], ['mat_leather', 'Leather', state.LeatherStash]]
+                    .map(([icon, label, n]) => `<span class="mat-icon">${ART.item(icon)}</span> ${label}: <strong>${n}</strong>`).join(' &nbsp;|&nbsp; ') + `
                  <div class="muted" style="margin-top:4px;">Smelt unwanted gear from your inventory to gather materials.</div>`;
             const p = state.Player;
             document.getElementById('forgeRecipeContainer').innerHTML = RECIPES.map((r, i) => {
                 const locked = p.Level < r.ReqLevel;
                 return `<div class="exp-card ${locked ? 'locked' : ''}">
-                    <h4 class="rt-${r.ResultRarity}">${esc(r.Name)}</h4>
-                    <div class="muted">${r.ResultRarity} ${r.ResultType} · Req. level ${r.ReqLevel}</div>
+                    <div class="item-head"><div class="item-icon">${getIcon(r.IconSvg)}</div><div>
+                        <h4 class="rt-${r.ResultRarity}">${esc(r.Name)}</h4>
+                        <div class="muted">${r.ResultRarity} ${r.ResultType} · Req. level ${r.ReqLevel}</div>
+                    </div></div>
                     <div style="font-size:12px;">Cost: ${r.ReqIron} Iron, ${r.ReqBronze} Bronze, ${r.ReqRuby} Ruby, ${r.ReqLeather} Leather</div>
                     <button class="btn-roman btn-gold" onclick="craftRecipe(${i})" ${locked ? 'disabled' : ''}>Craft Gear 🔨</button>
                 </div>`;
@@ -3129,8 +3924,12 @@
                 }
                 const done = q.Progress >= q.Goal;
                 const reward = `${q.RewardGold} Gold, ${Math.floor(q.RewardXP * xpMultiplier())} XP` + (q.RewardRubies ? `, ${q.RewardRubies} 💎` : '');
+                const art = q.Kind === 'monster' ? ART.portrait(findMonsterById(q.Target).Name)
+                    : q.Kind === 'arena' ? ART.portrait('gladiator_3')
+                    : q.Kind === 'dungeon' ? ART.portrait('skeleton')
+                    : ART.portrait('bandit');
                 return `<div class="exp-card quest-card ${done ? 'done' : ''}">
-                    <h4 style="color:var(--text-gold);">${esc(questDescription(q))}</h4>
+                    <div class="portrait-row">${art}<h4 style="color:var(--text-gold);">${esc(questDescription(q))}</h4></div>
                     <div class="progress-text">Progress: ${q.Progress} / ${q.Goal}</div>
                     <div class="stat-bar"><div class="stat-fill fill-xp" style="width:${q.Progress / q.Goal * 100}%"></div></div>
                     <div style="font-size:12px;">Reward: ${esc(reward)}</div>
@@ -3232,6 +4031,8 @@
             banner.className = 'combat-result-banner banner-pending';
             document.getElementById('modalFighter1Name').innerText = r.PlayerName;
             document.getElementById('modalFighter2Name').innerText = r.EnemyName;
+            document.getElementById('modalPortrait1').innerHTML = ART.avatar(state.Player.Equipment);
+            document.getElementById('modalPortrait2').innerHTML = ART.portrait(r.EnemyArt);
             document.getElementById('modalRewards').style.display = 'none';
             document.getElementById('modalCombatLog').innerHTML = '';
             setCombatBars(r, r.PlayerStartHP, r.EnemyMaxHP);
@@ -3302,6 +4103,7 @@
 
         window.addEventListener('pagehide', saveGame);
 
+        document.getElementById('brandLogo').innerHTML = ART.logo();
         state = loadGame();
         applyTheme();
         applyRegen(Date.now());

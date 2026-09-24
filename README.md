@@ -22,6 +22,9 @@ An offline, single-player ancient Roman RPG that runs entirely on your computer.
 - **Rubies**: earned from dungeon bosses (mostly on the first conquest), Pantheon tasks, and arena milestones. Spend them to refill energy, skip the arena cooldown, or bring in new merchant wares.
 - **Animated combat reports**: fights play out line by line with live HP bars (Instant, Fast, or Normal speed).
 - **5 Custom Visual Themes**: Dark Imperial, Roman Parchment, Colosseum Crimson, Legion Emerald, and Tyrian Purple.
+- **Hand-drawn vector art**: icons for every kind of gear (each matches the item's name), portraits for all 25 monsters and the 4 gladiator styles, scene banners for every region and dungeon, and a player figure that changes with the gear you equip. All the art is drawn as SVG code inside `game.html`, so there are still no image files to ship.
+
+![Expeditions screen](docs/screenshot-expeditions.png)
 
 ## Playing
 
