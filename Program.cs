@@ -1,245 +1,137 @@
 using System;
 using System.Diagnostics;
 using System.IO;
-using System.Threading;
-using System.Runtime.InteropServices;
+using System.Reflection;
 using System.Windows.Forms;
 
 namespace GladiatusOffline
 {
-    class Program
+    // Aeterna Roma is a self-contained HTML game (game.html) that runs entirely in the browser
+    // and saves to the browser's local storage. This launcher only unpacks the embedded page
+    // and opens it in a chromeless Edge/Chrome app window, then exits. Nothing keeps running
+    // in the background and no network ports are opened.
+    static class Program
     {
-        public static Action ToggleFullscreenAction;
-
-        // Win32: create a named mutex to ensure only one instance runs
-        [DllImport("kernel32.dll")]
-        static extern IntPtr CreateMutex(IntPtr lpMutexAttributes, bool bInitialOwner, string lpName);
-        [DllImport("kernel32.dll")]
-        static extern int GetLastError();
-        const int ERROR_ALREADY_EXISTS = 183;
+        const string GameResourceName = "AeternaRoma.game.html";
 
         [STAThread]
-        static void Main(string[] args)
+        static void Main()
         {
-            // Single-instance guard: if server is already running, just open browser
-            IntPtr mutex = CreateMutex(IntPtr.Zero, true, "AeternaRoma_Server_Mutex");
-            if (GetLastError() == ERROR_ALREADY_EXISTS)
+            string gamePath;
+            try
             {
-                // Another instance is already running the server; just open the UI
-                LaunchAppWindow("http://127.0.0.1:8080/");
+                gamePath = ExtractGame();
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not prepare the game files:\n\n" + ex.Message,
+                    "Aeterna Roma", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
-            // Start HTTP server on background thread
-            Server server = new Server(8080);
-            Thread serverThread = new Thread(() => server.Start());
-            serverThread.IsBackground = true;
-            serverThread.Start();
+            string url = new Uri(gamePath).AbsoluteUri;
 
-            // Wait until HTTP server successfully binds
-            server.ServerStartedEvent.WaitOne(5000);
-            string url = server.BoundUrl ?? "http://127.0.0.1:8080/";
+            // App mode = chromeless window (no address bar, no tabs) that looks like a native app.
+            if (TryLaunchAppWindow(FindFirstExisting(EdgeCandidates()), url)) return;
+            if (TryLaunchAppWindow(FindFirstExisting(ChromeCandidates()), url)) return;
 
-            // Launch game in a chromeless standalone window via Edge/Chrome app mode
-            LaunchAppWindow(url);
-
-            // Keep the process alive with a hidden form message loop.
-            // This keeps the background server thread alive and responsive.
-            // The process will only exit when the user kills it via Task Manager
-            // or when Windows shuts down.
-            Application.Run(new HiddenForm());
+            // Fallback: open the page in the default browser.
+            try
+            {
+                Process.Start(new ProcessStartInfo { FileName = gamePath, UseShellExecute = true });
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Could not open a browser for the game. You can open this file manually:\n\n" + gamePath + "\n\n" + ex.Message,
+                    "Aeterna Roma", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
         }
 
-        private static void LaunchAppWindow(string url)
+        // Writes the embedded game page to %LOCALAPPDATA%\AeternaRoma\game.html.
+        // The page lives at a fixed path so the browser keeps the same local storage (save data) between launches.
+        private static string ExtractGame()
         {
-            // Strategy: Try Edge app mode first, then Chrome app mode, then default browser
-            // App mode = chromeless window (no address bar, no tabs) — looks like a native app
-
-            // 1) Try Microsoft Edge (always present on Windows 10/11)
-            string edgePath = FindEdgePath();
-            if (edgePath != null)
+            byte[] content;
+            using (Stream resource = Assembly.GetExecutingAssembly().GetManifestResourceStream(GameResourceName))
             {
-                try
+                if (resource == null) throw new InvalidOperationException("The game page is missing from the executable. Rebuild it with build.bat.");
+                using (MemoryStream buffer = new MemoryStream())
                 {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = edgePath,
-                        Arguments = "--app=" + url + " --new-window --disable-extensions",
-                        UseShellExecute = false
-                    });
-                    return;
+                    resource.CopyTo(buffer);
+                    content = buffer.ToArray();
                 }
-                catch { }
             }
 
-            // 2) Try Google Chrome
-            string chromePath = FindChromePath();
-            if (chromePath != null)
-            {
-                try
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = chromePath,
-                        Arguments = "--app=" + url + " --new-window --disable-extensions",
-                        UseShellExecute = false
-                    });
-                    return;
-                }
-                catch { }
-            }
+            string dir = Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "AeternaRoma");
+            Directory.CreateDirectory(dir);
+            string path = Path.Combine(dir, "game.html");
 
-            // 3) Fallback: open default browser (will have address bar, but at least it works)
+            if (!File.Exists(path) || !ContentEquals(File.ReadAllBytes(path), content))
+            {
+                string tempPath = path + ".tmp";
+                File.WriteAllBytes(tempPath, content);
+                if (File.Exists(path)) File.Replace(tempPath, path, null);
+                else File.Move(tempPath, path);
+            }
+            return path;
+        }
+
+        private static bool ContentEquals(byte[] a, byte[] b)
+        {
+            if (a.Length != b.Length) return false;
+            for (int i = 0; i < a.Length; i++)
+            {
+                if (a[i] != b[i]) return false;
+            }
+            return true;
+        }
+
+        private static bool TryLaunchAppWindow(string browserPath, string url)
+        {
+            if (browserPath == null) return false;
             try
             {
                 Process.Start(new ProcessStartInfo
                 {
-                    FileName = url,
-                    UseShellExecute = true
+                    FileName = browserPath,
+                    Arguments = "--app=\"" + url + "\" --new-window",
+                    UseShellExecute = false
                 });
+                return true;
             }
-            catch { }
+            catch
+            {
+                return false;
+            }
         }
 
-        private static string FindEdgePath()
+        private static string[] EdgeCandidates()
         {
-            string[] candidates = new string[]
+            return new string[]
             {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                    "Microsoft", "Edge", "Application", "msedge.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                    "Microsoft", "Edge", "Application", "msedge.exe"),
-                @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                @"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Microsoft", "Edge", "Application", "msedge.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Microsoft", "Edge", "Application", "msedge.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Microsoft", "Edge", "Application", "msedge.exe")
             };
+        }
 
+        private static string[] ChromeCandidates()
+        {
+            return new string[]
+            {
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles), "Google", "Chrome", "Application", "chrome.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86), "Google", "Chrome", "Application", "chrome.exe"),
+                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData), "Google", "Chrome", "Application", "chrome.exe")
+            };
+        }
+
+        private static string FindFirstExisting(string[] candidates)
+        {
             foreach (string path in candidates)
             {
-                if (File.Exists(path)) return path;
+                if (!string.IsNullOrEmpty(path) && File.Exists(path)) return path;
             }
             return null;
-        }
-
-        private static string FindChromePath()
-        {
-            string[] candidates = new string[]
-            {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                    "Google", "Chrome", "Application", "chrome.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                    "Google", "Chrome", "Application", "chrome.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.LocalApplicationData),
-                    "Google", "Chrome", "Application", "chrome.exe"),
-                @"C:\Program Files\Google\Chrome\Application\chrome.exe",
-                @"C:\Program Files (x86)\Google\Chrome\Application\chrome.exe"
-            };
-
-            foreach (string path in candidates)
-            {
-                if (File.Exists(path)) return path;
-            }
-            return null;
-        }
-    }
-
-    // Invisible form that keeps the process alive via the WinForms message pump
-    class HiddenForm : Form
-    {
-        private NotifyIcon trayIcon;
-
-        public HiddenForm()
-        {
-            this.ShowInTaskbar = false;
-            this.WindowState = FormWindowState.Minimized;
-            this.FormBorderStyle = FormBorderStyle.None;
-            this.Opacity = 0;
-            this.Size = new System.Drawing.Size(0, 0);
-
-            // System tray icon so the user can re-open or quit the game
-            trayIcon = new NotifyIcon();
-            trayIcon.Text = "Aeterna Roma";
-            trayIcon.Icon = System.Drawing.SystemIcons.Shield;
-            trayIcon.Visible = true;
-            trayIcon.DoubleClick += OnTrayDoubleClick;
-
-            ContextMenuStrip menu = new ContextMenuStrip();
-            menu.Items.Add("Open Game Window", null, OnOpenGame);
-            menu.Items.Add("Exit Aeterna Roma", null, OnExit);
-            trayIcon.ContextMenuStrip = menu;
-        }
-
-        protected override void OnLoad(EventArgs e)
-        {
-            base.OnLoad(e);
-            this.Visible = false;
-            this.Hide();
-        }
-
-        private void OnTrayDoubleClick(object sender, EventArgs e)
-        {
-            OnOpenGame(sender, e);
-        }
-
-        private void OnOpenGame(object sender, EventArgs e)
-        {
-            // Re-launch a new app-mode window pointing at the running server
-            string edgePath = FindEdgePath();
-            if (edgePath != null)
-            {
-                try
-                {
-                    Process.Start(new ProcessStartInfo
-                    {
-                        FileName = edgePath,
-                        Arguments = "--app=http://127.0.0.1:8080/ --new-window --disable-extensions",
-                        UseShellExecute = false
-                    });
-                    return;
-                }
-                catch { }
-            }
-            // Fallback
-            try
-            {
-                Process.Start(new ProcessStartInfo { FileName = "http://127.0.0.1:8080/", UseShellExecute = true });
-            }
-            catch { }
-        }
-
-        private void OnExit(object sender, EventArgs e)
-        {
-            trayIcon.Visible = false;
-            trayIcon.Dispose();
-            Application.Exit();
-        }
-
-        private static string FindEdgePath()
-        {
-            string[] candidates = new string[]
-            {
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFilesX86),
-                    "Microsoft", "Edge", "Application", "msedge.exe"),
-                Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ProgramFiles),
-                    "Microsoft", "Edge", "Application", "msedge.exe"),
-                @"C:\Program Files (x86)\Microsoft\Edge\Application\msedge.exe",
-                @"C:\Program Files\Microsoft\Edge\Application\msedge.exe"
-            };
-
-            foreach (string path in candidates)
-            {
-                if (File.Exists(path)) return path;
-            }
-            return null;
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            if (disposing && trayIcon != null)
-            {
-                trayIcon.Visible = false;
-                trayIcon.Dispose();
-            }
-            base.Dispose(disposing);
         }
     }
 }

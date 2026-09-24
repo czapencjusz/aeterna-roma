@@ -1,0 +1,2503 @@
+<!DOCTYPE html>
+<html lang="en" data-theme="DarkImperial">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Aeterna Roma - Hero of Rome</title>
+    <!-- Optional web fonts: when offline the game falls back to local serif/sans-serif fonts. -->
+    <link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Cinzel+Decorative:wght@700&family=Philosopher:ital,wght@0,400;0,700;1,400&display=swap" rel="stylesheet">
+    <style>
+        :root, [data-theme="DarkImperial"] {
+            --bg-dark: #0f0a0a;
+            --bg-card: #1c1414;
+            --bg-glow: #2b1818;
+            --header-top: #1f1414;
+            --tab-top: #2b1d1d;
+            --tab-bottom: #150d0d;
+            --border-gold: #c5a059;
+            --text-gold: #ffd700;
+            --text-primary: #e6dac3;
+            --text-accent: #e5c158;
+            --btn-red: #800000;
+        }
+        [data-theme="RomanParchment"] {
+            --bg-dark: #221a12;
+            --bg-card: #3a2e21;
+            --bg-glow: #5a4630;
+            --header-top: #3a2e21;
+            --tab-top: #4d3d2b;
+            --tab-bottom: #2a2118;
+            --border-gold: #d8b878;
+            --text-gold: #f3d58a;
+            --text-primary: #f3e9d2;
+            --text-accent: #e6c47e;
+            --btn-red: #7a4a1f;
+        }
+        [data-theme="ColosseumCrimson"] {
+            --bg-dark: #140606;
+            --bg-card: #240b0b;
+            --bg-glow: #4a0d0d;
+            --header-top: #2a0c0c;
+            --tab-top: #3a1212;
+            --tab-bottom: #1a0707;
+            --border-gold: #d4574a;
+            --text-gold: #ffb199;
+            --text-primary: #f2dcd6;
+            --text-accent: #ff8a73;
+            --btn-red: #a3140b;
+        }
+        [data-theme="LegionEmerald"] {
+            --bg-dark: #06120b;
+            --bg-card: #0f2117;
+            --bg-glow: #123d24;
+            --header-top: #0f2117;
+            --tab-top: #173322;
+            --tab-bottom: #09170f;
+            --border-gold: #6fbf73;
+            --text-gold: #c8e6a0;
+            --text-primary: #dcebdc;
+            --text-accent: #9ed89f;
+            --btn-red: #1f6b35;
+        }
+        [data-theme="TyrianPurple"] {
+            --bg-dark: #0f0714;
+            --bg-card: #1d0f26;
+            --bg-glow: #2e1240;
+            --header-top: #1d0f26;
+            --tab-top: #2c1839;
+            --tab-bottom: #13091a;
+            --border-gold: #b889d6;
+            --text-gold: #f0c6ff;
+            --text-primary: #eadcf2;
+            --text-accent: #d6a6f0;
+            --btn-red: #66177a;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; }
+
+        body {
+            font-family: 'Philosopher', sans-serif;
+            background-color: var(--bg-dark);
+            color: var(--text-primary);
+            background-image: radial-gradient(circle at 50% 20%, var(--bg-glow) 0%, var(--bg-dark) 80%);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+            overflow-x: hidden;
+        }
+
+        /* HEADER & NAVBAR */
+        header {
+            background: linear-gradient(180deg, var(--header-top) 0%, var(--bg-dark) 100%);
+            border-bottom: 2px solid var(--border-gold);
+            padding: 10px 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            flex-wrap: wrap;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.8);
+            position: sticky;
+            top: 0;
+            z-index: 100;
+        }
+
+        .brand-title {
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 26px;
+            color: var(--text-gold);
+            text-shadow: 0 0 10px rgba(255, 215, 0, 0.4);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .resource-bar {
+            display: flex;
+            gap: 20px;
+            background: rgba(0,0,0,0.5);
+            padding: 8px 16px;
+            border-radius: 20px;
+            border: 1px solid rgba(197, 160, 89, 0.3);
+        }
+
+        .res-item {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            font-weight: bold;
+            font-size: 15px;
+        }
+        .res-gold { color: #ffd700; }
+        .res-rubies { color: #ff5252; }
+        .res-honor { color: #e040fb; }
+
+        /* MAIN LAYOUT */
+        .app-container {
+            display: flex;
+            flex: 1;
+            padding: 20px;
+            gap: 20px;
+            max-width: 1400px;
+            margin: 0 auto;
+            width: 100%;
+        }
+
+        /* LEFT SIDEBAR: GLADIATOR STATS */
+        .sidebar {
+            width: 320px;
+            flex-shrink: 0;
+            background: var(--bg-card);
+            border: 2px solid var(--border-gold);
+            border-radius: 8px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+            align-self: flex-start;
+        }
+
+        .avatar-box {
+            text-align: center;
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border-gold);
+            border-radius: 6px;
+            padding: 15px;
+            position: relative;
+        }
+
+        .avatar-svg {
+            width: 120px;
+            height: 120px;
+            filter: drop-shadow(0 0 8px rgba(255, 215, 0, 0.3));
+        }
+
+        .gladiator-name {
+            font-family: 'Cinzel', serif;
+            font-size: 20px;
+            color: var(--text-gold);
+            margin-top: 8px;
+        }
+
+        .gladiator-level {
+            font-size: 13px;
+            color: var(--text-accent);
+        }
+
+        .status-note {
+            font-size: 12px;
+            color: var(--text-accent);
+            margin-top: 4px;
+        }
+
+        /* PROGRESS BARS */
+        .stat-bar-container {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+
+        .stat-bar-label {
+            display: flex;
+            justify-content: space-between;
+            font-size: 12px;
+            font-weight: bold;
+        }
+
+        .stat-bar {
+            height: 14px;
+            background: #222;
+            border-radius: 7px;
+            overflow: hidden;
+            border: 1px solid #444;
+            position: relative;
+        }
+
+        .stat-fill {
+            height: 100%;
+            transition: width 0.3s ease;
+        }
+
+        .fill-hp { background: linear-gradient(90deg, #1b5e20, #4caf50); }
+        .fill-energy { background: linear-gradient(90deg, #0d47a1, #2196f3); }
+        .fill-xp { background: linear-gradient(90deg, #4a148c, #ab47bc); }
+
+        /* EQUIPMENT SLOTS GRID */
+        .equipment-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 8px;
+            background: rgba(0,0,0,0.3);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid rgba(197, 160, 89, 0.2);
+        }
+
+        .equip-slot {
+            width: 60px;
+            height: 60px;
+            background: rgba(0,0,0,0.6);
+            border: 1px dashed var(--border-gold);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s;
+            font-size: 28px;
+        }
+
+        .equip-slot:hover {
+            transform: scale(1.05);
+            border-style: solid;
+            box-shadow: 0 0 8px var(--border-gold);
+        }
+
+        .equip-slot.empty::after {
+            content: attr(data-slot);
+            font-size: 10px;
+            color: #666;
+            text-transform: uppercase;
+        }
+
+        /* MAIN CONTENT VIEW */
+        .main-content {
+            flex: 1;
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+        }
+
+        /* NAVIGATION TABS */
+        .nav-tabs {
+            display: flex;
+            gap: 6px;
+            flex-wrap: wrap;
+            background: rgba(0,0,0,0.4);
+            padding: 8px;
+            border-radius: 8px;
+            border: 1px solid var(--border-gold);
+        }
+
+        .nav-tab {
+            padding: 10px 18px;
+            background: linear-gradient(180deg, var(--tab-top) 0%, var(--tab-bottom) 100%);
+            border: 1px solid var(--border-gold);
+            color: var(--text-primary);
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            font-size: 14px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+
+        .nav-tab:hover {
+            filter: brightness(1.3);
+            color: var(--text-gold);
+        }
+
+        .nav-tab.active {
+            background-color: var(--btn-red);
+            background-image: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.45) 100%);
+            color: var(--text-gold);
+            box-shadow: 0 0 10px var(--btn-red);
+            border-color: var(--text-gold);
+        }
+
+        /* TAB PANELS */
+        .tab-panel {
+            background: var(--bg-card);
+            border: 2px solid var(--border-gold);
+            border-radius: 8px;
+            padding: 20px;
+            flex: 1;
+            min-height: 500px;
+            box-shadow: 0 0 15px rgba(0,0,0,0.5);
+        }
+
+        .tab-content { display: none; }
+        .tab-content.active { display: block; }
+
+        .tab-title {
+            font-family: 'Cinzel Decorative', serif;
+            color: var(--text-gold);
+            margin-bottom: 10px;
+        }
+
+        .muted { font-size: 12px; opacity: 0.8; }
+
+        /* BUTTONS & UI COMPONENTS */
+        .btn-roman {
+            background-color: var(--btn-red);
+            background-image: linear-gradient(180deg, rgba(255,255,255,0.06) 0%, rgba(0,0,0,0.45) 100%);
+            color: var(--text-gold);
+            border: 1px solid var(--border-gold);
+            padding: 8px 16px;
+            font-family: 'Cinzel', serif;
+            font-weight: bold;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+        }
+
+        .btn-roman:hover {
+            filter: brightness(1.25);
+            box-shadow: 0 0 8px rgba(255, 215, 0, 0.4);
+        }
+
+        .btn-roman.active {
+            border-color: var(--text-gold);
+            box-shadow: 0 0 8px var(--text-gold);
+        }
+
+        .btn-gold {
+            background-color: #c5a059;
+            background-image: linear-gradient(180deg, #d9b56b 0%, #7a602f 100%);
+            color: #000;
+        }
+
+        .btn-roman:disabled {
+            opacity: 0.45;
+            cursor: not-allowed;
+            filter: grayscale(0.6);
+            box-shadow: none;
+        }
+
+        .btn-row { display: flex; gap: 10px; flex-wrap: wrap; }
+
+        select.roman-select {
+            background: rgba(0,0,0,0.5);
+            color: var(--text-primary);
+            border: 1px solid var(--border-gold);
+            border-radius: 4px;
+            padding: 8px;
+            font-family: 'Cinzel', serif;
+        }
+
+        /* INVENTORY GRID */
+        .inventory-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+            gap: 10px;
+            margin-top: 15px;
+        }
+
+        .merchant-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+            gap: 12px;
+        }
+
+        .inv-slot {
+            width: 70px;
+            height: 70px;
+            background: rgba(0,0,0,0.5);
+            border: 1px solid #444;
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            position: relative;
+            transition: transform 0.2s;
+            font-size: 30px;
+        }
+
+        .inv-slot:hover {
+            transform: scale(1.05);
+            border-color: var(--border-gold);
+        }
+
+        .inv-slot.selected {
+            outline: 2px solid var(--text-gold);
+            outline-offset: 2px;
+        }
+
+        .inv-slot.empty-slot { opacity: 0.2; cursor: default; }
+        .inv-slot.empty-slot:hover { transform: none; }
+
+        .rarity-Common { border-color: #888; }
+        .rarity-Uncommon { border-color: #2e7d32; box-shadow: inset 0 0 5px #2e7d32; }
+        .rarity-Rare { border-color: #1565c0; box-shadow: inset 0 0 8px #1565c0; }
+        .rarity-Epic { border-color: #7b1fa2; box-shadow: inset 0 0 10px #7b1fa2; }
+        .rarity-Legendary { border-color: #ffd700; box-shadow: inset 0 0 12px #ffd700; }
+
+        .rt-Common { color: #d0d0d0; }
+        .rt-Uncommon { color: #66bb6a; }
+        .rt-Rare { color: #42a5f5; }
+        .rt-Epic { color: #ce93d8; }
+        .rt-Legendary { color: #ffd700; }
+
+        .item-name { font-weight: bold; margin-bottom: 2px; }
+        .item-meta { font-size: 11px; opacity: 0.75; margin-bottom: 6px; }
+        .item-stats { font-size: 12px; line-height: 1.5; }
+        .item-head { display: flex; gap: 10px; align-items: flex-start; }
+        .item-icon { font-size: 30px; line-height: 1; }
+
+        /* EXPEDITIONS & ARENA CARDS */
+        .exp-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 15px;
+        }
+
+        .exp-card {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border-gold);
+            border-radius: 6px;
+            padding: 15px;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .exp-card.locked { opacity: 0.55; }
+
+        .monster-list {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            margin-top: 10px;
+        }
+
+        .monster-row {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            gap: 10px;
+            background: rgba(255,255,255,0.03);
+            padding: 8px 12px;
+            border-radius: 4px;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .monster-row.player-row {
+            border-color: var(--text-gold);
+            background: rgba(255, 215, 0, 0.08);
+        }
+
+        .info-box {
+            margin-bottom: 15px;
+            background: rgba(0,0,0,0.4);
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border-gold);
+        }
+
+        /* COMBAT LOG MODAL OVERLAY */
+        .modal-overlay {
+            position: fixed;
+            top: 0; left: 0; right: 0; bottom: 0;
+            background: rgba(0,0,0,0.85);
+            z-index: 1000;
+            display: none;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+
+        .modal-overlay.open { display: flex; }
+
+        .combat-modal {
+            background: var(--bg-card);
+            border: 2px solid var(--border-gold);
+            border-radius: 8px;
+            width: 100%;
+            max-width: 650px;
+            max-height: 85vh;
+            display: flex;
+            flex-direction: column;
+            box-shadow: 0 0 30px rgba(0,0,0,0.9);
+        }
+
+        .modal-header {
+            padding: 15px;
+            border-bottom: 1px solid var(--border-gold);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            background: rgba(0,0,0,0.4);
+            font-family: 'Cinzel', serif;
+            color: var(--text-gold);
+        }
+
+        .modal-body {
+            padding: 15px;
+            overflow-y: auto;
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            gap: 10px;
+        }
+
+        .combat-log { display: flex; flex-direction: column; gap: 6px; }
+
+        .turn-line {
+            padding: 6px 10px;
+            border-radius: 4px;
+            font-size: 13px;
+            background: rgba(255,255,255,0.03);
+        }
+
+        .turn-player { border-left: 3px solid #2196f3; }
+        .turn-enemy { border-left: 3px solid #f44336; }
+        .turn-crit { background: rgba(255, 215, 0, 0.1); border-left-color: #ffd700; }
+
+        .combat-result-banner {
+            text-align: center;
+            padding: 12px;
+            font-family: 'Cinzel Decorative', serif;
+            font-size: 22px;
+            border-radius: 4px;
+        }
+        .victory-bg { background: rgba(46, 125, 50, 0.4); color: #4caf50; border: 1px solid #4caf50; }
+        .defeat-bg { background: rgba(198, 40, 40, 0.4); color: #f44336; border: 1px solid #f44336; }
+
+        .reward-box {
+            background: rgba(0,0,0,0.35);
+            border: 1px solid var(--border-gold);
+            border-radius: 4px;
+            padding: 8px 12px;
+            font-size: 13px;
+            line-height: 1.6;
+        }
+
+        .overview-subtabs {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 15px;
+            border-bottom: 1px solid var(--border-gold);
+            padding-bottom: 8px;
+        }
+        .subtab-btn {
+            background: rgba(0,0,0,0.4);
+            border: 1px solid var(--border-gold);
+            color: var(--text-primary);
+            padding: 6px 12px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-family: 'Cinzel', serif;
+            font-size: 12px;
+        }
+        .subtab-btn.active {
+            background: var(--btn-red);
+            color: var(--text-gold);
+        }
+
+        .overview-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 20px;
+        }
+
+        /* TOAST NOTIFICATIONS */
+        .toast-container {
+            position: fixed;
+            right: 20px;
+            bottom: 20px;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            z-index: 2000;
+            max-width: 360px;
+        }
+        .toast {
+            background: var(--bg-card);
+            border: 1px solid var(--border-gold);
+            color: var(--text-primary);
+            padding: 10px 14px;
+            border-radius: 6px;
+            box-shadow: 0 4px 16px rgba(0,0,0,0.7);
+            font-size: 13px;
+        }
+
+        @media (max-width: 900px) {
+            .app-container { flex-direction: column; padding: 12px; }
+            .sidebar { width: 100%; }
+            .overview-grid { grid-template-columns: 1fr; }
+        }
+    </style>
+</head>
+<body>
+
+    <header>
+        <div class="brand-title">
+            🦅 <span>Aeterna Roma</span>
+        </div>
+        <div class="resource-bar">
+            <div class="res-item res-gold" title="Gold">💰 <span id="resGold">0</span></div>
+            <div class="res-item res-rubies" title="Rubies">💎 <span id="resRubies">0</span></div>
+            <div class="res-item res-honor" title="Honor">🏆 <span id="resHonor">0</span></div>
+        </div>
+        <div class="btn-row">
+            <button class="btn-roman" onclick="playAudio('click'); manualSave();">💾 Save</button>
+            <button class="btn-roman btn-gold" id="btnMute" onclick="toggleAudio();">🔊 Audio</button>
+        </div>
+    </header>
+
+    <div class="app-container">
+        <!-- SIDEBAR -->
+        <div class="sidebar">
+            <div class="avatar-box">
+                <div id="avatarContainer"></div>
+                <div class="gladiator-name" id="gladName">Gladiator</div>
+                <div class="gladiator-level" id="gladLevel">LVL 1</div>
+                <div class="status-note" id="sidebarStatus"></div>
+            </div>
+
+            <!-- STAT BARS -->
+            <div class="stat-bar-container">
+                <div class="stat-bar-label"><span>HP</span><span id="textHp">100/100</span></div>
+                <div class="stat-bar"><div class="stat-fill fill-hp" id="fillHp" style="width:100%"></div></div>
+            </div>
+
+            <div class="stat-bar-container">
+                <div class="stat-bar-label"><span>Energy</span><span id="textEnergy">24/24</span></div>
+                <div class="stat-bar"><div class="stat-fill fill-energy" id="fillEnergy" style="width:100%"></div></div>
+            </div>
+
+            <div class="stat-bar-container">
+                <div class="stat-bar-label"><span>Damage</span><span id="statDmg">3 - 6</span></div>
+            </div>
+
+            <div class="stat-bar-container">
+                <div class="stat-bar-label"><span>Armor</span><span id="statArmor">0</span></div>
+            </div>
+
+            <div class="stat-bar-container">
+                <div class="stat-bar-label"><span>Arena Rank</span><span id="statRank">#10</span></div>
+            </div>
+
+            <!-- EQUIPMENT SLOTS -->
+            <div style="font-family:'Cinzel',serif; font-size:12px; color:var(--text-gold); text-align:center; margin-top:5px;">EQUIPPED GEAR <span class="muted">(click to unequip)</span></div>
+            <div class="equipment-grid">
+                <div class="equip-slot empty" data-slot="Head" id="slot-Head" onclick="unequipSlot('Head')"></div>
+                <div class="equip-slot empty" data-slot="Chest" id="slot-Chest" onclick="unequipSlot('Chest')"></div>
+                <div class="equip-slot empty" data-slot="Gloves" id="slot-Gloves" onclick="unequipSlot('Gloves')"></div>
+                <div class="equip-slot empty" data-slot="Shoes" id="slot-Shoes" onclick="unequipSlot('Shoes')"></div>
+                <div class="equip-slot empty" data-slot="Weapon" id="slot-Weapon" onclick="unequipSlot('Weapon')"></div>
+                <div class="equip-slot empty" data-slot="Shield" id="slot-Shield" onclick="unequipSlot('Shield')"></div>
+                <div class="equip-slot empty" data-slot="Ring" id="slot-Ring" onclick="unequipSlot('Ring')"></div>
+                <div class="equip-slot empty" data-slot="Amulet" id="slot-Amulet" onclick="unequipSlot('Amulet')"></div>
+            </div>
+        </div>
+
+        <!-- MAIN PANEL -->
+        <div class="main-content">
+            <div class="nav-tabs" id="navTabs">
+                <button class="nav-tab active" data-tab="overview" onclick="switchTab('overview')">🏛️ Gladiator</button>
+                <button class="nav-tab" data-tab="training" onclick="switchTab('training')">💪 Training</button>
+                <button class="nav-tab" data-tab="expeditions" onclick="switchTab('expeditions')">🗺️ Expeditions</button>
+                <button class="nav-tab" data-tab="arena" onclick="switchTab('arena')">⚔️ Colosseum</button>
+                <button class="nav-tab" data-tab="dungeons" onclick="switchTab('dungeons')">🗝️ Dungeons</button>
+                <button class="nav-tab" data-tab="merchants" onclick="switchTab('merchants')">⚖️ Merchants</button>
+                <button class="nav-tab" data-tab="forge" onclick="switchTab('forge')">🔥 The Forge</button>
+                <button class="nav-tab" data-tab="work" onclick="switchTab('work')">🌾 Villa Work</button>
+                <button class="nav-tab" data-tab="guild" onclick="switchTab('guild')">🦅 Guild</button>
+                <button class="nav-tab" data-tab="settings" onclick="switchTab('settings')">⚙️ Settings</button>
+            </div>
+
+            <div class="tab-panel">
+                <!-- OVERVIEW TAB -->
+                <div id="tab-overview" class="tab-content active">
+                    <div class="overview-subtabs">
+                        <button class="subtab-btn active" id="ovSubtabBtnBase" onclick="switchOverviewSubtab('base')">Base Attributes</button>
+                        <button class="subtab-btn" id="ovSubtabBtnHidden" onclick="switchOverviewSubtab('hidden')">Hidden &amp; Combat Stats</button>
+                    </div>
+
+                    <div id="ovSubtab-base">
+                        <h2 class="tab-title">Gladiator Overview</h2>
+                        <div class="overview-grid">
+                            <div>
+                                <h4 style="color:var(--text-accent); margin-bottom:10px;">Core Attributes</h4>
+                                <div class="monster-list">
+                                    <div class="monster-row"><span>Strength (Dmg &amp; Block)</span><strong id="attrStr">5</strong></div>
+                                    <div class="monster-row"><span>Dexterity (Hit &amp; Crit)</span><strong id="attrDex">5</strong></div>
+                                    <div class="monster-row"><span>Agility (Dodge &amp; Block)</span><strong id="attrAgi">5</strong></div>
+                                    <div class="monster-row"><span>Constitution (Max HP &amp; Regen)</span><strong id="attrCon">5</strong></div>
+                                    <div class="monster-row"><span>Charisma (Double Strike)</span><strong id="attrCha">5</strong></div>
+                                    <div class="monster-row"><span>Intelligence (Crit Dmg &amp; Potions)</span><strong id="attrInt">5</strong></div>
+                                </div>
+                            </div>
+                            <div>
+                                <h4 style="color:var(--text-accent); margin-bottom:10px;">Progress &amp; Level</h4>
+                                <div class="monster-list">
+                                    <div class="monster-row"><span>Level</span><strong id="ovLvl">1</strong></div>
+                                    <div class="monster-row"><span>Experience</span><strong id="ovXpText">0 / 100 XP</strong></div>
+                                </div>
+                                <div class="stat-bar" style="margin-top:10px;"><div class="stat-fill fill-xp" id="ovXpFill" style="width:0%"></div></div>
+                            </div>
+                        </div>
+
+                        <h3 style="font-family:'Cinzel',serif; color:var(--text-gold); margin-top:25px;">Inventory Items <span class="muted" id="invCount"></span></h3>
+                        <div class="inventory-grid" id="inventoryContainer"></div>
+                        <div id="selectedItemPanel" class="info-box" style="margin-top:15px; display:none;"></div>
+                    </div>
+
+                    <div id="ovSubtab-hidden" style="display:none;">
+                        <h2 class="tab-title">Hidden &amp; Combat Formulae</h2>
+                        <p class="muted">Chances that depend on the enemy are shown against an opponent with the same stats as you.</p>
+                        <div class="monster-list" id="hiddenStatsGrid"></div>
+                    </div>
+                </div>
+
+                <!-- TRAINING TAB -->
+                <div id="tab-training" class="tab-content">
+                    <h2 class="tab-title">Campus Martialis - Training</h2>
+                    <p style="font-size:13px; margin-bottom:15px;">Train your gladiator's physical attributes to increase combat potency in Arena and Expeditions.</p>
+                    <div class="monster-list" id="trainingContainer"></div>
+                </div>
+
+                <!-- EXPEDITIONS TAB -->
+                <div id="tab-expeditions" class="tab-content">
+                    <h2 class="tab-title">Expeditions across the Empire</h2>
+                    <div class="exp-grid" id="expeditionContainer"></div>
+                </div>
+
+                <!-- ARENA TAB -->
+                <div id="tab-arena" class="tab-content">
+                    <h2 class="tab-title">The Colosseum Arena</h2>
+                    <div class="info-box" id="arenaStatus"></div>
+                    <div class="monster-list" id="arenaContainer"></div>
+                </div>
+
+                <!-- DUNGEONS TAB -->
+                <div id="tab-dungeons" class="tab-content">
+                    <h2 class="tab-title">Catacombs &amp; Dungeons</h2>
+                    <div class="exp-grid" id="dungeonContainer"></div>
+                </div>
+
+                <!-- MERCHANTS TAB -->
+                <div id="tab-merchants" class="tab-content">
+                    <h2 class="tab-title">Forum Boarium - Merchants</h2>
+                    <div class="btn-row" style="margin-bottom:15px;" id="vendorButtons"></div>
+                    <div class="info-box" id="vendorInfo"></div>
+                    <div class="merchant-grid" id="merchantContainer"></div>
+                </div>
+
+                <!-- FORGE TAB -->
+                <div id="tab-forge" class="tab-content">
+                    <h2 class="tab-title">Vulcan's Forge</h2>
+                    <div id="forgeStashInfo" class="info-box"></div>
+                    <div class="exp-grid" id="forgeRecipeContainer"></div>
+                </div>
+
+                <!-- WORK TAB -->
+                <div id="tab-work" class="tab-content">
+                    <h2 class="tab-title">Roman Villa Work</h2>
+                    <p style="margin-bottom:15px;">Perform manual labor for patrician lords to earn honest Gold and Experience. While you work you cannot fight.</p>
+                    <div id="workContainer"></div>
+                </div>
+
+                <!-- GUILD TAB -->
+                <div id="tab-guild" class="tab-content">
+                    <h2 class="tab-title">Gladiator Guild House</h2>
+                    <div id="guildContent"></div>
+                </div>
+
+                <!-- SETTINGS TAB -->
+                <div id="tab-settings" class="tab-content">
+                    <h2 class="tab-title">Settings &amp; Controls</h2>
+                    <div style="display:flex; flex-direction:column; gap:10px; max-width:320px;">
+                        <label style="display:flex; flex-direction:column; gap:6px;">
+                            <span style="font-family:'Cinzel',serif; color:var(--text-accent);">Visual Theme</span>
+                            <select class="roman-select" id="themeSelect" onchange="setTheme(this.value)"></select>
+                        </label>
+                        <button class="btn-roman btn-gold" onclick="toggleFullscreen()">📺 Fullscreen</button>
+                        <button class="btn-roman btn-gold" onclick="manualSave()">💾 Quick Save</button>
+                        <button class="btn-roman" onclick="exportSave()">📥 Export Save File</button>
+                        <button class="btn-roman" onclick="document.getElementById('importFile').click()">📤 Import Save File</button>
+                        <input type="file" id="importFile" accept=".json,application/json" style="display:none;" onchange="importSaveFile(this)">
+                        <p class="muted">Progress is saved automatically in this browser's local storage. Export a save file to back it up or move it to another computer. Save files from the old server version (savegame.json) can be imported too.</p>
+                    </div>
+                    <div style="margin-top:30px; border-top:1px solid #444; padding-top:15px;">
+                        <button class="btn-roman" style="background:#800000; border-color:#ff4d4d; color:#fff; width:100%; justify-content:center; margin-top:5px;" onclick="resetGameConfirm()">🔄 Reset Gladiator Progress</button>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- COMBAT REPORT MODAL -->
+    <div class="modal-overlay" id="combatModal" onclick="if (event.target === this) closeCombatModal()">
+        <div class="combat-modal">
+            <div class="modal-header">
+                <span id="modalCombatTitle">COMBAT REPORT</span>
+                <button style="background:none; border:none; color:#ffd700; font-size:24px; cursor:pointer;" onclick="closeCombatModal()">✕</button>
+            </div>
+            <div class="modal-body">
+                <div class="combat-result-banner" id="modalCombatResultBanner">VICTORY!</div>
+                <div style="display:flex; justify-content:space-between; font-weight:bold; font-size:14px;">
+                    <span id="modalFighter1Name" style="color:#2196f3;">Player</span>
+                    <span style="color:#888;">VS</span>
+                    <span id="modalFighter2Name" style="color:#f44336;">Enemy</span>
+                </div>
+                <div class="reward-box" id="modalRewards"></div>
+                <div class="combat-log" id="modalCombatLog"></div>
+            </div>
+        </div>
+    </div>
+
+    <div class="toast-container" id="toastContainer"></div>
+
+    <script>
+        'use strict';
+
+        // =====================================================================
+        //  CONSTANTS & STATIC GAME DATA
+        // =====================================================================
+
+        const SAVE_KEY = 'aeternaRoma.save.v1';
+
+        const ITEM_TYPES = ['Weapon', 'Armor', 'Helmet', 'Shield', 'Ring', 'Amulet', 'Gloves', 'Shoes', 'Potion', 'Material'];
+        const EQUIP_TYPES = ITEM_TYPES.slice(0, 8);
+        const RARITIES = ['Common', 'Uncommon', 'Rare', 'Epic', 'Legendary'];
+        const SLOTS = ['Head', 'Chest', 'Gloves', 'Shoes', 'Weapon', 'Shield', 'Ring', 'Amulet'];
+        const SLOT_FOR_TYPE = {
+            Weapon: 'Weapon', Armor: 'Chest', Helmet: 'Head', Shield: 'Shield',
+            Ring: 'Ring', Amulet: 'Amulet', Gloves: 'Gloves', Shoes: 'Shoes'
+        };
+        const ATTRIBUTES = ['Strength', 'Dexterity', 'Agility', 'Constitution', 'Charisma', 'Intelligence'];
+
+        const ENERGY_REGEN_PER_MIN = 2;
+        const ARENA_COOLDOWN_MS = 5 * 60 * 1000;
+        const DUNGEON_ENERGY_COST = 2;
+        const MIN_FIGHT_HP_RATIO = 0.10;
+        const MAX_TURNS = 30;
+        const LOOT_CHANCE = 0.55;
+        const SHIELD_BLOCK_BONUS = 0.08;
+        const GUILD_COST = 500;
+        const WORK_GOLD_PER_HOUR = 110;
+        const WORK_XP_PER_HOUR = 25;
+        const WORK_OPTIONS = [1, 2, 4, 8];
+        const LADDER_SIZE = 21; // 20 rival gladiators + the player
+
+        const THEMES = {
+            DarkImperial: 'Dark Imperial',
+            RomanParchment: 'Roman Parchment',
+            ColosseumCrimson: 'Colosseum Crimson',
+            LegionEmerald: 'Legion Emerald',
+            TyrianPurple: 'Tyrian Purple'
+        };
+
+        const VENDOR_DEFS = {
+            Weaponsmith: { Name: 'Marcus the Blacksmith', Label: '⚔️ Weaponsmith', Stock: ['Weapon', 'Shield'] },
+            Armorer: { Name: 'Flavius Armorsmith', Label: '🛡️ Armorer', Stock: ['Armor', 'Helmet', 'Gloves', 'Shoes'] },
+            General: { Name: 'Gaius Goods Trader', Label: '💍 General Merchant', Stock: ['Ring', 'Amulet'] },
+            Alchemist: { Name: 'Cornelia the Apothecary', Label: '🧪 Apothecary', Stock: null }
+        };
+        const VENDOR_STOCK_SIZE = 6;
+        const ALCHEMIST_ITEMS = [
+            { Name: 'Small Health Potion', HealAmount: 40, Price: 15, IconSvg: 'potion_red' },
+            { Name: 'Large Health Potion', HealAmount: 100, Price: 35, IconSvg: 'potion_red' },
+            { Name: 'Stamina Elixir', EnergyAmount: 10, Price: 50, IconSvg: 'potion_blue' }
+        ];
+
+        const LOCATIONS = [
+            {
+                Id: 1, Name: 'Suburbs of Rome', ReqLevel: 1, EnergyCost: 1,
+                Description: 'Outskirts of the Eternal City, overrun by rabid wolves, runaway slaves, and mountain bandits.',
+                Monsters: [
+                    { Id: 'm1', Name: 'Wild Boar', Level: 1, MaxHP: 45, MinDamage: 3, MaxDamage: 7, Armor: 2, Dexterity: 4, Agility: 4, XPReward: 15, MinGold: 10, MaxGold: 25 },
+                    { Id: 'm2', Name: 'Stray Hound', Level: 1, MaxHP: 35, MinDamage: 2, MaxDamage: 6, Armor: 1, Dexterity: 6, Agility: 6, XPReward: 12, MinGold: 8, MaxGold: 20 },
+                    { Id: 'm3', Name: 'Highway Bandit', Level: 2, MaxHP: 65, MinDamage: 5, MaxDamage: 11, Armor: 4, Dexterity: 8, Agility: 6, XPReward: 25, MinGold: 20, MaxGold: 45 }
+                ]
+            },
+            {
+                Id: 2, Name: 'Mist Mountains', ReqLevel: 3, EnergyCost: 2,
+                Description: 'Treacherous jagged peaks guarded by fierce Harpies, Stone Trolls, and Shadow Lynx.',
+                Monsters: [
+                    { Id: 'm4', Name: 'Mountain Lynx', Level: 3, MaxHP: 90, MinDamage: 8, MaxDamage: 14, Armor: 6, Dexterity: 12, Agility: 14, XPReward: 40, MinGold: 35, MaxGold: 70 },
+                    { Id: 'm5', Name: 'Screeching Harpy', Level: 4, MaxHP: 110, MinDamage: 10, MaxDamage: 18, Armor: 8, Dexterity: 15, Agility: 16, XPReward: 55, MinGold: 50, MaxGold: 90 },
+                    { Id: 'm6', Name: 'Mountain Troll', Level: 5, MaxHP: 160, MinDamage: 14, MaxDamage: 24, Armor: 15, Dexterity: 8, Agility: 5, XPReward: 75, MinGold: 70, MaxGold: 130 }
+                ]
+            },
+            {
+                Id: 3, Name: 'Ancient Forest', ReqLevel: 6, EnergyCost: 2,
+                Description: 'Deep mystical woods harboring rogue Centaurs, Werewolves, and Ancient Treants.',
+                Monsters: [
+                    { Id: 'm7', Name: 'Centaur Scout', Level: 6, MaxHP: 190, MinDamage: 16, MaxDamage: 26, Armor: 12, Dexterity: 18, Agility: 18, XPReward: 100, MinGold: 90, MaxGold: 160 },
+                    { Id: 'm8', Name: 'Timber Werewolf', Level: 7, MaxHP: 230, MinDamage: 20, MaxDamage: 32, Armor: 14, Dexterity: 22, Agility: 20, XPReward: 130, MinGold: 120, MaxGold: 210 },
+                    { Id: 'm9', Name: 'Corrupted Treant', Level: 8, MaxHP: 300, MinDamage: 24, MaxDamage: 38, Armor: 22, Dexterity: 10, Agility: 8, XPReward: 170, MinGold: 150, MaxGold: 280 }
+                ]
+            },
+            {
+                Id: 4, Name: 'Barbarian Camp', ReqLevel: 9, EnergyCost: 3,
+                Description: 'Fierce hostile war camp of Northern Barbarian Warriors and Chieftains.',
+                Monsters: [
+                    { Id: 'm10', Name: 'Barbarian Berserker', Level: 9, MaxHP: 360, MinDamage: 28, MaxDamage: 45, Armor: 18, Dexterity: 24, Agility: 22, XPReward: 220, MinGold: 200, MaxGold: 350 },
+                    { Id: 'm11', Name: 'Warlord Chieftain', Level: 10, MaxHP: 480, MinDamage: 35, MaxDamage: 58, Armor: 25, Dexterity: 28, Agility: 24, XPReward: 300, MinGold: 300, MaxGold: 500 }
+                ]
+            }
+        ];
+
+        const DUNGEONS = [
+            {
+                Id: 1, Name: 'Catacombs of Rome', ReqLevel: 4,
+                Description: 'Underground ancient tombs occupied by Undead Centurions and the Necromancer Master.',
+                Stages: [
+                    { Name: 'Catacomb Guard', IsBoss: false, Monster: { Name: 'Skeleton Legionary', Level: 4, MaxHP: 120, MinDamage: 10, MaxDamage: 16, Armor: 8, Dexterity: 12, Agility: 10, XPReward: 60, MinGold: 50, MaxGold: 90 } },
+                    { Name: 'Crypt Tomb', IsBoss: false, Monster: { Name: 'Crypt Wight', Level: 5, MaxHP: 170, MinDamage: 14, MaxDamage: 22, Armor: 12, Dexterity: 15, Agility: 12, XPReward: 90, MinGold: 80, MaxGold: 130 } },
+                    { Name: 'Necromancer Chamber', IsBoss: true, Monster: { Name: 'Lich Lord Cassius', Level: 6, MaxHP: 280, MinDamage: 20, MaxDamage: 32, Armor: 18, Dexterity: 20, Agility: 18, XPReward: 200, MinGold: 250, MaxGold: 450 } }
+                ]
+            },
+            {
+                Id: 2, Name: 'Labyrinth of the Minotaur', ReqLevel: 8,
+                Description: 'Winding maze of stone corridors guarded by mythical beasts and the monstrous Minotaur.',
+                Stages: [
+                    { Name: 'Maze Entrance', IsBoss: false, Monster: { Name: 'Gorgon Sentinel', Level: 8, MaxHP: 260, MinDamage: 22, MaxDamage: 36, Armor: 16, Dexterity: 22, Agility: 20, XPReward: 160, MinGold: 150, MaxGold: 250 } },
+                    { Name: 'Labyrinth Center', IsBoss: true, Monster: { Name: 'Minotaur Emperor', Level: 10, MaxHP: 500, MinDamage: 38, MaxDamage: 60, Armor: 28, Dexterity: 25, Agility: 22, XPReward: 400, MinGold: 500, MaxGold: 900 } }
+                ]
+            }
+        ];
+
+        const RECIPES = [
+            { Id: 'r1', Name: 'Centurion Gladius', ResultType: 'Weapon', ResultRarity: 'Uncommon', ReqIron: 5, ReqBronze: 2, ReqRuby: 0, ReqLeather: 2, ReqLevel: 2, IconSvg: 'weapon_1' },
+            { Id: 'r2', Name: 'Imperial Lorica Segmentata', ResultType: 'Armor', ResultRarity: 'Rare', ReqIron: 8, ReqBronze: 5, ReqRuby: 1, ReqLeather: 5, ReqLevel: 4, IconSvg: 'armor_1' },
+            { Id: 'r3', Name: 'Scutum of Mars', ResultType: 'Shield', ResultRarity: 'Epic', ReqIron: 10, ReqBronze: 8, ReqRuby: 3, ReqLeather: 4, ReqLevel: 6, IconSvg: 'shield_1' },
+            { Id: 'r4', Name: 'Golden Galea Helmet', ResultType: 'Helmet', ResultRarity: 'Legendary', ReqIron: 15, ReqBronze: 12, ReqRuby: 5, ReqLeather: 8, ReqLevel: 8, IconSvg: 'helmet_1' }
+        ];
+
+        const ARENA_NAMES = [
+            'Tiberius', 'Cassius', 'Brutus', 'Varro', 'Flavius',
+            'Septimius', 'Valerius', 'Hadrian', 'Claudius', 'Lucius',
+            'Aurelius', 'Commodus', 'Cornelius', 'Severus', 'Domitian',
+            'Titus', 'Vespian', 'Trajan', 'Marcus Antonius', 'Spartacus'
+        ];
+
+        // =====================================================================
+        //  UTILITIES
+        // =====================================================================
+
+        function randInt(min, max) { return Math.floor(Math.random() * (max - min + 1)) + min; } // inclusive
+        function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+        function clamp(v, lo, hi) { return Math.max(lo, Math.min(hi, v)); }
+        function uid() { return Date.now().toString(36) + '-' + Math.random().toString(36).slice(2, 10); }
+        function toInt(v, def) { const n = Number(v); return Number.isFinite(n) ? Math.trunc(n) : def; }
+        function pct(chance) { return (chance * 100).toFixed(1) + '%'; }
+
+        const ESC_MAP = { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' };
+        function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, c => ESC_MAP[c]); }
+
+        function formatDuration(ms) {
+            const total = Math.max(0, Math.ceil(ms / 1000));
+            const h = Math.floor(total / 3600);
+            const m = Math.floor((total % 3600) / 60);
+            const s = total % 60;
+            const mm = h ? String(m).padStart(2, '0') : String(m);
+            return (h ? h + ':' : '') + mm + ':' + String(s).padStart(2, '0');
+        }
+
+        // =====================================================================
+        //  ITEMS
+        // =====================================================================
+
+        const ITEM_TEMPLATE = {
+            Id: '', Name: '', Prefix: '', Suffix: '', Type: 'Material', Rarity: 'Common',
+            LevelRequirement: 1, Price: 0, MinDamage: 0, MaxDamage: 0, Armor: 0,
+            Strength: 0, Dexterity: 0, Agility: 0, Constitution: 0, Charisma: 0, Intelligence: 0,
+            HealAmount: 0, EnergyAmount: 0, IconSvg: '',
+            SmeltIron: 0, SmeltBronze: 0, SmeltRuby: 0, SmeltLeather: 0
+        };
+        const ITEM_NUMERIC_FIELDS = Object.keys(ITEM_TEMPLATE).filter(k => typeof ITEM_TEMPLATE[k] === 'number');
+
+        function blankItem() { return Object.assign({}, ITEM_TEMPLATE, { Id: uid() }); }
+
+        function makePotion(def) {
+            return Object.assign(blankItem(), { Type: 'Potion', Rarity: 'Common', LevelRequirement: 1 }, def);
+        }
+
+        function displayName(item) {
+            return [item.Prefix, item.Name, item.Suffix].filter(Boolean).join(' ');
+        }
+
+        function rollRarity() {
+            const r = Math.random();
+            if (r > 0.95) return 'Legendary';
+            if (r > 0.85) return 'Epic';
+            if (r > 0.65) return 'Rare';
+            if (r > 0.35) return 'Uncommon';
+            return 'Common';
+        }
+
+        function generateItem(level, type, rarity) {
+            type = type || pick(EQUIP_TYPES);
+            rarity = rarity || rollRarity();
+            const mult = RARITIES.indexOf(rarity) + 1;
+
+            const item = blankItem();
+            item.Type = type;
+            item.Rarity = rarity;
+            item.LevelRequirement = level;
+
+            let baseName = 'Roman Gear';
+            switch (type) {
+                case 'Weapon':
+                    baseName = pick(['Gladius', 'Spatha', 'Pugio Dagger', 'Trident', 'Halberd', 'Centurion Sword']);
+                    item.MinDamage = level * 3 + randInt(1, 4) * mult;
+                    item.MaxDamage = item.MinDamage + randInt(3, 7) * mult;
+                    item.IconSvg = 'weapon_' + randInt(1, 3);
+                    break;
+                case 'Helmet':
+                    baseName = pick(['Galea Helmet', 'Centurion Crest', 'Legionary Helm', 'Gladiator Mask']);
+                    item.Armor = level * 4 + randInt(2, 5) * mult;
+                    item.IconSvg = 'helmet_' + randInt(1, 2);
+                    break;
+                case 'Armor':
+                    baseName = pick(['Lorica Segmentata', 'Lorica Hamata', 'Gladiator Cuirass', 'Bronze Breastplate']);
+                    item.Armor = level * 8 + randInt(5, 11) * mult;
+                    item.IconSvg = 'armor_' + randInt(1, 2);
+                    break;
+                case 'Shield':
+                    baseName = pick(['Scutum Shield', 'Parma Round Shield', 'Tower Shield', 'Gladiator Buckler']);
+                    item.Armor = level * 5 + randInt(3, 6) * mult;
+                    item.IconSvg = 'shield_' + randInt(1, 2);
+                    break;
+                case 'Ring':
+                    baseName = 'Signet Ring';
+                    item.Strength = randInt(1, 2) * mult;
+                    item.Agility = randInt(1, 2) * mult;
+                    item.IconSvg = 'ring_1';
+                    break;
+                case 'Amulet':
+                    baseName = 'Imperial Amulet';
+                    item.Constitution = randInt(1, 3) * mult;
+                    item.Charisma = randInt(1, 3) * mult;
+                    item.IconSvg = 'amulet_1';
+                    break;
+                case 'Gloves':
+                    baseName = 'Leather Gauntlets';
+                    item.Armor = level * 2 + mult;
+                    item.Dexterity = randInt(1, 2) * mult;
+                    item.IconSvg = 'gloves_1';
+                    break;
+                case 'Shoes':
+                    baseName = 'Caligae Sandals';
+                    item.Armor = level * 2 + mult;
+                    item.Agility = randInt(1, 2) * mult;
+                    item.IconSvg = 'shoes_1';
+                    break;
+            }
+
+            item.Name = baseName;
+            item.Prefix = pick(['', 'Praetorian', 'Centurion', 'Imperial', 'Olympian', 'Invictus', 'Titan']);
+            item.Suffix = pick(['', 'of Valor', 'of Jupiter', 'of Mars', 'of Blood', 'of Victory']);
+
+            item.Price = (level * 25 + 20) * mult;
+            item.SmeltIron = randInt(1, 3) * mult;
+            item.SmeltBronze = randInt(1, 2) * mult;
+            item.SmeltRuby = RARITIES.indexOf(rarity) >= RARITIES.indexOf('Rare') ? randInt(1, 2) : 0;
+            item.SmeltLeather = randInt(1, 3) * mult;
+            return item;
+        }
+
+        // =====================================================================
+        //  GLADIATOR (PLAYER) RULES
+        // =====================================================================
+
+        function newPlayer() {
+            const equipment = {};
+            SLOTS.forEach(s => equipment[s] = null);
+            return {
+                Name: 'Flavius', Level: 1, XP: 0, MaxXP: 100,
+                Gold: 250, Rubies: 10, Honor: 50, ArenaRank: 10,
+                BaseStrength: 5, BaseDexterity: 5, BaseAgility: 5,
+                BaseConstitution: 5, BaseCharisma: 5, BaseIntelligence: 5,
+                CurrentHP: 0, MaxHP: 0, CurrentEnergy: 24, MaxEnergy: 24,
+                Equipment: equipment, Inventory: [], InventoryCapacity: 24
+            };
+        }
+
+        function equipBonus(p, stat) {
+            let bonus = 0;
+            SLOTS.forEach(s => { const it = p.Equipment[s]; if (it) bonus += it[stat] || 0; });
+            return bonus;
+        }
+        function totalStat(p, stat) { return p['Base' + stat] + equipBonus(p, stat); }
+        function totalArmor(p) { return equipBonus(p, 'Armor'); }
+        function hasShield(p) { return !!p.Equipment.Shield; }
+
+        function minDamage(p) {
+            const w = p.Equipment.Weapon;
+            return 2 + Math.floor(totalStat(p, 'Strength') / 2) + (w ? w.MinDamage : 0);
+        }
+        function maxDamage(p) {
+            const w = p.Equipment.Weapon;
+            return 5 + Math.floor(totalStat(p, 'Strength') / 2) + Math.floor(totalStat(p, 'Dexterity') / 3) + (w ? w.MaxDamage : 0);
+        }
+
+        function hpRegenPerMin(p) { return 2 + totalStat(p, 'Constitution') * 0.5; }
+        function healMultiplier(p) { return 1 + totalStat(p, 'Intelligence') * 0.02; }
+        function trainingCost(base) { return Math.floor(base * base * 2.5) + 15; }
+        function minFightHP(p) { return Math.ceil(p.MaxHP * MIN_FIGHT_HP_RATIO); }
+
+        function recalcStats(p) {
+            p.MaxHP = 100 + totalStat(p, 'Constitution') * 35;
+            p.CurrentHP = clamp(p.CurrentHP, 0, p.MaxHP);
+            p.CurrentEnergy = clamp(p.CurrentEnergy, 0, p.MaxEnergy);
+        }
+
+        // Adds XP and applies any level-ups. Returns the number of levels gained.
+        function gainXP(xp) {
+            const p = state.Player;
+            p.XP += xp;
+            let levels = 0;
+            while (p.XP >= p.MaxXP) {
+                p.XP -= p.MaxXP;
+                p.Level++;
+                p.MaxXP = Math.floor(p.MaxXP * 1.5);
+                p.MaxEnergy += 2;
+                p.CurrentEnergy = p.MaxEnergy;
+                p.BaseStrength++;
+                p.BaseDexterity++;
+                p.BaseAgility++;
+                p.BaseConstitution++;
+                recalcStats(p);
+                p.CurrentHP = p.MaxHP;
+                levels++;
+            }
+            if (levels > 0) restockVendors();
+            return levels;
+        }
+
+        // =====================================================================
+        //  GAME STATE: CREATION, SAVING, LOADING, MIGRATION
+        // =====================================================================
+
+        let state = null;
+        let storageWarningShown = false;
+
+        function newGuild() {
+            return { HasGuild: false, Name: '', Tag: '', Level: 0, GoldVault: 0, Log: [] };
+        }
+
+        function idleWork() {
+            return { IsWorking: false, DurationHours: 0, StartTime: 0, ExpectedGold: 0, ExpectedXP: 0 };
+        }
+
+        function buildLadder(playerRank) {
+            const ladder = [];
+            let rank = 1;
+            ARENA_NAMES.forEach((name, i) => {
+                if (rank === playerRank) rank++;
+                ladder.push({ Id: 'arena_' + (i + 1), Name: name, Rank: rank, IconSvg: 'gladiator_' + (i % 4 + 1) });
+                rank++;
+            });
+            return ladder;
+        }
+
+        function isLadderValid(ladder, playerRank) {
+            if (!Array.isArray(ladder) || ladder.length !== ARENA_NAMES.length) return false;
+            const seen = new Set([playerRank]);
+            for (const o of ladder) {
+                if (!o || typeof o.Id !== 'string' || typeof o.Name !== 'string') return false;
+                if (!Number.isInteger(o.Rank) || o.Rank < 1 || o.Rank > LADDER_SIZE || seen.has(o.Rank)) return false;
+                seen.add(o.Rank);
+            }
+            return true;
+        }
+
+        function stockVendor(key, level) {
+            const def = VENDOR_DEFS[key];
+            if (!def.Stock) return ALCHEMIST_ITEMS.map(makePotion);
+            const items = [];
+            for (let i = 0; i < VENDOR_STOCK_SIZE; i++) items.push(generateItem(level, pick(def.Stock)));
+            return items;
+        }
+
+        function restockVendors() {
+            Object.keys(VENDOR_DEFS).forEach(key => {
+                if (VENDOR_DEFS[key].Stock) state.Vendors[key] = { Items: stockVendor(key, state.Player.Level) };
+            });
+        }
+
+        function newGameState() {
+            const p = newPlayer();
+            p.Equipment.Weapon = Object.assign(blankItem(), {
+                Name: 'Iron Gladius', Type: 'Weapon', MinDamage: 4, MaxDamage: 8, Price: 45,
+                IconSvg: 'weapon_1', SmeltIron: 2, SmeltBronze: 1, SmeltLeather: 1
+            });
+            p.Equipment.Chest = Object.assign(blankItem(), {
+                Name: 'Tunic of Rome', Type: 'Armor', Armor: 10, Price: 45,
+                IconSvg: 'armor_1', SmeltIron: 1, SmeltBronze: 1, SmeltLeather: 2
+            });
+            p.Inventory.push(makePotion({ Name: 'Health Potion', HealAmount: 50, Price: 20, IconSvg: 'potion_red' }));
+            recalcStats(p);
+            p.CurrentHP = p.MaxHP;
+
+            const now = Date.now();
+            const s = {
+                Version: 1,
+                Player: p,
+                Vendors: {},
+                ArenaLadder: buildLadder(p.ArenaRank),
+                DungeonProgress: {},
+                ActiveWork: idleWork(),
+                PlayerGuild: newGuild(),
+                IronStash: 10, BronzeStash: 10, RubyStash: 5, LeatherStash: 10,
+                LastHPRegen: now,
+                LastEnergyRegen: now,
+                ArenaCooldownUntil: 0,
+                Settings: { ThemeMode: 'DarkImperial', AudioMuted: false }
+            };
+            Object.keys(VENDOR_DEFS).forEach(key => s.Vendors[key] = { Items: stockVendor(key, p.Level) });
+            DUNGEONS.forEach(d => s.DungeonProgress[d.Id] = { CurrentStage: 1, IsCompleted: false });
+            return s;
+        }
+
+        // Converts one item from any save format (including the old C# server save,
+        // which stored enums as numbers) into a clean item object.
+        function normalizeItem(raw) {
+            if (!raw || typeof raw !== 'object') return null;
+            const item = blankItem();
+            ITEM_NUMERIC_FIELDS.forEach(k => item[k] = Math.max(0, toInt(raw[k], 0)));
+            ['Name', 'Prefix', 'Suffix', 'IconSvg'].forEach(k => item[k] = typeof raw[k] === 'string' ? raw[k].slice(0, 60) : '');
+            if (typeof raw.Id === 'string' && raw.Id) item.Id = raw.Id.slice(0, 60);
+            item.Type = typeof raw.Type === 'number' ? ITEM_TYPES[raw.Type] : raw.Type;
+            if (!ITEM_TYPES.includes(item.Type)) item.Type = 'Material';
+            item.Rarity = typeof raw.Rarity === 'number' ? RARITIES[raw.Rarity] : raw.Rarity;
+            if (!RARITIES.includes(item.Rarity)) item.Rarity = 'Common';
+            item.LevelRequirement = Math.max(1, item.LevelRequirement);
+            if (!item.Name) item.Name = 'Unknown Item';
+            return item;
+        }
+
+        function normalizeState(raw) {
+            const s = newGameState();
+            const now = Date.now();
+            if (!raw || typeof raw !== 'object' || !raw.Player || typeof raw.Player !== 'object') return s;
+
+            // Player
+            const rp = raw.Player;
+            const p = s.Player;
+            if (typeof rp.Name === 'string' && rp.Name.trim()) p.Name = rp.Name.trim().slice(0, 24);
+            p.Level = Math.max(1, toInt(rp.Level, p.Level));
+            p.MaxXP = Math.max(1, toInt(rp.MaxXP, p.MaxXP));
+            p.XP = clamp(toInt(rp.XP, 0), 0, p.MaxXP - 1);
+            ['Gold', 'Rubies', 'Honor'].forEach(k => p[k] = Math.max(0, toInt(rp[k], p[k])));
+            p.ArenaRank = clamp(toInt(rp.ArenaRank, p.ArenaRank), 1, LADDER_SIZE);
+            ATTRIBUTES.forEach(a => p['Base' + a] = Math.max(1, toInt(rp['Base' + a], p['Base' + a])));
+            p.MaxEnergy = Math.max(1, toInt(rp.MaxEnergy, p.MaxEnergy));
+            p.CurrentEnergy = toInt(rp.CurrentEnergy, p.MaxEnergy);
+            p.InventoryCapacity = clamp(toInt(rp.InventoryCapacity, p.InventoryCapacity), 1, 100);
+
+            p.Inventory = [];
+            SLOTS.forEach(slot => {
+                const item = normalizeItem(rp.Equipment && rp.Equipment[slot]);
+                p.Equipment[slot] = null;
+                if (!item) return;
+                if (SLOT_FOR_TYPE[item.Type] === slot) p.Equipment[slot] = item;
+                else p.Inventory.push(item); // item was in the wrong slot; move it to the bag
+            });
+            if (Array.isArray(rp.Inventory)) rp.Inventory.forEach(r => { const it = normalizeItem(r); if (it) p.Inventory.push(it); });
+
+            recalcStats(p);
+            p.CurrentHP = toInt(rp.CurrentHP, p.MaxHP);
+            recalcStats(p);
+
+            // Vendors (the apothecary always has its fixed potion list)
+            if (raw.Vendors && typeof raw.Vendors === 'object') {
+                Object.keys(VENDOR_DEFS).forEach(key => {
+                    const rv = raw.Vendors[key];
+                    if (VENDOR_DEFS[key].Stock && rv && Array.isArray(rv.Items)) {
+                        const items = rv.Items.map(normalizeItem).filter(Boolean);
+                        if (items.length) s.Vendors[key] = { Items: items };
+                    }
+                });
+            }
+
+            // Arena ladder: keep it if it is consistent with the player's rank, otherwise rebuild it
+            if (Array.isArray(raw.ArenaLadder)) {
+                const ladder = raw.ArenaLadder.map(o => o && ({
+                    Id: typeof o.Id === 'string' ? o.Id.slice(0, 40) : '',
+                    Name: typeof o.Name === 'string' ? o.Name.slice(0, 40) : '',
+                    Rank: toInt(o.Rank, 0),
+                    IconSvg: typeof o.IconSvg === 'string' ? o.IconSvg.slice(0, 40) : ''
+                }));
+                s.ArenaLadder = isLadderValid(ladder, p.ArenaRank) ? ladder : buildLadder(p.ArenaRank);
+            } else {
+                s.ArenaLadder = buildLadder(p.ArenaRank);
+            }
+
+            // Dungeon progress (new format: DungeonProgress map; old format: Dungeons array)
+            DUNGEONS.forEach(d => {
+                let rd = raw.DungeonProgress && raw.DungeonProgress[d.Id];
+                if (!rd && Array.isArray(raw.Dungeons)) rd = raw.Dungeons.find(x => x && toInt(x.Id, -1) === d.Id);
+                if (rd) {
+                    s.DungeonProgress[d.Id] = {
+                        CurrentStage: clamp(toInt(rd.CurrentStage, 1), 1, d.Stages.length),
+                        IsCompleted: rd.IsCompleted === true
+                    };
+                }
+            });
+
+            // Villa work
+            const rw = raw.ActiveWork;
+            if (rw && rw.IsWorking === true && WORK_OPTIONS.includes(toInt(rw.DurationHours, 0)) && typeof rw.StartTime === 'number') {
+                const hours = toInt(rw.DurationHours, 0);
+                s.ActiveWork = {
+                    IsWorking: true, DurationHours: hours, StartTime: Math.min(rw.StartTime, now),
+                    ExpectedGold: hours * WORK_GOLD_PER_HOUR, ExpectedXP: hours * WORK_XP_PER_HOUR
+                };
+            }
+
+            // Guild
+            const rg = raw.PlayerGuild;
+            if (rg && rg.HasGuild === true) {
+                s.PlayerGuild = {
+                    HasGuild: true,
+                    Name: typeof rg.Name === 'string' ? rg.Name.slice(0, 24) : 'Guild',
+                    Tag: typeof rg.Tag === 'string' ? rg.Tag.slice(0, 5) : '',
+                    Level: Math.max(1, toInt(rg.Level, 1)),
+                    GoldVault: Math.max(0, toInt(rg.GoldVault, 0)),
+                    Log: Array.isArray(rg.Log) ? rg.Log.filter(l => typeof l === 'string').map(l => l.slice(0, 200)).slice(-50) : []
+                };
+            }
+
+            ['IronStash', 'BronzeStash', 'RubyStash', 'LeatherStash'].forEach(k => s[k] = Math.max(0, toInt(raw[k], s[k])));
+
+            // Timers are epoch milliseconds. Old server saves used .NET date strings: those restart from now.
+            const ts = v => (typeof v === 'number' && Number.isFinite(v) && v <= now) ? v : now;
+            s.LastHPRegen = ts(raw.LastHPRegen);
+            s.LastEnergyRegen = ts(raw.LastEnergyRegen);
+            s.ArenaCooldownUntil = typeof raw.ArenaCooldownUntil === 'number' ? clamp(raw.ArenaCooldownUntil, 0, now + ARENA_COOLDOWN_MS) : 0;
+
+            if (raw.Settings && typeof raw.Settings === 'object') {
+                if (THEMES[raw.Settings.ThemeMode]) s.Settings.ThemeMode = raw.Settings.ThemeMode;
+                s.Settings.AudioMuted = raw.Settings.AudioMuted === true;
+            }
+            return s;
+        }
+
+        function saveGame() {
+            try {
+                localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+                return true;
+            } catch (e) {
+                if (!storageWarningShown) {
+                    storageWarningShown = true;
+                    notify('⚠️ This browser is not allowing the game to save. Use Settings → Export Save File to keep your progress.');
+                }
+                return false;
+            }
+        }
+
+        function loadGame() {
+            let raw = null;
+            try { raw = localStorage.getItem(SAVE_KEY); } catch (e) { raw = null; }
+            if (!raw) return newGameState();
+            try {
+                return normalizeState(JSON.parse(raw));
+            } catch (e) {
+                // Never silently destroy an unreadable save: keep a copy next to it.
+                try { localStorage.setItem(SAVE_KEY + '.corrupt-' + Date.now(), raw); } catch (e2) { /* ignore */ }
+                setTimeout(() => notify('⚠️ Your save could not be read. A backup copy was kept and a new game was started.'), 0);
+                return newGameState();
+            }
+        }
+
+        function commit() {
+            saveGame();
+            renderUI();
+        }
+
+        // =====================================================================
+        //  TIME-BASED SYSTEMS: REGENERATION, WORK, COOLDOWNS
+        // =====================================================================
+
+        function applyRegen(now) {
+            const p = state.Player;
+            let changed = false;
+
+            // HP: (2 + Constitution * 0.5) per minute. Unused fractions carry over.
+            if (!(state.LastHPRegen <= now)) state.LastHPRegen = now; // also guards against the clock going backwards
+            if (p.CurrentHP >= p.MaxHP) {
+                state.LastHPRegen = now;
+            } else {
+                const rate = hpRegenPerMin(p);
+                const gained = Math.floor((now - state.LastHPRegen) / 60000 * rate);
+                if (gained > 0) {
+                    p.CurrentHP = Math.min(p.MaxHP, p.CurrentHP + gained);
+                    state.LastHPRegen = p.CurrentHP >= p.MaxHP ? now : state.LastHPRegen + gained / rate * 60000;
+                    changed = true;
+                }
+            }
+
+            // Energy: ENERGY_REGEN_PER_MIN per minute.
+            if (!(state.LastEnergyRegen <= now)) state.LastEnergyRegen = now;
+            if (p.CurrentEnergy >= p.MaxEnergy) {
+                state.LastEnergyRegen = now;
+            } else {
+                const gained = Math.floor((now - state.LastEnergyRegen) / 60000 * ENERGY_REGEN_PER_MIN);
+                if (gained > 0) {
+                    p.CurrentEnergy = Math.min(p.MaxEnergy, p.CurrentEnergy + gained);
+                    state.LastEnergyRegen = p.CurrentEnergy >= p.MaxEnergy ? now : state.LastEnergyRegen + gained / ENERGY_REGEN_PER_MIN * 60000;
+                    changed = true;
+                }
+            }
+            return changed;
+        }
+
+        function workEndTime() {
+            const w = state.ActiveWork;
+            return w.StartTime + w.DurationHours * 3600 * 1000;
+        }
+
+        // Pays out finished villa work. Returns true when a payout happened.
+        function completeWorkIfDone(now) {
+            const w = state.ActiveWork;
+            if (!w.IsWorking || now < workEndTime()) return false;
+            state.Player.Gold += w.ExpectedGold;
+            const levels = gainXP(w.ExpectedXP);
+            notify(`🌾 Villa work finished: +${w.ExpectedGold} gold, +${w.ExpectedXP} XP` + (levels ? ` — you reached level ${state.Player.Level}!` : ''));
+            state.ActiveWork = idleWork();
+            return true;
+        }
+
+        function arenaCooldownLeft(now) { return Math.max(0, state.ArenaCooldownUntil - now); }
+
+        let arenaWasCooling = false;
+        function tick() {
+            const now = Date.now();
+            const regenChanged = applyRegen(now);
+            if (completeWorkIfDone(now)) {
+                commit();
+                return;
+            }
+            const cooling = arenaCooldownLeft(now) > 0;
+            if (arenaWasCooling && !cooling) renderArena();
+            arenaWasCooling = cooling;
+            if (regenChanged) renderSidebar();
+            renderTimers(now);
+        }
+
+        // =====================================================================
+        //  COMBAT ENGINE
+        // =====================================================================
+
+        const Formulas = {
+            hitChance: (attDex, defAgi) => clamp(attDex / Math.max(1, attDex + defAgi) * 1.15, 0.15, 0.95),
+            blockChance: (defAgi, defStr, shieldBonus) => Math.min(0.30, defAgi * 0.005 + defStr * 0.003) + shieldBonus,
+            critChance: (attDex, defAgi, attInt) => Math.min(0.40, 0.05 + attDex / Math.max(1, attDex + defAgi) * 0.12 + attInt * 0.003),
+            critMultiplier: attInt => 1.5 + attInt * 0.015,
+            armorPenetration: attStr => Math.floor(attStr * 0.5),
+            mitigation: effectiveArmor => 100 / (100 + effectiveArmor * 0.45),
+            doubleStrikeChance: (attCha, defCha) => clamp(attCha / Math.max(1, attCha + defCha) * 0.22, 0.02, 0.30)
+        };
+
+        function playerCombatant(p) {
+            return {
+                name: p.Name, isPlayer: true, hp: p.CurrentHP,
+                str: totalStat(p, 'Strength'), dex: totalStat(p, 'Dexterity'), agi: totalStat(p, 'Agility'),
+                cha: totalStat(p, 'Charisma'), int: totalStat(p, 'Intelligence'),
+                armor: totalArmor(p), minDmg: minDamage(p), maxDmg: maxDamage(p),
+                shieldBonus: hasShield(p) ? SHIELD_BLOCK_BONUS : 0
+            };
+        }
+
+        function monsterCombatant(m) {
+            const L = m.Level;
+            return {
+                name: m.Name, isPlayer: false, hp: m.MaxHP,
+                str: L * 3, dex: m.Dexterity || L * 3, agi: m.Agility || L * 3, cha: L * 2, int: L * 2,
+                armor: m.Armor, minDmg: m.MinDamage, maxDmg: m.MaxDamage, shieldBonus: 0
+            };
+        }
+
+        function arenaCombatant(o) {
+            return {
+                name: o.Name, isPlayer: false, hp: o.MaxHP,
+                str: o.Strength, dex: o.Dexterity, agi: o.Agility, cha: o.Charisma, int: o.Intelligence,
+                armor: o.Armor, minDmg: o.MinDamage, maxDmg: o.MaxDamage, shieldBonus: 0
+            };
+        }
+
+        // Expedition/dungeon monsters grow with the player once they out-level the area.
+        function scaleMonster(m, playerLevel, areaReqLevel) {
+            const delta = Math.max(0, playerLevel - areaReqLevel);
+            if (delta === 0) return Object.assign({}, m);
+            return Object.assign({}, m, {
+                Level: m.Level + delta,
+                MaxHP: Math.floor(m.MaxHP * (1 + delta * 0.22)),
+                MinDamage: m.MinDamage + delta * 3,
+                MaxDamage: m.MaxDamage + delta * 5,
+                Armor: m.Armor + delta * 3,
+                Dexterity: m.Dexterity + delta * 2,
+                Agility: m.Agility + delta * 2,
+                XPReward: m.XPReward + delta * 12,
+                MinGold: m.MinGold + delta * 10,
+                MaxGold: m.MaxGold + delta * 20
+            });
+        }
+
+        // Arena opponents are levelled relative to the player: higher ranks are tougher.
+        function arenaOpponentStats(opp, p) {
+            const lvl = Math.max(1, p.Level + 6 - opp.Rank);
+            return {
+                Name: opp.Name, Rank: opp.Rank, Level: lvl,
+                Strength: 5 + lvl * 3, Dexterity: 5 + lvl * 3, Agility: 5 + lvl * 3, Constitution: 5 + lvl * 3,
+                Charisma: lvl * 3, Intelligence: lvl * 2,
+                MaxHP: 100 + lvl * 35, MinDamage: 4 + lvl * 4, MaxDamage: 8 + lvl * 5, Armor: lvl * 5
+            };
+        }
+
+        function executeTurn(turnNum, att, def, turns) {
+            const base = { Turn: turnNum, AttackerIsPlayer: att.isPlayer };
+
+            if (Math.random() > Formulas.hitChance(att.dex, def.agi)) {
+                turns.push(Object.assign(base, { Type: 'Miss', Damage: 0, Message: `💨 ${att.name} attacks ${def.name} but MISSES!` }));
+                return;
+            }
+
+            if (Math.random() < Formulas.blockChance(def.agi, def.str, def.shieldBonus)) {
+                turns.push(Object.assign(base, { Type: 'Block', Damage: 0, Message: `🛡️ ${def.name} BLOCKS ${att.name}'s strike completely!` }));
+                return;
+            }
+
+            let dmg = randInt(att.minDmg, att.maxDmg);
+            const isCrit = Math.random() < Formulas.critChance(att.dex, def.agi, att.int);
+            if (isCrit) dmg = Math.floor(dmg * Formulas.critMultiplier(att.int));
+
+            const effectiveArmor = Math.max(0, def.armor - Formulas.armorPenetration(att.str));
+            const mitigation = Formulas.mitigation(effectiveArmor);
+            const finalDmg = Math.max(1, Math.floor(dmg * mitigation));
+            def.hp -= finalDmg;
+
+            turns.push(Object.assign(base, {
+                Type: isCrit ? 'Critical' : 'Hit',
+                Damage: finalDmg,
+                Message: isCrit
+                    ? `💥 CRITICAL HIT! ${att.name} strikes ${def.name} for ${finalDmg} damage!`
+                    : `⚔️ ${att.name} hits ${def.name} for ${finalDmg} damage.`
+            }));
+
+            if (def.hp > 0 && Math.random() < Formulas.doubleStrikeChance(att.cha, def.cha)) {
+                const extra = Math.max(1, Math.floor(randInt(att.minDmg, att.maxDmg) * mitigation));
+                def.hp -= extra;
+                turns.push({
+                    Turn: turnNum, AttackerIsPlayer: att.isPlayer, Type: 'DoubleStrike', Damage: extra,
+                    Message: `⚡ ${att.name}'s high Charisma triggers a DOUBLE STRIKE dealing ${extra} extra damage!`
+                });
+            }
+        }
+
+        function runFight(title, enemy) {
+            const p = state.Player;
+            const pc = playerCombatant(p);
+            const result = {
+                Title: title, PlayerName: p.Name, EnemyName: enemy.name, Turns: [],
+                IsVictory: false, XPGained: 0, GoldGained: 0, Loot: [], LevelsGained: 0, Notes: []
+            };
+
+            let turn = 1;
+            while (pc.hp > 0 && enemy.hp > 0 && turn <= MAX_TURNS) {
+                executeTurn(turn, pc, enemy, result.Turns);
+                if (enemy.hp <= 0) break;
+                executeTurn(turn, enemy, pc, result.Turns);
+                turn++;
+            }
+
+            result.IsVictory = pc.hp > 0 && enemy.hp <= 0;
+            if (!result.IsVictory && pc.hp > 0) {
+                result.Notes.push(`After ${MAX_TURNS} rounds the crowd declared ${enemy.name} the winner.`);
+            }
+            p.CurrentHP = Math.max(1, pc.hp); // defeat leaves you badly hurt, never dead
+            return result;
+        }
+
+        function grantRewards(result, xp, gold) {
+            state.Player.Gold += gold;
+            result.GoldGained = gold;
+            result.XPGained = xp;
+            result.LevelsGained = gainXP(xp);
+        }
+
+        function rollLoot(result) {
+            if (Math.random() >= LOOT_CHANCE) return;
+            const p = state.Player;
+            const item = generateItem(p.Level);
+            if (p.Inventory.length < p.InventoryCapacity) {
+                p.Inventory.push(item);
+                result.Loot.push(item);
+            } else {
+                result.Notes.push(`You found ${displayName(item)}, but your inventory is full.`);
+            }
+        }
+
+        // Shared pre-fight checks. Returns true when the gladiator may fight.
+        function canFight() {
+            const p = state.Player;
+            if (state.ActiveWork.IsWorking) {
+                notify('You are busy working at the villa. Finish or cancel the work first.');
+                return false;
+            }
+            if (p.CurrentHP < minFightHP(p)) {
+                notify(`You are too wounded to fight (need at least ${minFightHP(p)} HP). Rest or drink a potion.`);
+                return false;
+            }
+            return true;
+        }
+
+        // =====================================================================
+        //  PLAYER ACTIONS
+        // =====================================================================
+
+        function startExpedition(locIdx, monsterIdx) {
+            playAudio('click');
+            const loc = LOCATIONS[locIdx];
+            const base = loc && loc.Monsters[monsterIdx];
+            if (!base) return;
+            const p = state.Player;
+            if (p.Level < loc.ReqLevel) { notify(`${loc.Name} requires level ${loc.ReqLevel}.`); return; }
+            if (p.CurrentEnergy < loc.EnergyCost) { notify(`Not enough energy (${loc.EnergyCost} needed).`); return; }
+            if (!canFight()) return;
+
+            p.CurrentEnergy -= loc.EnergyCost;
+            const m = scaleMonster(base, p.Level, loc.ReqLevel);
+            const result = runFight('Expedition: ' + m.Name, monsterCombatant(m));
+            if (result.IsVictory) {
+                grantRewards(result, m.XPReward, randInt(m.MinGold, m.MaxGold));
+                rollLoot(result);
+            }
+            commit();
+            showCombatModal(result);
+        }
+
+        function challengeArena(ladderIdx) {
+            playAudio('click');
+            const opp = state.ArenaLadder[ladderIdx];
+            if (!opp) return;
+            const now = Date.now();
+            if (arenaCooldownLeft(now) > 0) { notify(`The arena master needs time to prepare the next bout (${formatDuration(arenaCooldownLeft(now))}).`); return; }
+            if (!canFight()) return;
+
+            const p = state.Player;
+            const o = arenaOpponentStats(opp, p);
+            const result = runFight('Arena Challenge: ' + o.Name, arenaCombatant(o));
+            state.ArenaCooldownUntil = now + ARENA_COOLDOWN_MS;
+
+            if (result.IsVictory) {
+                grantRewards(result, o.Level * 15 + 20, o.Level * 45 + randInt(20, 79));
+                const honor = 10 + Math.max(0, LADDER_SIZE - opp.Rank);
+                p.Honor += honor;
+                result.Notes.push(`+${honor} Honor`);
+                if (opp.Rank < p.ArenaRank) {
+                    const old = p.ArenaRank;
+                    p.ArenaRank = opp.Rank;
+                    opp.Rank = old;
+                    result.Notes.push(`You climb the ladder to rank #${p.ArenaRank}!`);
+                }
+            }
+            commit();
+            showCombatModal(result);
+        }
+
+        function enterDungeon(dungIdx) {
+            playAudio('click');
+            const d = DUNGEONS[dungIdx];
+            if (!d) return;
+            const prog = state.DungeonProgress[d.Id];
+            const p = state.Player;
+            if (prog.IsCompleted) { notify(`${d.Name} is already conquered.`); return; }
+            if (p.Level < d.ReqLevel) { notify(`${d.Name} requires level ${d.ReqLevel}.`); return; }
+            if (p.CurrentEnergy < DUNGEON_ENERGY_COST) { notify(`Not enough energy (${DUNGEON_ENERGY_COST} needed).`); return; }
+            if (!canFight()) return;
+
+            const stage = d.Stages[prog.CurrentStage - 1];
+            p.CurrentEnergy -= DUNGEON_ENERGY_COST;
+            const m = scaleMonster(stage.Monster, p.Level, d.ReqLevel);
+            const result = runFight(`${d.Name} — ${stage.Name}`, monsterCombatant(m));
+            if (result.IsVictory) {
+                grantRewards(result, m.XPReward, randInt(m.MinGold, m.MaxGold));
+                rollLoot(result);
+                if (prog.CurrentStage < d.Stages.length) {
+                    prog.CurrentStage++;
+                    result.Notes.push(`You advance to floor ${prog.CurrentStage} of ${d.Stages.length}.`);
+                } else {
+                    prog.IsCompleted = true;
+                    result.Notes.push(`🏆 ${d.Name} has been conquered!`);
+                }
+            }
+            commit();
+            showCombatModal(result);
+        }
+
+        function restartDungeon(dungIdx) {
+            const d = DUNGEONS[dungIdx];
+            if (!d) return;
+            playAudio('click');
+            state.DungeonProgress[d.Id] = { CurrentStage: 1, IsCompleted: false };
+            commit();
+        }
+
+        function trainAttr(attrIdx) {
+            playAudio('click');
+            const attr = ATTRIBUTES[attrIdx];
+            if (!attr) return;
+            const p = state.Player;
+            const cost = trainingCost(p['Base' + attr]);
+            if (p.Gold < cost) { notify(`Training ${attr} costs ${cost} gold.`); return; }
+            p.Gold -= cost;
+            p['Base' + attr]++;
+            recalcStats(p);
+            commit();
+        }
+
+        function clearSelection() { selectedInventoryIndex = -1; }
+
+        function equipItem(idx) {
+            playAudio('click');
+            const p = state.Player;
+            const item = p.Inventory[idx];
+            if (!item) return;
+            if (item.Type === 'Potion') { usePotion(idx); return; }
+            const slot = SLOT_FOR_TYPE[item.Type];
+            if (!slot) { notify('This item cannot be equipped.'); return; }
+            if (p.Level < item.LevelRequirement) { notify(`You must be level ${item.LevelRequirement} to equip this.`); return; }
+
+            p.Inventory.splice(idx, 1);
+            if (p.Equipment[slot]) p.Inventory.push(p.Equipment[slot]);
+            p.Equipment[slot] = item;
+            recalcStats(p);
+            clearSelection();
+            commit();
+        }
+
+        function usePotion(idx) {
+            playAudio('click');
+            const p = state.Player;
+            const item = p.Inventory[idx];
+            if (!item || item.Type !== 'Potion') return;
+            const healWasted = !item.HealAmount || p.CurrentHP >= p.MaxHP;
+            const energyWasted = !item.EnergyAmount || p.CurrentEnergy >= p.MaxEnergy;
+            if (healWasted && energyWasted) { notify('You would gain nothing from drinking this right now.'); return; }
+
+            p.Inventory.splice(idx, 1);
+            if (item.HealAmount > 0) {
+                const heal = Math.floor(item.HealAmount * healMultiplier(p));
+                p.CurrentHP = Math.min(p.MaxHP, p.CurrentHP + heal);
+            }
+            if (item.EnergyAmount > 0) {
+                p.CurrentEnergy = Math.min(p.MaxEnergy, p.CurrentEnergy + item.EnergyAmount);
+            }
+            clearSelection();
+            commit();
+        }
+
+        function unequipSlot(slot) {
+            playAudio('click');
+            const p = state.Player;
+            if (!SLOTS.includes(slot) || !p.Equipment[slot]) return;
+            if (p.Inventory.length >= p.InventoryCapacity) { notify('Your inventory is full.'); return; }
+            p.Inventory.push(p.Equipment[slot]);
+            p.Equipment[slot] = null;
+            recalcStats(p);
+            commit();
+        }
+
+        function sellItem(idx) {
+            playAudio('click');
+            const p = state.Player;
+            const item = p.Inventory[idx];
+            if (!item) return;
+            p.Gold += item.Price;
+            p.Inventory.splice(idx, 1);
+            clearSelection();
+            commit();
+        }
+
+        function smeltItem(idx) {
+            playAudio('click');
+            const p = state.Player;
+            const item = p.Inventory[idx];
+            if (!item) return;
+            if (item.Type === 'Potion') { notify('Potions cannot be smelted.'); return; }
+            state.IronStash += item.SmeltIron;
+            state.BronzeStash += item.SmeltBronze;
+            state.RubyStash += item.SmeltRuby;
+            state.LeatherStash += item.SmeltLeather;
+            p.Inventory.splice(idx, 1);
+            clearSelection();
+            notify(`Smelted into ${item.SmeltIron} iron, ${item.SmeltBronze} bronze, ${item.SmeltRuby} ruby, ${item.SmeltLeather} leather.`);
+            commit();
+        }
+
+        function craftRecipe(recIdx) {
+            playAudio('click');
+            const r = RECIPES[recIdx];
+            if (!r) return;
+            const p = state.Player;
+            if (p.Level < r.ReqLevel) { notify(`${r.Name} requires level ${r.ReqLevel}.`); return; }
+            if (state.IronStash < r.ReqIron || state.BronzeStash < r.ReqBronze || state.RubyStash < r.ReqRuby || state.LeatherStash < r.ReqLeather) {
+                notify('Not enough materials. Smelt unwanted gear to gather more.');
+                return;
+            }
+            if (p.Inventory.length >= p.InventoryCapacity) { notify('Your inventory is full.'); return; }
+
+            state.IronStash -= r.ReqIron;
+            state.BronzeStash -= r.ReqBronze;
+            state.RubyStash -= r.ReqRuby;
+            state.LeatherStash -= r.ReqLeather;
+
+            const item = generateItem(p.Level, r.ResultType, r.ResultRarity);
+            item.Name = r.Name;
+            item.Prefix = '';
+            item.Suffix = '';
+            item.IconSvg = r.IconSvg;
+            p.Inventory.push(item);
+            notify(`🔨 Forged ${item.Name}!`);
+            commit();
+        }
+
+        let currentVendor = 'Weaponsmith';
+
+        function switchVendor(key) {
+            if (!VENDOR_DEFS[key]) return;
+            playAudio('click');
+            currentVendor = key;
+            renderMerchants();
+        }
+
+        function buyItem(key, idx) {
+            playAudio('click');
+            const def = VENDOR_DEFS[key];
+            const vendor = state.Vendors[key];
+            const item = vendor && vendor.Items[idx];
+            if (!def || !item) return;
+            const p = state.Player;
+            if (p.Gold < item.Price) { notify(`You need ${item.Price} gold.`); return; }
+            if (p.Inventory.length >= p.InventoryCapacity) { notify('Your inventory is full.'); return; }
+
+            p.Gold -= item.Price;
+            if (def.Stock) {
+                vendor.Items.splice(idx, 1);
+                p.Inventory.push(item);
+                vendor.Items.push(generateItem(p.Level, pick(def.Stock)));
+            } else {
+                // The apothecary never runs out of potions.
+                p.Inventory.push(Object.assign({}, item, { Id: uid() }));
+            }
+            commit();
+        }
+
+        function startWork(hours) {
+            playAudio('click');
+            if (!WORK_OPTIONS.includes(hours) || state.ActiveWork.IsWorking) return;
+            state.ActiveWork = {
+                IsWorking: true, DurationHours: hours, StartTime: Date.now(),
+                ExpectedGold: hours * WORK_GOLD_PER_HOUR, ExpectedXP: hours * WORK_XP_PER_HOUR
+            };
+            commit();
+        }
+
+        function cancelWork() {
+            playAudio('click');
+            if (!state.ActiveWork.IsWorking) return;
+            if (!confirm('Stop working now? You will not be paid for this shift.')) return;
+            state.ActiveWork = idleWork();
+            commit();
+        }
+
+        function createGuild() {
+            playAudio('click');
+            const p = state.Player;
+            if (state.PlayerGuild.HasGuild) return;
+            if (p.Gold < GUILD_COST) { notify(`Founding a guild costs ${GUILD_COST} gold.`); return; }
+
+            const name = (prompt('Name your guild (3-24 characters):', 'Legio Victrix') || '').trim();
+            if (!name) return;
+            if (name.length < 3 || name.length > 24) { notify('The guild name must be 3-24 characters.'); return; }
+            const tag = (prompt('Guild tag (2-5 characters):', 'ROM') || '').trim().toUpperCase();
+            if (!tag) return;
+            if (tag.length < 2 || tag.length > 5) { notify('The guild tag must be 2-5 characters.'); return; }
+
+            p.Gold -= GUILD_COST;
+            state.PlayerGuild = {
+                HasGuild: true, Name: name, Tag: tag, Level: 1, GoldVault: 0,
+                Log: [`Guild founded by ${p.Name}.`]
+            };
+            commit();
+        }
+
+        function manualSave() {
+            if (saveGame()) notify('💾 Game saved.');
+        }
+
+        function exportSave() {
+            playAudio('click');
+            saveGame();
+            const blob = new Blob([JSON.stringify(state, null, 2)], { type: 'application/json' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = 'aeterna_roma_save.json';
+            document.body.appendChild(a);
+            a.click();
+            a.remove();
+            setTimeout(() => URL.revokeObjectURL(url), 1000);
+        }
+
+        function importSaveFile(input) {
+            const file = input.files && input.files[0];
+            input.value = '';
+            if (!file) return;
+            const reader = new FileReader();
+            reader.onload = () => {
+                let parsed;
+                try { parsed = JSON.parse(String(reader.result).replace(/^﻿/, '')); } catch (e) { parsed = null; }
+                if (!parsed || !parsed.Player) { notify('That file is not an Aeterna Roma save.'); return; }
+                if (!confirm('Replace your current progress with this save file?')) return;
+                state = normalizeState(parsed);
+                clearSelection();
+                applyTheme();
+                commit();
+                notify('📤 Save file loaded.');
+            };
+            reader.onerror = () => notify('Could not read that file.');
+            reader.readAsText(file);
+        }
+
+        function resetGameConfirm() {
+            if (!confirm('Are you sure you want to reset all gladiator progress? This cannot be undone.')) return;
+            playAudio('click');
+            const settings = state.Settings;
+            state = newGameState();
+            state.Settings = settings;
+            clearSelection();
+            commit();
+            notify('Gladiator progress reset.');
+        }
+
+        // =====================================================================
+        //  AUDIO, THEME, NOTIFICATIONS
+        // =====================================================================
+
+        let audioCtx = null;
+
+        function playAudio(type) {
+            if (!state || state.Settings.AudioMuted) return;
+            try {
+                if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                const now = audioCtx.currentTime;
+                const tone = (freq, endFreq, start, dur, vol, wave) => {
+                    const osc = audioCtx.createOscillator();
+                    const gain = audioCtx.createGain();
+                    if (wave) osc.type = wave;
+                    osc.frequency.setValueAtTime(freq, start);
+                    if (endFreq) osc.frequency.exponentialRampToValueAtTime(endFreq, start + dur);
+                    gain.gain.setValueAtTime(vol, start);
+                    gain.gain.linearRampToValueAtTime(0.01, start + dur);
+                    osc.connect(gain);
+                    gain.connect(audioCtx.destination);
+                    osc.start(start);
+                    osc.stop(start + dur);
+                };
+                if (type === 'click') tone(400, 200, now, 0.05, 0.15);
+                else if (type === 'hit') tone(150, 40, now, 0.15, 0.3, 'sawtooth');
+                else if (type === 'victory') [261.63, 329.63, 392.00, 523.25].forEach((f, i) => tone(f, null, now + i * 0.1, 0.2, 0.2));
+            } catch (e) { /* audio is optional */ }
+        }
+
+        function toggleAudio() {
+            state.Settings.AudioMuted = !state.Settings.AudioMuted;
+            saveGame();
+            renderAudioButton();
+            playAudio('click');
+        }
+
+        function renderAudioButton() {
+            document.getElementById('btnMute').innerText = state.Settings.AudioMuted ? '🔇 Muted' : '🔊 Audio';
+        }
+
+        function applyTheme() {
+            document.documentElement.setAttribute('data-theme', state.Settings.ThemeMode);
+        }
+
+        function setTheme(key) {
+            if (!THEMES[key]) return;
+            state.Settings.ThemeMode = key;
+            applyTheme();
+            saveGame();
+        }
+
+        function toggleFullscreen() {
+            playAudio('click');
+            if (!document.fullscreenElement) {
+                document.documentElement.requestFullscreen().catch(() => {});
+            } else if (document.exitFullscreen) {
+                document.exitFullscreen();
+            }
+        }
+
+        function notify(msg) {
+            const box = document.getElementById('toastContainer');
+            const el = document.createElement('div');
+            el.className = 'toast';
+            el.textContent = msg;
+            box.appendChild(el);
+            while (box.children.length > 4) box.firstChild.remove();
+            setTimeout(() => el.remove(), 4500);
+        }
+
+        // =====================================================================
+        //  RENDERING
+        // =====================================================================
+
+        let selectedInventoryIndex = -1;
+
+        function getIcon(iconType) {
+            const t = iconType || '';
+            if (t.startsWith('weapon')) return `<svg viewBox="0 0 64 64" width="36" height="36"><path d="M20 50 L44 14 L50 20 L26 56 Z" fill="#cccccc" stroke="#ffd700" stroke-width="2"/></svg>`;
+            if (t.startsWith('helmet')) return `<svg viewBox="0 0 64 64" width="36" height="36"><path d="M16 36 C16 18 48 18 48 36 Z" fill="#888888" stroke="#ffd700" stroke-width="2"/></svg>`;
+            if (t.startsWith('armor')) return `<svg viewBox="0 0 64 64" width="36" height="36"><rect x="14" y="16" width="36" height="40" rx="6" fill="#666666" stroke="#ffd700" stroke-width="2"/></svg>`;
+            if (t.startsWith('shield')) return `<svg viewBox="0 0 64 64" width="36" height="36"><path d="M16 12 L48 12 L48 38 C48 50 32 58 32 58 C32 58 16 50 16 38 Z" fill="#aa2222" stroke="#ffd700" stroke-width="2"/></svg>`;
+            if (t.startsWith('ring')) return '💍';
+            if (t.startsWith('amulet')) return '📿';
+            if (t.startsWith('gloves')) return '🧤';
+            if (t.startsWith('shoes')) return '👢';
+            if (t === 'potion_blue') return '🧉';
+            if (t.startsWith('potion')) return '🧪';
+            return '📦';
+        }
+
+        function renderGladiatorAvatar() {
+            return `<svg class="avatar-svg" viewBox="0 0 100 120">
+                <circle cx="50" cy="30" r="18" fill="#dca376"/>
+                <rect x="35" y="48" width="30" height="45" rx="5" fill="#800000"/>
+                <rect x="25" y="50" width="10" height="35" fill="#dca376"/>
+                <rect x="65" y="50" width="10" height="35" fill="#dca376"/>
+                <rect x="38" y="93" width="10" height="20" fill="#dca376"/>
+                <rect x="52" y="93" width="10" height="20" fill="#dca376"/>
+                <path d="M35 50 L65 50 L60 80 L40 80 Z" fill="#707070" stroke="#ffd700" stroke-width="1.5"/>
+                <rect x="38" y="103" width="10" height="10" fill="#573e27"/>
+                <rect x="52" y="103" width="10" height="10" fill="#573e27"/>
+                <path d="M34 32 C34 15 66 15 66 32 Z" fill="#707070" stroke="#ffd700" stroke-width="2"/>
+                <path d="M50 10 L50 25" stroke="#cc0000" stroke-width="5"/>
+            </svg>`;
+        }
+
+        function itemDetailsHtml(item) {
+            const lines = [];
+            if (item.MinDamage || item.MaxDamage) lines.push(`Damage: ${item.MinDamage} - ${item.MaxDamage}`);
+            if (item.Armor) lines.push(`Armor: +${item.Armor}`);
+            ATTRIBUTES.forEach(a => { if (item[a]) lines.push(`${a}: +${item[a]}`); });
+            if (item.HealAmount) lines.push(`Restores: +${item.HealAmount} HP (before Intelligence bonus)`);
+            if (item.EnergyAmount) lines.push(`Restores: +${item.EnergyAmount} Energy`);
+            const meta = item.Type === 'Potion' ? 'Potion' : `${item.Rarity} ${item.Type} · Req. level ${item.LevelRequirement}`;
+            return `<div class="item-head">
+                    <div class="item-icon">${getIcon(item.IconSvg)}</div>
+                    <div>
+                        <div class="item-name rt-${esc(item.Rarity)}">${esc(displayName(item))}</div>
+                        <div class="item-meta">${esc(meta)}</div>
+                        <div class="item-stats">${lines.map(esc).join('<br>')}</div>
+                    </div>
+                </div>`;
+        }
+
+        function renderSidebar() {
+            const p = state.Player;
+            document.getElementById('resGold').innerText = p.Gold.toLocaleString();
+            document.getElementById('resRubies').innerText = p.Rubies;
+            document.getElementById('resHonor').innerText = p.Honor;
+
+            document.getElementById('textHp').innerText = `${p.CurrentHP}/${p.MaxHP}`;
+            document.getElementById('fillHp').style.width = `${clamp(p.CurrentHP / p.MaxHP * 100, 0, 100)}%`;
+            document.getElementById('textEnergy').innerText = `${p.CurrentEnergy}/${p.MaxEnergy}`;
+            document.getElementById('fillEnergy').style.width = `${clamp(p.CurrentEnergy / p.MaxEnergy * 100, 0, 100)}%`;
+
+            document.getElementById('gladName').innerText = p.Name;
+            document.getElementById('gladLevel').innerText = `LVL ${p.Level}`;
+            document.getElementById('statDmg').innerText = `${minDamage(p)} - ${maxDamage(p)}`;
+            document.getElementById('statArmor').innerText = totalArmor(p);
+            document.getElementById('statRank').innerText = `#${p.ArenaRank}`;
+        }
+
+        function renderEquipment() {
+            const p = state.Player;
+            document.getElementById('avatarContainer').innerHTML = renderGladiatorAvatar();
+            SLOTS.forEach(slot => {
+                const el = document.getElementById(`slot-${slot}`);
+                const item = p.Equipment[slot];
+                if (item) {
+                    el.className = `equip-slot rarity-${item.Rarity}`;
+                    el.innerHTML = getIcon(item.IconSvg);
+                    el.title = `${displayName(item)} (click to unequip)`;
+                } else {
+                    el.className = 'equip-slot empty';
+                    el.innerHTML = '';
+                    el.title = slot;
+                }
+            });
+        }
+
+        function renderOverview() {
+            const p = state.Player;
+            document.getElementById('attrStr').innerText = totalStat(p, 'Strength');
+            document.getElementById('attrDex').innerText = totalStat(p, 'Dexterity');
+            document.getElementById('attrAgi').innerText = totalStat(p, 'Agility');
+            document.getElementById('attrCon').innerText = totalStat(p, 'Constitution');
+            document.getElementById('attrCha').innerText = totalStat(p, 'Charisma');
+            document.getElementById('attrInt').innerText = totalStat(p, 'Intelligence');
+            document.getElementById('ovLvl').innerText = p.Level;
+            document.getElementById('ovXpText').innerText = `${p.XP} / ${p.MaxXP} XP`;
+            document.getElementById('ovXpFill').style.width = `${clamp(p.XP / p.MaxXP * 100, 0, 100)}%`;
+        }
+
+        function switchOverviewSubtab(subId) {
+            playAudio('click');
+            const hidden = subId === 'hidden';
+            document.getElementById('ovSubtabBtnBase').classList.toggle('active', !hidden);
+            document.getElementById('ovSubtabBtnHidden').classList.toggle('active', hidden);
+            document.getElementById('ovSubtab-base').style.display = hidden ? 'none' : 'block';
+            document.getElementById('ovSubtab-hidden').style.display = hidden ? 'block' : 'none';
+            if (hidden) renderHiddenStats();
+        }
+
+        function renderHiddenStats() {
+            const p = state.Player;
+            const str = totalStat(p, 'Strength');
+            const dex = totalStat(p, 'Dexterity');
+            const agi = totalStat(p, 'Agility');
+            const con = totalStat(p, 'Constitution');
+            const cha = totalStat(p, 'Charisma');
+            const intel = totalStat(p, 'Intelligence');
+            const armor = totalArmor(p);
+            const shield = hasShield(p);
+            const regen = hpRegenPerMin(p);
+
+            const stats = [
+                { icon: '🛡️', title: 'Block Chance', val: pct(Formulas.blockChance(agi, str, shield ? SHIELD_BLOCK_BONUS : 0)), desc: `From Agility & Strength (max 30%)${shield ? ' + Shield (+8%)' : ' — equip a shield for +8%'}` },
+                { icon: '🎯', title: 'Hit Chance', val: pct(Formulas.hitChance(dex, agi)), desc: 'Your Dexterity vs. the enemy\'s Agility (15%-95%)' },
+                { icon: '⚡', title: 'Critical Strike Chance', val: pct(Formulas.critChance(dex, agi, intel)), desc: 'From Dexterity & Intelligence (max 40%)' },
+                { icon: '💥', title: 'Critical Damage Multiplier', val: (Formulas.critMultiplier(intel) * 100).toFixed(1) + '%', desc: `+${(intel * 1.5).toFixed(1)}% bonus damage from Intelligence` },
+                { icon: '⚔️', title: 'Double Strike Chance', val: pct(Formulas.doubleStrikeChance(cha, cha)), desc: 'Your Charisma vs. the enemy\'s Charisma (2%-30%)' },
+                { icon: '❤️', title: 'HP Regeneration Rate', val: `+${Math.round(regen * 60)} HP/h`, desc: `+${regen.toFixed(1)} HP/min (driven by ${con} Constitution)` },
+                { icon: '🔋', title: 'Energy Regeneration', val: `+${ENERGY_REGEN_PER_MIN}/min`, desc: 'Energy is spent on expeditions and dungeons' },
+                { icon: '🧪', title: 'Healing Potion Bonus', val: `+${Math.round(intel * 2)}%`, desc: '+2% item healing per Intelligence point' },
+                { icon: '🛡️', title: 'Armor Damage Reduction', val: pct(1 - Formulas.mitigation(armor)), desc: `Mitigation from ${armor} total Armor (before enemy penetration)` },
+                { icon: '🗡️', title: 'Armor Penetration', val: `-${Formulas.armorPenetration(str)} Armor`, desc: `Enemy armor bypassed by ${str} Strength` }
+            ];
+
+            document.getElementById('hiddenStatsGrid').innerHTML = stats.map(s => `<div class="monster-row">
+                    <div>
+                        <span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">${s.icon} ${esc(s.title)}</span>
+                        <div style="font-size:11px; opacity:0.8;">${esc(s.desc)}</div>
+                    </div>
+                    <strong style="font-size:13px;">${esc(s.val)}</strong>
+                </div>`).join('');
+        }
+
+        function renderInventory() {
+            const p = state.Player;
+            let html = '';
+            for (let i = 0; i < p.InventoryCapacity; i++) {
+                const item = p.Inventory[i];
+                if (item) {
+                    html += `<div class="inv-slot rarity-${esc(item.Rarity)} ${selectedInventoryIndex === i ? 'selected' : ''}" title="${esc(displayName(item))}" onclick="selectInventoryItem(${i})">${getIcon(item.IconSvg)}</div>`;
+                } else {
+                    html += `<div class="inv-slot empty-slot"></div>`;
+                }
+            }
+            // Items beyond capacity (possible with imported saves) stay visible so they can be sold.
+            for (let i = p.InventoryCapacity; i < p.Inventory.length; i++) {
+                const item = p.Inventory[i];
+                html += `<div class="inv-slot rarity-${esc(item.Rarity)} ${selectedInventoryIndex === i ? 'selected' : ''}" title="${esc(displayName(item))}" onclick="selectInventoryItem(${i})">${getIcon(item.IconSvg)}</div>`;
+            }
+            document.getElementById('inventoryContainer').innerHTML = html;
+            document.getElementById('invCount').innerText = `(${p.Inventory.length}/${p.InventoryCapacity})`;
+            renderSelectedItem();
+        }
+
+        function selectInventoryItem(idx) {
+            playAudio('click');
+            selectedInventoryIndex = idx;
+            renderInventory();
+        }
+
+        function renderSelectedItem() {
+            const panel = document.getElementById('selectedItemPanel');
+            const item = state.Player.Inventory[selectedInventoryIndex];
+            if (!item) {
+                selectedInventoryIndex = -1;
+                panel.style.display = 'none';
+                return;
+            }
+            const i = selectedInventoryIndex;
+            let html = itemDetailsHtml(item);
+            html += `<div class="btn-row" style="margin-top:10px;">`;
+            if (item.Type === 'Potion') html += `<button class="btn-roman btn-gold" onclick="usePotion(${i})">Drink Potion</button>`;
+            else if (SLOT_FOR_TYPE[item.Type]) html += `<button class="btn-roman btn-gold" onclick="equipItem(${i})">Equip</button>`;
+            html += `<button class="btn-roman" onclick="sellItem(${i})">Sell (${item.Price} Gold)</button>`;
+            if (item.Type !== 'Potion') html += `<button class="btn-roman" onclick="smeltItem(${i})">Smelt</button>`;
+            html += `</div>`;
+            panel.innerHTML = html;
+            panel.style.display = 'block';
+        }
+
+        function renderTraining() {
+            const p = state.Player;
+            document.getElementById('trainingContainer').innerHTML = ATTRIBUTES.map((attr, i) => {
+                const base = p['Base' + attr];
+                const cost = trainingCost(base);
+                const bonus = equipBonus(p, attr);
+                return `<div class="monster-row">
+                    <div><strong style="color:var(--text-gold);">${attr}</strong> - Base: ${base}${bonus ? ` <span class="muted">(+${bonus} from gear)</span>` : ''}</div>
+                    <button class="btn-roman btn-gold" onclick="trainAttr(${i})" ${p.Gold < cost ? 'disabled' : ''}>Train (${cost} Gold)</button>
+                </div>`;
+            }).join('');
+        }
+
+        function renderExpeditions() {
+            const p = state.Player;
+            document.getElementById('expeditionContainer').innerHTML = LOCATIONS.map((loc, li) => {
+                const locked = p.Level < loc.ReqLevel;
+                const monsters = loc.Monsters.map((m, mi) => {
+                    const scaled = scaleMonster(m, p.Level, loc.ReqLevel);
+                    return `<div class="monster-row">
+                        <div><strong>${esc(m.Name)}</strong> <span style="font-size:11px; color:var(--text-accent);">LVL ${scaled.Level} · ${scaled.MaxHP} HP</span></div>
+                        <button class="btn-roman" onclick="startExpedition(${li}, ${mi})" ${locked ? 'disabled' : ''}>Attack ⚔️</button>
+                    </div>`;
+                }).join('');
+                return `<div class="exp-card ${locked ? 'locked' : ''}">
+                    <h3 style="color:var(--text-accent); font-family:'Cinzel',serif;">${esc(loc.Name)}${locked ? ' 🔒' : ''}</h3>
+                    <p style="font-size:12px;">${esc(loc.Description)}</p>
+                    <div style="font-size:12px; color:var(--text-accent);">Req. Level: ${loc.ReqLevel} | Energy Cost: ${loc.EnergyCost}</div>
+                    <div class="monster-list">${monsters}</div>
+                </div>`;
+            }).join('');
+        }
+
+        function renderArena() {
+            const p = state.Player;
+            const cooling = arenaCooldownLeft(Date.now()) > 0;
+            const rows = state.ArenaLadder.map((opp, idx) => ({ opp, idx }));
+            rows.push({ player: true, Rank: p.ArenaRank });
+            rows.sort((a, b) => (a.player ? a.Rank : a.opp.Rank) - (b.player ? b.Rank : b.opp.Rank));
+
+            document.getElementById('arenaContainer').innerHTML = rows.map(r => {
+                if (r.player) {
+                    return `<div class="monster-row player-row">
+                        <div><span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">#${p.ArenaRank}</span> - <strong>${esc(p.Name)}</strong> <span style="font-size:11px;">(You, LVL ${p.Level})</span></div>
+                    </div>`;
+                }
+                const o = arenaOpponentStats(r.opp, p);
+                const better = r.opp.Rank < p.ArenaRank;
+                return `<div class="monster-row">
+                    <div>
+                        <span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">#${r.opp.Rank}</span> -
+                        <strong>${esc(r.opp.Name)}</strong> <span style="font-size:11px;">(LVL ${o.Level})</span>
+                        ${better ? '<span class="muted"> · win to take this rank</span>' : ''}
+                    </div>
+                    <button class="btn-roman btn-gold" onclick="challengeArena(${r.idx})" ${cooling ? 'disabled' : ''}>Challenge ⚔️</button>
+                </div>`;
+            }).join('');
+            renderTimers(Date.now());
+        }
+
+        function renderDungeons() {
+            const p = state.Player;
+            document.getElementById('dungeonContainer').innerHTML = DUNGEONS.map((d, di) => {
+                const prog = state.DungeonProgress[d.Id];
+                const locked = p.Level < d.ReqLevel;
+                let body;
+                if (prog.IsCompleted) {
+                    body = `<div style="color:var(--text-gold);">🏆 Conquered!</div>
+                        <button class="btn-roman" onclick="restartDungeon(${di})">Run the Dungeon Again</button>`;
+                } else {
+                    const stage = d.Stages[prog.CurrentStage - 1];
+                    const m = scaleMonster(stage.Monster, p.Level, d.ReqLevel);
+                    body = `<div style="font-size:12px; color:var(--text-accent);">Floor ${prog.CurrentStage} / ${d.Stages.length}: ${esc(stage.Name)}</div>
+                        <div class="monster-row"><div><strong>${esc(m.Name)}</strong>${stage.IsBoss ? ' 👑' : ''} <span style="font-size:11px; color:var(--text-accent);">LVL ${m.Level} · ${m.MaxHP} HP</span></div></div>
+                        <button class="btn-roman btn-gold" onclick="enterDungeon(${di})" ${locked ? 'disabled' : ''}>Enter Floor (${DUNGEON_ENERGY_COST} Energy) ⚔️</button>`;
+                }
+                return `<div class="exp-card ${locked ? 'locked' : ''}">
+                    <h3 style="color:var(--text-accent); font-family:'Cinzel',serif;">${esc(d.Name)}${locked ? ' 🔒' : ''}</h3>
+                    <p style="font-size:12px;">${esc(d.Description)}</p>
+                    <div style="font-size:12px; color:var(--text-accent);">Req. Level: ${d.ReqLevel}</div>
+                    ${body}
+                </div>`;
+            }).join('');
+        }
+
+        function renderMerchants() {
+            document.getElementById('vendorButtons').innerHTML = Object.keys(VENDOR_DEFS).map(key =>
+                `<button class="btn-roman ${key === currentVendor ? 'active' : ''}" onclick="switchVendor('${key}')">${VENDOR_DEFS[key].Label}</button>`
+            ).join('');
+
+            const def = VENDOR_DEFS[currentVendor];
+            document.getElementById('vendorInfo').innerHTML = `<strong style="color:var(--text-gold);">${esc(def.Name)}</strong>
+                <span class="muted">${def.Stock ? ' · Stock refreshes when you level up' : ' · Always in stock'}</span>`;
+
+            const p = state.Player;
+            const vendor = state.Vendors[currentVendor];
+            document.getElementById('merchantContainer').innerHTML = vendor.Items.map((item, idx) => `<div class="exp-card">
+                    ${itemDetailsHtml(item)}
+                    <button class="btn-roman btn-gold" onclick="buyItem('${currentVendor}', ${idx})" ${p.Gold < item.Price ? 'disabled' : ''}>Buy (${item.Price} Gold)</button>
+                </div>`).join('');
+        }
+
+        function renderForge() {
+            document.getElementById('forgeStashInfo').innerHTML =
+                `Iron: <strong>${state.IronStash}</strong> | Bronze: <strong>${state.BronzeStash}</strong> | Ruby: <strong>${state.RubyStash}</strong> | Leather: <strong>${state.LeatherStash}</strong>
+                 <div class="muted" style="margin-top:4px;">Smelt unwanted gear from your inventory to gather materials.</div>`;
+            const p = state.Player;
+            document.getElementById('forgeRecipeContainer').innerHTML = RECIPES.map((r, i) => {
+                const locked = p.Level < r.ReqLevel;
+                return `<div class="exp-card ${locked ? 'locked' : ''}">
+                    <h4 class="rt-${r.ResultRarity}">${esc(r.Name)}</h4>
+                    <div class="muted">${r.ResultRarity} ${r.ResultType} · Req. level ${r.ReqLevel}</div>
+                    <div style="font-size:12px;">Cost: ${r.ReqIron} Iron, ${r.ReqBronze} Bronze, ${r.ReqRuby} Ruby, ${r.ReqLeather} Leather</div>
+                    <button class="btn-roman btn-gold" onclick="craftRecipe(${i})" ${locked ? 'disabled' : ''}>Craft Gear 🔨</button>
+                </div>`;
+            }).join('');
+        }
+
+        function renderWork() {
+            const w = state.ActiveWork;
+            const el = document.getElementById('workContainer');
+            if (w.IsWorking) {
+                el.innerHTML = `<div class="info-box">
+                        Working a ${w.DurationHours}-hour shift for <strong>${w.ExpectedGold} gold</strong> and <strong>${w.ExpectedXP} XP</strong>.
+                        <div style="margin-top:6px;">Time remaining: <strong id="workTimer"></strong></div>
+                        <div class="muted" style="margin-top:4px;">You are paid automatically when the shift ends, even if the game is closed.</div>
+                    </div>
+                    <button class="btn-roman" onclick="cancelWork()">Stop Working</button>`;
+            } else {
+                el.innerHTML = `<div class="btn-row">` + WORK_OPTIONS.map(h =>
+                    `<button class="btn-roman btn-gold" onclick="startWork(${h})">Work ${h}h (+${h * WORK_GOLD_PER_HOUR} Gold, +${h * WORK_XP_PER_HOUR} XP)</button>`
+                ).join('') + `</div>`;
+            }
+        }
+
+        function renderGuild() {
+            const container = document.getElementById('guildContent');
+            const g = state.PlayerGuild;
+            if (!g.HasGuild) {
+                container.innerHTML = `<div>
+                    <h3>Found a Gladiator Guild</h3>
+                    <p style="margin-bottom:10px;">Found your own ludus to recruit mercenaries and upgrade guild buildings.</p>
+                    <button class="btn-roman btn-gold" onclick="createGuild()">Found Guild (${GUILD_COST} Gold)</button>
+                </div>`;
+                return;
+            }
+            container.innerHTML = `<h3>${esc(g.Name)} [${esc(g.Tag)}] - Level ${g.Level}</h3>
+                <div style="margin-top:10px;">Guild Gold Vault: <strong>${g.GoldVault}</strong></div>
+                <div class="monster-list" style="margin-top:15px;">${g.Log.map(l => `<div class="turn-line">${esc(l)}</div>`).join('')}</div>`;
+        }
+
+        function renderSettings() {
+            const sel = document.getElementById('themeSelect');
+            sel.innerHTML = Object.keys(THEMES).map(k => `<option value="${k}">${THEMES[k]}</option>`).join('');
+            sel.value = state.Settings.ThemeMode;
+        }
+
+        function renderTimers(now) {
+            const p = state.Player;
+            const left = arenaCooldownLeft(now);
+            const arenaStatus = document.getElementById('arenaStatus');
+            arenaStatus.innerHTML = left > 0
+                ? `⏳ Next arena bout in <strong>${formatDuration(left)}</strong>`
+                : `⚔️ Ready to fight! Your rank: <strong>#${p.ArenaRank}</strong> of ${LADDER_SIZE}. Beat a higher-ranked gladiator to take their place.`;
+
+            let status = '';
+            if (state.ActiveWork.IsWorking) {
+                const remaining = formatDuration(workEndTime() - now);
+                status = `🌾 Working at the villa (${remaining} left)`;
+                const t = document.getElementById('workTimer');
+                if (t) t.innerText = remaining;
+            } else if (p.CurrentHP < minFightHP(p)) {
+                status = '🩸 Too wounded to fight — resting';
+            }
+            document.getElementById('sidebarStatus').innerText = status;
+        }
+
+        function renderUI() {
+            renderSidebar();
+            renderEquipment();
+            renderOverview();
+            renderInventory();
+            renderTraining();
+            renderExpeditions();
+            renderArena();
+            renderDungeons();
+            renderMerchants();
+            renderForge();
+            renderWork();
+            renderGuild();
+            renderSettings();
+            renderAudioButton();
+            if (document.getElementById('ovSubtab-hidden').style.display !== 'none') renderHiddenStats();
+            renderTimers(Date.now());
+        }
+
+        function switchTab(tabId) {
+            const panel = document.getElementById('tab-' + tabId);
+            if (!panel) return;
+            playAudio('click');
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.toggle('active', el === panel));
+            document.querySelectorAll('#navTabs .nav-tab').forEach(btn => btn.classList.toggle('active', btn.dataset.tab === tabId));
+        }
+
+        function showCombatModal(r) {
+            document.getElementById('modalCombatTitle').innerText = r.Title;
+            const banner = document.getElementById('modalCombatResultBanner');
+            banner.innerText = r.IsVictory ? 'VICTORY!' : 'DEFEAT';
+            banner.className = 'combat-result-banner ' + (r.IsVictory ? 'victory-bg' : 'defeat-bg');
+            document.getElementById('modalFighter1Name').innerText = r.PlayerName;
+            document.getElementById('modalFighter2Name').innerText = r.EnemyName;
+
+            const rewards = [];
+            if (r.IsVictory) rewards.push(`+${r.XPGained} XP, +${r.GoldGained} Gold`);
+            else rewards.push('No rewards. Rest to recover your health before the next fight.');
+            if (r.LevelsGained) rewards.push(`⭐ Level up! You are now level ${state.Player.Level}.`);
+            r.Loot.forEach(item => rewards.push(`🎁 Loot: <span class="rt-${esc(item.Rarity)}">${esc(displayName(item))}</span>`));
+            r.Notes.forEach(n => rewards.push(esc(n)));
+            document.getElementById('modalRewards').innerHTML = rewards.join('<br>');
+
+            document.getElementById('modalCombatLog').innerHTML = r.Turns.map(t =>
+                `<div class="turn-line ${t.AttackerIsPlayer ? 'turn-player' : 'turn-enemy'} ${t.Type === 'Critical' ? 'turn-crit' : ''}">[${t.Turn}] ${esc(t.Message)}</div>`
+            ).join('');
+
+            document.getElementById('combatModal').classList.add('open');
+            playAudio(r.IsVictory ? 'victory' : 'hit');
+        }
+
+        function closeCombatModal() {
+            document.getElementById('combatModal').classList.remove('open');
+        }
+
+        // =====================================================================
+        //  STARTUP
+        // =====================================================================
+
+        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCombatModal(); });
+
+        // Keep several open game windows in sync instead of letting them overwrite each other.
+        window.addEventListener('storage', e => {
+            if (e.key !== SAVE_KEY || !e.newValue) return;
+            try {
+                state = normalizeState(JSON.parse(e.newValue));
+                applyTheme();
+                renderUI();
+            } catch (err) { /* ignore a partial write from the other window */ }
+        });
+
+        window.addEventListener('pagehide', saveGame);
+
+        state = loadGame();
+        applyTheme();
+        applyRegen(Date.now());
+        completeWorkIfDone(Date.now());
+        arenaWasCooling = arenaCooldownLeft(Date.now()) > 0;
+        commit();
+        setInterval(tick, 1000);
+    </script>
+</body>
+</html>
