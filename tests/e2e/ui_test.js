@@ -67,7 +67,7 @@ function pyCall(method, args) {
     check(await text('#statDmg') === '8 - 16', 'sidebar damage comes from Python');
     check((await page.$$('#brandLogo svg')).length === 1, 'logo art renders');
 
-    for (const tab of ['training', 'expeditions', 'arena', 'dungeons', 'quests', 'merchants', 'forge', 'work', 'guild', 'settings', 'overview']) {
+    for (const tab of ['training', 'expeditions', 'arena', 'dungeons', 'labors', 'quests', 'merchants', 'forge', 'work', 'guild', 'settings', 'overview']) {
         await page.click(`.nav-tab[data-tab="${tab}"]`);
         check(await page.isVisible(`#tab-${tab}`), `tab ${tab} opens`);
     }
@@ -78,9 +78,9 @@ function pyCall(method, args) {
     await page.click('#ovSubtabBtnSets');
     check((await page.$$('#setsGrid .exp-card')).length === 6, 'gear sets render');
     await page.click('#ovSubtabBtnBestiary');
-    check((await page.$$('#bestiaryGrid .beast-card.unknown')).length === 52, 'bestiary starts with every foe unknown');
+    check((await page.$$('#bestiaryGrid .beast-card.unknown')).length === 64, 'bestiary starts with every foe unknown');
     await page.click('#ovSubtabBtnLaurels');
-    check((await page.$$('#laurelsGrid .ach-card')).length === 23 && (await page.$$('#laurelsGrid .ach-card.done')).length === 0, 'laurels render');
+    check((await page.$$('#laurelsGrid .ach-card')).length === 28 && (await page.$$('#laurelsGrid .ach-card.done')).length === 0, 'laurels render');
     await page.click('#ovSubtabBtnBase');
 
     // Merchants
@@ -107,6 +107,8 @@ function pyCall(method, args) {
     check((await text('#textEnergy')) === '23/24', 'expedition energy cost shown');
     check(await page.isDisabled('#expeditionContainer .exp-card:nth-child(3) button'), 'locked region buttons disabled');
     check((await page.$$('#expeditionContainer .exp-card')).length === 12, 'all twelve regions listed');
+    check((await page.$$('#expeditionContainer .exp-card:nth-child(1) .threat')).length === 3, 'open regions show a threat rating per foe');
+    check((await page.$$('#expeditionContainer .exp-card:nth-child(3) .threat')).length === 0, 'locked regions show no threat rating');
     await page.click('.nav-tab[data-tab="overview"]');
     await page.click('#ovSubtabBtnBestiary');
     check((await page.$$('#bestiaryGrid .beast-card:not(.unknown)')).length === (await get(['Stats', 'FightsWon'])), 'a won fight adds a bestiary entry');
@@ -133,9 +135,62 @@ function pyCall(method, args) {
     await page.waitForFunction(() => view.arena.cooldownUntil === 0);
     check(await get(['Player', 'Rubies']) === 4, 'ruby skip button works while timers tick');
 
+    // Battle series, with a level-up on the way
+    await set(['Player', 'CurrentHP'], 999);
+    await set(['Player', 'CurrentEnergy'], 24);
+    await set(['Player', 'XP'], (await get(['Player', 'MaxXP'])) - 1);
+    await refresh();
+    await page.click('.nav-tab[data-tab="expeditions"]');
+    await page.selectOption('#seriesSize', '3');
+    await page.click('#expeditionContainer .exp-card:nth-child(1) .monster-row:nth-child(2) .btn-series');
+    await page.waitForSelector('#combatModal.open');
+    const seriesLines = (await page.$$('#modalCombatLog .series-line')).length;
+    check(seriesLines >= 1 && seriesLines <= 3 && /VICTORIES/.test(await text('#modalCombatResultBanner')), 'battle series shows one line per fight');
+    check(await page.isVisible('.levelup-burst'), 'a level-up is celebrated in the report');
+    await shot('series.png');
+    await page.keyboard.press(' ');
+    check(!(await page.isVisible('#combatModal.open')), 'Space closes a finished report');
+    check(await get(['Player', 'Level']) === 2, 'series XP levels the gladiator up');
+
+    // Keyboard shortcuts
+    await page.keyboard.press('2');
+    check(await page.isVisible('#tab-training'), 'number keys switch tabs');
+    await page.keyboard.press('1');
+
+    // Imperial Decree
+    await page.click('.nav-tab[data-tab="quests"]');
+    check(/Daily gift ready/.test(await text('#sidebarDaily')), 'sidebar announces the daily gift');
+    const goldBeforeDaily = await get(['Player', 'Gold']);
+    await page.click('#dailyContainer button:has-text("Claim Day 1")');
+    await page.waitForFunction(() => view.state.Daily.Streak === 1);
+    check((await get(['Player', 'Gold'])) > goldBeforeDaily && (await text('#sidebarDaily')) === '', 'claiming the decree pays out once');
+    check((await page.$$('#dailyContainer .daily-day.claimed')).length === 1, 'claimed day is marked');
+
+    // Labors of Hercules
+    await set(['Player', 'Level'], 6);
+    await set(['Player', 'BaseStrength'], 300);
+    await set(['Player', 'BaseConstitution'], 300);
+    await set(['Player', 'CurrentHP'], 99999);
+    await set(['Player', 'CurrentEnergy'], 24);
+    await refresh();
+    await page.click('.nav-tab[data-tab="labors"]');
+    check((await page.$$('#laborsContainer .labor-card')).length === 12, 'twelve labors listed');
+    check((await page.$$('#laborsContainer .labor-card button')).length === 1, 'only the next labor can be attempted');
+    await page.click('#laborsContainer .labor-card:nth-child(1) button');
+    await page.waitForSelector('#combatModal.open');
+    await page.keyboard.press('Escape');
+    await page.waitForFunction(() => view.state.Player.Labors.length === 1);
+    check((await page.$$('#laborsProgress .labor-pip.done')).length === 1 && /Permanent|Completed/.test(await text('#laborsContainer .labor-card:nth-child(1)')), 'a completed labor is marked');
+    await shot('labors.png');
+    await set(['Player', 'BaseStrength'], 5);
+    await set(['Player', 'BaseConstitution'], 5);
+    await set(['Player', 'CurrentHP'], 999);
+    await refresh();
+
     // Honor exchange
     await set(['Player', 'Honor'], 1000);
     await refresh();
+    await page.click('.nav-tab[data-tab="arena"]');
     await page.waitForFunction(() => view.state.Player.Honor === 1000);
     check((await page.$$('#honorShopContainer .exp-card')).length === 4, 'honor exchange renders');
     const capBefore = await get(['Player', 'InventoryCapacity']);
@@ -184,13 +239,43 @@ function pyCall(method, args) {
     await page.waitForFunction(n => view.state.Player.Inventory.length === n - 1, invBefore);
     check(true, 'unequip and sell work');
 
+    // Lock, tooltip, sort
+    await pyCall('test_add_item', [1, 'Ring', 'Common']);
+    await refresh();
+    const ringIndex = (await get(['Player', 'Inventory'])).length - 1;
+    await page.hover(`#inventoryContainer .inv-slot:nth-child(${ringIndex + 1})`);
+    await page.waitForSelector('#itemTooltip', { state: 'visible' });
+    check(/Ring/.test(await text('#itemTooltip')), 'hovering an item shows a tooltip');
+    await page.click(`#inventoryContainer .inv-slot:nth-child(${ringIndex + 1})`);
+    await page.click('#selectedItemPanel button:has-text("Lock")');
+    await page.waitForFunction(i => view.state.Player.Inventory[i].Locked, ringIndex);
+    check(!(await page.$('#selectedItemPanel button:has-text("Sell")')) && (await page.$$('#inventoryContainer .slot-badge.lock')).length === 1, 'locked items show a lock and cannot be sold');
+    await page.click('button:has-text("Sort")');
+    await page.waitForFunction(() => view.state.Player.Inventory[0].Type !== 'Potion');
+    check(true, 'sorting puts gear before potions');
+    const lockedAt = (await get(['Player', 'Inventory'])).findIndex(i => i.Locked);
+    await page.click(`#inventoryContainer .inv-slot:nth-child(${lockedAt + 1})`);
+    await page.click('#selectedItemPanel button:has-text("Unlock")');
+    await page.waitForFunction(i => !view.state.Player.Inventory[i].Locked, lockedAt);
+
+    // Reforge at the forge
+    await pyCall('test_add_item', [5, 'Amulet', 'Rare']);
+    await set(['Player', 'Gold'], 5000);
+    await refresh();
+    await page.click('.nav-tab[data-tab="forge"]');
+    const reforgeBtn = '#enhanceContainer .monster-row:last-child button:has-text("Reforge")';
+    await page.click(reforgeBtn);
+    await page.waitForFunction(() => view.state.Stats.ItemsReforged === 1);
+    check(true, 'reforging goes through Python');
+    await page.click('.nav-tab[data-tab="overview"]');
+
     // Sell junk
     await pyCall('test_add_item', [1, 'Ring', 'Common']);
     await pyCall('test_add_item', [1, 'Ring', 'Common']);
     await refresh();
     dialogAnswers.push(true);
     await page.click('button:has-text("Sell Common Gear")');
-    await page.waitForFunction(() => !view.state.Player.Inventory.some(i => i.Type === 'Ring'));
+    await page.waitForFunction(() => !view.state.Player.Inventory.some(i => i.Type === 'Ring' && i.Rarity === 'Common'));
     check(true, 'sell common gear asks, then sells');
 
     // Training + a notice when it's too expensive
@@ -225,7 +310,9 @@ function pyCall(method, args) {
     await page.waitForFunction(() => view.state.PlayerGuild.GoldVault === 100);
     check((await page.$$('#guildContent .exp-card')).length === 3, 'guild buildings render');
 
-    // Quests
+    // Quests (the battle series may already have finished the first task)
+    await set(['QuestSlots', 0, 'Quest', 'Progress'], 0);
+    await refresh();
     await page.click('.nav-tab[data-tab="quests"]');
     dialogAnswers.push(true);
     await page.click('#questContainer .exp-card:nth-child(1) button:has-text("Abandon")');
@@ -246,10 +333,10 @@ function pyCall(method, args) {
     await page.click('#expeditionContainer .exp-card:nth-child(1) .monster-row:nth-child(1) button');
     await page.waitForSelector('#combatModal.open');
     check(/FIGHT/.test(await text('#modalCombatResultBanner')), 'report starts animating');
-    check(await text('#textHp') === hpBefore && await text('#textEnergy') === '20/24', 'sidebar waits for the report to finish');
+    check(await text('#textHp') === hpBefore && /^20\//.test(await text('#textEnergy')), 'sidebar waits for the report to finish');
     await page.click('#btnSkipCombat');
     check(/VICTORY|DEFEAT/.test(await text('#modalCombatResultBanner')), 'skip reveals the result');
-    check(await text('#textEnergy') === '19/24', 'sidebar updates after the report');
+    check(/^19\//.test(await text('#textEnergy')), 'sidebar updates after the report');
     await page.keyboard.press('Escape');
 
     // Settings: theme, rename, export/import, reset
@@ -280,7 +367,7 @@ function pyCall(method, args) {
     if (SHOTS) {
         await set(['Settings', 'ThemeMode'], 'DarkImperial');
         await refresh();
-        for (const tab of ['overview', 'expeditions', 'arena', 'dungeons', 'quests']) {
+        for (const tab of ['overview', 'expeditions', 'arena', 'dungeons', 'labors', 'quests', 'forge']) {
             await page.click(`.nav-tab[data-tab="${tab}"]`);
             await shot(`tab-${tab}.png`);
         }

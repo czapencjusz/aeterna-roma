@@ -9,16 +9,19 @@ import math
 
 from . import combat
 from .data import (ACHIEVEMENTS, ARENA_COOLDOWN_MS, ARENA_MILESTONES, ARENA_SET_DROP_CHANCE, ATTRIBUTES, BESTIARY,
-                   BLESSINGS, COMBAT_SPEEDS, DUNGEON_ENERGY_COST, DUNGEONS, ENERGY_REGEN_PER_MIN, GUILD_BUILDING_MAX,
-                   GUILD_BUILDINGS, GUILD_COST, GUILD_DONATIONS, HONOR_SHOP, LADDER_SIZE, LOCATIONS, LOOT_CHANCE,
-                   MAX_ENHANCE, QUEST_ABANDON_WAIT_MS, RECIPES, RUBY_COST, SATCHEL_SLOTS, SET_DROP_CHANCE,
-                   SLOT_FOR_TYPE, SLOTS, THEMES, UNIQUE_REPEAT_CHANCE, UNIQUES, VENDOR_DEFS, WORK_OPTIONS, blessing_cost)
-from .items import display_name, generate_item, is_equipment, make_set_piece, make_unique, sell_price
-from .rules import (all_effects, guild_building_cost, guild_level_from_buildings, has_full_set, heal_multiplier,
+                   BLESSINGS, COMBAT_SPEEDS, DAILY_REWARDS, DUNGEON_ENERGY_COST, DUNGEONS, ENERGY_REGEN_PER_MIN,
+                   EQUIP_TYPES, GUILD_BUILDING_MAX, GUILD_BUILDINGS, GUILD_COST, GUILD_DONATIONS, HONOR_SHOP,
+                   ITEM_TYPES, LABOR_ENERGY_COST, LABORS, LABORS_COMPLETE_REWARD, LADDER_SIZE, LOCATIONS, LOOT_CHANCE,
+                   MAX_ENHANCE, QUEST_ABANDON_WAIT_MS, RARITIES, RECIPES, RUBY_COST, SATCHEL_SLOTS, SERIES_SIZES,
+                   SET_DROP_CHANCE, SLOT_FOR_TYPE, SLOTS, THEMES, UNIQUE_REPEAT_CHANCE, UNIQUES, VENDOR_DEFS,
+                   WORK_OPTIONS, blessing_cost, reforge_cost)
+from .items import (display_name, generate_item, is_equipment, make_mythic, make_set_piece, make_unique,
+                    reroll_affixes, sell_price)
+from .rules import (all_effects, describe_effects, guild_building_cost, guild_level_from_buildings, has_full_set, heal_multiplier,
                     hp_regen_per_min, min_fight_hp, recalc_stats, training_cost, work_pay, xp_multiplier, xp_to_next)
 from .state import (dungeon_key, generate_quest, idle_work, new_game_state, new_guild, normalize_state,
                     quest_description, stock_vendor)
-from .util import now_ms, pick, rand_int, roll, to_int, uid
+from .util import day_number, now_ms, pick, rand_int, roll, to_int, uid
 
 GLADIATOR_NAME_MIN, GLADIATOR_NAME_MAX = 3, 20
 GUILD_NAME_MIN, GUILD_NAME_MAX = 3, 24
@@ -69,7 +72,7 @@ class Game:
             p['Level'] += 1
             p['MaxXP'] = xp_to_next(p['Level'])
             p['MaxEnergy'] += 2
-            p['CurrentEnergy'] = p['MaxEnergy']
+            p['CurrentEnergy'] = max(p['CurrentEnergy'], p['MaxEnergy'])
             for attr in ('Strength', 'Dexterity', 'Agility', 'Constitution'):
                 p['Base' + attr] += 1
             recalc_stats(p)
@@ -173,21 +176,20 @@ class Game:
         regen = self.apply_regen(now)
         work = self.complete_work_if_done(now)
         quests = self.refresh_quest_slots(now)
-        if work or quests:
+        daily_ready = self.daily_status()[0]
+        new_day = daily_ready and not getattr(self, '_daily_ready', True)
+        self._daily_ready = daily_ready
+        if work or quests or new_day:
             return 'all'
         return 'sidebar' if regen else 'none'
 
     # ----------------------------------------------------------------- fights
 
     def can_fight(self):
-        p = self.player
-        if self.state['ActiveWork']['IsWorking']:
-            self.notify('You are busy working at the villa. Finish or cancel the work first.')
-            return False
-        if p['CurrentHP'] < min_fight_hp(p):
-            self.notify('You are too wounded to fight (need at least %d HP). Rest or drink a potion.' % min_fight_hp(p))
-            return False
-        return True
+        blocker = self.fight_blocker(0)
+        if blocker:
+            self.notify(blocker)
+        return not blocker
 
     def grant_rewards(self, result, xp, gold, effects=None):
         effects = all_effects(self.state) if effects is None else effects
@@ -265,26 +267,92 @@ class Game:
             if quest['Progress'] >= quest['Goal'] and result is not None:
                 result['Notes'].append('🏺 Divine task complete: %s. Claim it at the Pantheon!' % quest_description(quest))
 
-    def start_expedition(self, location_index, monster_index):
+    def fight_blocker(self, energy_cost):
+        """Why the player can't start a fight right now (a message), or None."""
+        p = self.player
+        if self.state['ActiveWork']['IsWorking']:
+            return 'You are busy working at the villa. Finish or cancel the work first.'
+        if p['CurrentHP'] < min_fight_hp(p):
+            return 'You are too wounded to fight (need at least %d HP). Rest or drink a potion.' % min_fight_hp(p)
+        if p['CurrentEnergy'] < energy_cost:
+            return 'Not enough energy (%d needed).' % energy_cost
+        return None
+
+    def _expedition_target(self, location_index, monster_index):
         li = _index(location_index, LOCATIONS)
         if li is None:
-            return None
+            return None, None
         location = LOCATIONS[li]
         mi = _index(monster_index, location['Monsters'])
         if mi is None:
+            return None, None
+        if self.player['Level'] < location['ReqLevel']:
+            self.notify('%s requires level %d.' % (location['Name'], location['ReqLevel']))
+            return None, None
+        return location, location['Monsters'][mi]
+
+    def start_expedition(self, location_index, monster_index):
+        location, monster = self._expedition_target(location_index, monster_index)
+        if not location:
+            return None
+        blocker = self.fight_blocker(location['EnergyCost'])
+        if blocker:
+            self.notify(blocker)
+            return None
+        return self._expedition_fight(location, monster)
+
+    def start_series(self, location_index, monster_index, count):
+        """Fights the same monster up to `count` times in a row. Stops at the first defeat, or when
+        the gladiator runs out of energy or health. Returns one combined report."""
+        count = to_int(count, 0)
+        if count not in SERIES_SIZES:
+            return None
+        location, monster = self._expedition_target(location_index, monster_index)
+        if not location:
+            return None
+        blocker = self.fight_blocker(location['EnergyCost'])
+        if blocker:
+            self.notify(blocker)
             return None
         p = self.player
-        if p['Level'] < location['ReqLevel']:
-            self.notify('%s requires level %d.' % (location['Name'], location['ReqLevel']))
-            return None
-        if p['CurrentEnergy'] < location['EnergyCost']:
-            self.notify('Not enough energy (%d needed).' % location['EnergyCost'])
-            return None
-        if not self.can_fight():
-            return None
+        series = {'Series': True, 'Title': 'Battle series: %s' % monster['Name'], 'PlayerName': p['Name'],
+                  'EnemyName': monster['Name'], 'EnemyArt': monster['Name'], 'Fights': [], 'Planned': count,
+                  'PlayerMaxHP': p['MaxHP'], 'PlayerStartHP': p['CurrentHP'], 'IsVictory': True, 'XPGained': 0,
+                  'GoldGained': 0, 'RubiesGained': 0, 'Loot': [], 'LevelsGained': 0, 'Notes': [], 'Turns': [],
+                  'StopReason': ''}
+        for n in range(count):
+            if n:
+                blocker = self.fight_blocker(location['EnergyCost'])
+                if blocker:
+                    series['StopReason'] = blocker
+                    break
+            hp_before = p['CurrentHP']
+            result = self._expedition_fight(location, monster)
+            series['Fights'].append({'IsVictory': result['IsVictory'], 'Enemy': result['EnemyName'],
+                                     'Turns': max([t['Turn'] for t in result['Turns']] or [0]),
+                                     'HPLost': max(0, hp_before - p['CurrentHP']),
+                                     'Gold': result['GoldGained'], 'XP': result['XPGained'],
+                                     'Loot': [display_name(item) for item in result['Loot']]})
+            for key in ('XPGained', 'GoldGained', 'RubiesGained', 'LevelsGained'):
+                series[key] += result[key]
+            series['Loot'].extend(result['Loot'])
+            series['Notes'].extend(note for note in result['Notes'] if note not in series['Notes'])
+            if not result['IsVictory']:
+                series['IsVictory'] = False
+                series['StopReason'] = 'You were defeated by %s.' % result['EnemyName']
+                break
+        wins = sum(1 for f in series['Fights'] if f['IsVictory'])
+        if wins == len(series['Fights']):
+            stats = self.state['Stats']
+            stats['BestSeries'] = max(stats['BestSeries'], wins)
+        series['Wins'] = wins
+        series['PlayerEndHP'] = p['CurrentHP']
+        return series
 
+    def _expedition_fight(self, location, monster_def):
+        p = self.player
         p['CurrentEnergy'] -= location['EnergyCost']
-        monster = combat.scale_monster(location['Monsters'][mi], p['Level'], location['ReqLevel'])
+        monster = combat.scale_monster(monster_def, p['Level'], location['ReqLevel'])
         effects = all_effects(self.state)  # taken before the fight uses up a blessing
         result = combat.run_fight(self.state, 'Expedition: ' + monster['Name'], combat.monster_combatant(monster))
         result['EnemyArt'] = monster['Name']
@@ -400,6 +468,56 @@ class Game:
         progress['CurrentStage'] = 1
         progress['IsCompleted'] = False
 
+    # --------------------------------------------------------- labors of hercules
+
+    def next_labor_index(self):
+        """Index of the next Labor to attempt (they are done in order), or None when all are complete."""
+        done = self.player['Labors']
+        return next((i for i, labor in enumerate(LABORS) if labor['Id'] not in done), None)
+
+    def attempt_labor(self, labor_index):
+        li = _index(labor_index, LABORS)
+        if li is None:
+            return None
+        labor = LABORS[li]
+        p = self.player
+        if labor['Id'] in p['Labors']:
+            self.notify('You have already completed %s.' % labor['Title'])
+            return None
+        if li != self.next_labor_index():
+            self.notify('The Labors must be done in order. Complete %s first.' % LABORS[self.next_labor_index()]['Title'])
+            return None
+        if p['Level'] < labor['ReqLevel']:
+            self.notify('%s requires level %d.' % (labor['Title'], labor['ReqLevel']))
+            return None
+        blocker = self.fight_blocker(LABOR_ENERGY_COST)
+        if blocker:
+            self.notify(blocker)
+            return None
+
+        p['CurrentEnergy'] -= LABOR_ENERGY_COST
+        monster = labor['Monster']
+        effects = all_effects(self.state)
+        result = combat.run_fight(self.state, 'Labor %s: %s' % (labor['Number'], labor['Title']),
+                                  combat.monster_combatant(monster))
+        result['EnemyArt'] = monster['Name']
+        if result['IsVictory']:
+            stats = self.state['Stats']
+            stats['MonstersSlain'] += 1
+            self.grant_rewards(result, monster['XPReward'], labor['Gold'], effects)
+            self.add_rubies(labor['Rubies'])
+            result['RubiesGained'] += labor['Rubies']
+            p['Labors'].append(labor['Id'])
+            recalc_stats(p)
+            result['Notes'].append('🦁 Labor %s complete! Permanent boon: %s.'
+                                   % (labor['Number'], ', '.join(describe_effects(labor['Boon']))))
+            if len(p['Labors']) == len(LABORS):
+                club = make_mythic(LABORS_COMPLETE_REWARD, p['Level'])
+                if self.give_loot(result, club):
+                    result['Notes'].append('🌟 All twelve Labors are done. Olympus sends you the %s!' % club['Name'])
+        self.after_fight(result, monster['Name'])
+        return result
+
     # ------------------------------------------------------------ character & items
 
     def train(self, attribute_index):
@@ -467,9 +585,37 @@ class Game:
         p['Equipment'][slot] = None
         recalc_stats(p)
 
-    def sell(self, inventory_index):
+    def _unlocked_item(self, inventory_index):
+        """Inventory index of an item that may be sold or smelted, or None (with a message if locked)."""
         p = self.player
         idx = _index(inventory_index, p['Inventory'])
+        if idx is None:
+            return None
+        if p['Inventory'][idx].get('Locked'):
+            self.notify('%s is locked. Unlock it first.' % display_name(p['Inventory'][idx]))
+            return None
+        return idx
+
+    def toggle_lock(self, inventory_index):
+        p = self.player
+        idx = _index(inventory_index, p['Inventory'])
+        if idx is not None:
+            item = p['Inventory'][idx]
+            item['Locked'] = not item.get('Locked')
+
+    def sort_inventory(self):
+        """Orders the bag: equipment by slot, strongest rarity and level first, then potions and the rest."""
+        type_order = {item_type: i for i, item_type in enumerate(EQUIP_TYPES + ['Potion'])}
+
+        def key(item):
+            return (type_order.get(item['Type'], len(ITEM_TYPES)), -RARITIES.index(item['Rarity']),
+                    -item['LevelRequirement'], -item['Upgrade'], display_name(item),
+                    -(item['HealAmount'] + item['EnergyAmount']))
+        self.player['Inventory'].sort(key=key)
+
+    def sell(self, inventory_index):
+        p = self.player
+        idx = self._unlocked_item(inventory_index)
         if idx is None:
             return
         p['Gold'] += sell_price(p['Inventory'][idx])
@@ -477,7 +623,8 @@ class Game:
 
     def junk_items(self):
         """Common, un-enhanced equipment: what "Sell Common Gear" sells."""
-        return [it for it in self.player['Inventory'] if is_equipment(it) and it['Rarity'] == 'Common' and not it['Upgrade']]
+        return [it for it in self.player['Inventory']
+                if is_equipment(it) and it['Rarity'] == 'Common' and not it['Upgrade'] and not it.get('Locked')]
 
     def sell_junk(self):
         junk = self.junk_items()
@@ -491,7 +638,7 @@ class Game:
 
     def smelt(self, inventory_index):
         p = self.player
-        idx = _index(inventory_index, p['Inventory'])
+        idx = self._unlocked_item(inventory_index)
         if idx is None:
             return
         item = p['Inventory'][idx]
@@ -544,8 +691,8 @@ class Game:
         return (self.player['Gold'] >= cost['Gold'] and s['IronStash'] >= cost['Iron'] and s['BronzeStash'] >= cost['Bronze']
                 and s['LeatherStash'] >= cost['Leather'] and s['RubyStash'] >= cost['Ruby'])
 
-    def enhance(self, location, key):
-        """location 0 = equipped slot index (into SLOTS), 1 = inventory index."""
+    def _gear_at(self, location, key):
+        """An equipment item by forge address: location 0 = equipped slot index (into SLOTS), 1 = inventory index."""
         p = self.player
         loc = to_int(location, -1)
         if loc == 0:
@@ -556,7 +703,40 @@ class Game:
             item = p['Inventory'][ii] if ii is not None else None
         else:
             item = None
-        if not item or not is_equipment(item):
+        return item if item and is_equipment(item) else None
+
+    @staticmethod
+    def can_reforge(item):
+        """Set pieces and Mythic treasures have fixed identities; everything else can be reforged."""
+        return is_equipment(item) and not item.get('SetId') and item['Rarity'] != 'Mythic'
+
+    def reforge(self, location, key):
+        """Rerolls an item's prefix and suffix (at least one is guaranteed)."""
+        item = self._gear_at(location, key)
+        if not item:
+            return
+        if not self.can_reforge(item):
+            self.notify('Set pieces and Mythic treasures cannot be reforged.')
+            return
+        s, p = self.state, self.player
+        cost = reforge_cost(item['LevelRequirement'])
+        if p['Gold'] < cost['Gold'] or s['BronzeStash'] < cost['Bronze'] or s['RubyStash'] < cost['Ruby']:
+            self.notify('Reforging costs %d gold, %d bronze and %d ruby.' % (cost['Gold'], cost['Bronze'], cost['Ruby']))
+            return
+        p['Gold'] -= cost['Gold']
+        s['BronzeStash'] -= cost['Bronze']
+        s['RubyStash'] -= cost['Ruby']
+        old = display_name(item)
+        reroll_affixes(item)
+        recalc_stats(p)
+        s['Stats']['ItemsReforged'] += 1
+        self.notify('⚒️ %s is reforged as %s.' % (old, display_name(item)))
+
+    def enhance(self, location, key):
+        """location 0 = equipped slot index (into SLOTS), 1 = inventory index."""
+        p = self.player
+        item = self._gear_at(location, key)
+        if not item:
             return
         if item['Upgrade'] >= MAX_ENHANCE:
             self.notify('This item is already fully enhanced.')
@@ -782,6 +962,8 @@ class Game:
             return (1 if has_full_set(self.player) else 0), goal
         if stat == 'BestiaryPct':
             return len(s['Bestiary']) * 100 // len(BESTIARY), goal
+        if stat == 'Labors':
+            return len(self.player['Labors']), goal
         return s['Stats'].get(stat, 0), goal
 
     def check_achievements(self):
@@ -797,6 +979,52 @@ class Game:
                 self.notify('🏅 Achievement unlocked: %s (+%s)' % (achievement['Name'], rubies_text(achievement['Rubies'])))
                 unlocked.append(achievement)
         return unlocked
+
+    # ------------------------------------------------------------- imperial decree
+
+    def daily_status(self):
+        """(can claim today, the streak day the next claim will be, 1-based)."""
+        daily = self.state['Daily']
+        today = day_number(self.clock())
+        if daily['LastDay'] == today:
+            return False, daily['Streak']
+        continuing = daily['LastDay'] == today - 1
+        return True, (daily['Streak'] + 1) if continuing else 1
+
+    def claim_daily(self):
+        can_claim, streak = self.daily_status()
+        if not can_claim:
+            self.notify('The Emperor has already rewarded you today. Come back tomorrow!')
+            return
+        s, p = self.state, self.player
+        reward = DAILY_REWARDS[(streak - 1) % len(DAILY_REWARDS)]
+        if reward.get('Item') and len(p['Inventory']) >= p['InventoryCapacity']:
+            self.notify("Make room in your inventory first: today's decree includes a piece of gear.")
+            return
+        s['Daily'] = {'LastDay': day_number(self.clock()), 'Streak': streak}
+        s['Stats']['DailyClaims'] += 1
+        s['Stats']['BestDailyStreak'] = max(s['Stats']['BestDailyStreak'], streak)
+        parts = []
+        if reward.get('Gold'):
+            gold = daily_gold(p['Level'], reward['Gold'])
+            p['Gold'] += gold
+            s['Stats']['GoldEarned'] += gold
+            parts.append('%d gold' % gold)
+        if reward.get('Energy'):
+            p['CurrentEnergy'] = max(p['CurrentEnergy'], p['MaxEnergy'])
+            parts.append('full energy')
+        for key, amount in reward.get('Materials', {}).items():
+            s[key] += amount
+        if reward.get('Materials'):
+            parts.append('forge materials')
+        if reward.get('Rubies'):
+            self.add_rubies(reward['Rubies'])
+            parts.append(rubies_text(reward['Rubies']))
+        if reward.get('Item'):
+            item = generate_item(p['Level'], rarity=reward['Item'])
+            p['Inventory'].append(item)
+            parts.append(display_name(item))
+        self.notify('📜 Imperial Decree, day %d: %s.' % (streak, ', '.join(parts)))
 
     # ------------------------------------------------------------------ ruby shop
 
@@ -858,6 +1086,11 @@ class Game:
         self.apply_regen(now)
         self.complete_work_if_done(now)
         self.refresh_quest_slots(now)
+
+
+def daily_gold(level, fights):
+    """Gold worth about `fights` typical fights at `level`."""
+    return fights * max(40, round(2.6 * level * level))
 
 
 def rubies_text(n):

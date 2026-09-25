@@ -2,7 +2,7 @@
 
 import math
 
-from .data import (ARENA_TITLES, BLESSINGS, EFFECT_CAPS, EFFECTS, GUILD_BUILDINGS, MIN_FIGHT_HP_RATIO, SETS, SLOTS,
+from .data import (ARENA_TITLES, BLESSINGS, EFFECT_CAPS, EFFECTS, GUILD_BUILDINGS, LABORS, MIN_FIGHT_HP_RATIO, SETS, SLOTS,
                    WORK_GOLD_PER_HOUR, WORK_XP_PER_HOUR, XP_EARLY_LEVELS, XP_LATE_GROWTH)
 from .util import clamp
 
@@ -35,9 +35,20 @@ def set_counts(player):
     return counts
 
 
-def gear_effects(player):
-    """Effects from equipped Mythic items and active set bonuses."""
+LABOR_BOONS = {labor['Id']: labor['Boon'] for labor in LABORS}
+
+
+def labor_effects(player):
+    """Permanent boons from completed Labors of Hercules."""
     total = {}
+    for labor_id in player.get('Labors', ()):
+        _add_effects(total, LABOR_BOONS.get(labor_id, {}))
+    return total
+
+
+def gear_effects(player):
+    """Permanent effects: equipped Mythic items, active set bonuses and Labor boons."""
+    total = labor_effects(player)
     for slot in SLOTS:
         item = player['Equipment'][slot]
         if item and item.get('Effects'):

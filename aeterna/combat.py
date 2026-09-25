@@ -101,6 +101,62 @@ def arena_opponent_stats(opponent, player):
     }
 
 
+# --- Threat estimate ------------------------------------------------------------------
+
+def expected_damage_per_turn(att, dfn):
+    """Average damage `att` deals to `dfn` in one turn, following execute_turn's rules."""
+    p_hit = hit_chance(att['dex'], dfn['agi'])
+    p_block = min(1.0, block_chance(dfn['agi'], dfn['str'], dfn['shield_bonus']))
+    p_crit = min(1.0, crit_chance(att['dex'], dfn['agi'], att['int']) + att.get('crit_bonus', 0))
+    reduction = mitigation(max(0, dfn['armor'] - armor_penetration(att['str'])))
+    base = max(1.0, (att['min_dmg'] + att['max_dmg']) / 2 * reduction)
+    per_hit = base * (1 + p_crit * (crit_multiplier(att['int']) - 1))
+    return p_hit * (1 - p_block) * (per_hit + double_strike_chance(att['cha'], dfn['cha']) * base)
+
+
+# Labels from easiest to hardest, with the lowest estimated win chance each one covers.
+THREAT_LEVELS = [(0.95, 'Trivial'), (0.80, 'Easy'), (0.55, 'Fair'), (0.30, 'Risky'), (0.0, 'Deadly')]
+
+
+def turns_to_win(state, enemy, pc=None):
+    """(turns the player needs to beat `enemy`, turns `enemy` needs to beat the player at full health).
+
+    Pass `pc` (from player_combatant) when rating many enemies, to build it only once.
+    """
+    pc = dict(pc or player_combatant(state), hp=None)
+    pc['hp'] = pc['max_hp']
+    mine = max(0.01, expected_damage_per_turn(pc, enemy))
+    theirs = max(0.01, expected_damage_per_turn(enemy, pc) - mine * pc.get('life_steal', 0))
+    return enemy['hp'] / mine, pc['hp'] / theirs
+
+
+def _sigmoid(x):
+    return 1 / (1 + math.exp(-max(-60.0, min(60.0, x))))
+
+
+# Fitted to simulated fights by `python -m aeterna.balance --calibrate` (RMS error about 3%).
+THREAT_SLOPE, THREAT_SHIFT, THREAT_TIMEOUT = 3.4, -0.78, 0.25
+
+
+def win_chance_from_turns(player_turns, enemy_turns):
+    """Win chance from the turn counts: who finishes the other first, and whether the player can
+    finish the enemy before the crowd calls the fight after MAX_TURNS rounds."""
+    duel = _sigmoid(THREAT_SLOPE * (math.log(enemy_turns / player_turns) - THREAT_SHIFT))
+    return duel * _sigmoid(THREAT_TIMEOUT * (MAX_TURNS - player_turns))
+
+
+def win_estimate(state, enemy, pc=None):
+    """Rough chance (0-1) that the player, at full health, beats `enemy`, without simulating the fight."""
+    return win_chance_from_turns(*turns_to_win(state, enemy, pc))
+
+
+def threat(state, enemy, pc=None):
+    """{'label', 'win'} for the interface: a difficulty label and the estimated win chance (0-100)."""
+    win = win_estimate(state, enemy, pc)
+    label = next(name for floor, name in THREAT_LEVELS if win >= floor)
+    return {'label': label, 'win': round(win * 100)}
+
+
 # --- Fight loop ---------------------------------------------------------------------
 
 def execute_turn(turn_num, att, dfn, turns):

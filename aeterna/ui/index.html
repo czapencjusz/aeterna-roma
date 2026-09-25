@@ -449,6 +449,65 @@
         .beast-card.unknown .art-portrait { filter: brightness(0) opacity(.45); }
         .section-title { font-family: 'Cinzel', serif; color: var(--text-gold); margin: 22px 0 10px; }
 
+        /* Threat badges: estimated difficulty of a fight */
+        .threat { display: inline-block; margin-left: 6px; padding: 0 6px; border-radius: 8px; font-size: 10px; font-weight: bold;
+                  letter-spacing: .3px; vertical-align: middle; border: 1px solid currentColor; cursor: help; }
+        .threat-Trivial { color: #9e9e9e; }
+        .threat-Easy { color: #66bb6a; }
+        .threat-Fair { color: #ffca28; }
+        .threat-Risky { color: #ff9800; }
+        .threat-Deadly { color: #ff5252; background: rgba(255,82,82,.12); }
+        .btn-row-tight { display: flex; gap: 6px; flex-shrink: 0; }
+        .btn-series { padding: 6px 9px; }
+        .exp-card .monster-row .btn-row-tight { flex-direction: column; }
+        .exp-card .monster-row .btn-row-tight .btn-roman { padding: 5px 10px; justify-content: center; font-size: 12px; }
+        .exp-card .monster-row .portrait-row { min-width: 0; }
+
+        /* Inventory badges */
+        .slot-badge { position: absolute; font-size: 11px; line-height: 1; pointer-events: none; }
+        .slot-badge.lock { top: 3px; right: 3px; }
+        .slot-badge.upg { bottom: 3px; right: 4px; color: #ffd700; font-weight: bold; text-shadow: 0 0 3px #000; }
+        .slot-badge.set { top: 3px; left: 3px; }
+
+        /* Floating item tooltip */
+        #itemTooltip { position: fixed; z-index: 3000; max-width: 300px; pointer-events: none; display: none;
+                       background: rgba(12,8,6,.96); border: 1px solid var(--border-gold); border-radius: 6px; padding: 10px;
+                       box-shadow: 0 6px 20px rgba(0,0,0,.6); font-size: 12px; color: #e6dac3; }
+        #itemTooltip .item-icon .art-item { width: 44px; height: 44px; }
+
+        /* Labors of Hercules */
+        .labors-banner { height: 150px; border: 1px solid var(--border-gold); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+        .labors-banner .art-scene { width: 100%; height: 100%; }
+        .labor-card.done { border-color: #ffd700; box-shadow: 0 0 8px rgba(255,215,0,.25); }
+        .labor-card.next { border-color: #ff7043; box-shadow: 0 0 10px rgba(255,112,67,.35); }
+        .labor-num { font-family: 'Cinzel Decorative', serif; color: var(--text-accent); font-size: 12px; }
+        .labor-story { font-style: italic; font-size: 12px; opacity: .85; }
+        .labor-progress { display: flex; gap: 4px; flex-wrap: wrap; margin: 6px 0 12px; }
+        .labor-pip { width: 26px; height: 26px; border-radius: 50%; border: 1px solid var(--border-gold); display: flex; align-items: center;
+                     justify-content: center; font-size: 10px; font-family: 'Cinzel', serif; opacity: .5; }
+        .labor-pip.done { background: radial-gradient(#ffd700, #8a6410); color: #1a1208; opacity: 1; font-weight: bold; }
+
+        /* Imperial Decree (daily reward) */
+        .daily-box { display: flex; flex-direction: column; gap: 10px; margin-bottom: 18px; }
+        .daily-days { display: grid; grid-template-columns: repeat(7, minmax(70px, 1fr)); gap: 8px; }
+        .daily-day { border: 1px solid #555; border-radius: 6px; padding: 6px; text-align: center; font-size: 11px; background: rgba(0,0,0,.35); opacity: .6; }
+        .daily-day .icon { font-size: 22px; display: block; }
+        .daily-day.claimed { opacity: .9; border-color: #66bb6a; }
+        .daily-day.claimed::after { content: '✔'; color: #66bb6a; font-weight: bold; display: block; }
+        .daily-day.today { opacity: 1; border-color: #ffd700; box-shadow: 0 0 10px rgba(255,215,0,.45); animation: pulse-gold 1.6s ease-in-out infinite; }
+        @keyframes pulse-gold { 50% { box-shadow: 0 0 18px rgba(255,215,0,.8); } }
+
+        /* Level-up celebration in the combat report */
+        .levelup-burst { margin: 6px 0; padding: 8px; text-align: center; border-radius: 6px; font-family: 'Cinzel Decorative', serif;
+                         font-size: 18px; color: #1a1208; background: linear-gradient(90deg, #8a6410, #ffd700, #fff3b0, #ffd700, #8a6410);
+                         background-size: 200% 100%; animation: levelup-shine 1.4s linear infinite, levelup-pop .5s ease-out; }
+        @keyframes levelup-shine { to { background-position: -200% 0; } }
+        @keyframes levelup-pop { from { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } to { transform: scale(1); opacity: 1; } }
+        .series-line { display: flex; justify-content: space-between; gap: 10px; padding: 5px 8px; border-left: 3px solid #4caf50; margin-bottom: 4px; background: rgba(255,255,255,.03); font-size: 13px; }
+        .series-line.lost { border-left-color: #f44336; }
+        .toast.toast-gold { border-color: #ffd700; box-shadow: 0 0 14px rgba(255,215,0,.45); color: #ffe082; }
+        .kbd { display: inline-block; padding: 0 5px; border: 1px solid #777; border-radius: 3px; font-family: monospace; font-size: 11px; }
+
         .item-name { font-weight: bold; margin-bottom: 2px; }
         .item-meta { font-size: 11px; opacity: 0.75; margin-bottom: 6px; }
         .item-stats { font-size: 12px; line-height: 1.5; }
@@ -791,6 +850,7 @@
                 <div class="gladiator-title" id="gladTitle"></div>
                 <div class="status-note" id="sidebarStatus"></div>
                 <div id="sidebarBlessing"></div>
+                <div id="sidebarDaily"></div>
             </div>
 
             <!-- STAT BARS -->
@@ -838,6 +898,7 @@
                 <button class="nav-tab" data-tab="expeditions" onclick="switchTab('expeditions')">🗺️ Expeditions</button>
                 <button class="nav-tab" data-tab="arena" onclick="switchTab('arena')">⚔️ Colosseum</button>
                 <button class="nav-tab" data-tab="dungeons" onclick="switchTab('dungeons')">🗝️ Dungeons</button>
+                <button class="nav-tab" data-tab="labors" onclick="switchTab('labors')">🦁 Labors</button>
                 <button class="nav-tab" data-tab="quests" onclick="switchTab('quests')">🏺 Pantheon</button>
                 <button class="nav-tab" data-tab="merchants" onclick="switchTab('merchants')">⚖️ Merchants</button>
                 <button class="nav-tab" data-tab="forge" onclick="switchTab('forge')">🔥 The Forge</button>
@@ -884,7 +945,10 @@
 
                         <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px; gap:10px; flex-wrap:wrap;">
                             <h3 style="font-family:'Cinzel',serif; color:var(--text-gold);">Inventory Items <span class="muted" id="invCount"></span></h3>
-                            <button class="btn-roman" onclick="sellJunk()">🪙 Sell Common Gear</button>
+                            <span class="btn-row-tight">
+                                <button class="btn-roman" onclick="sortInventory()" title="Order by slot, rarity and level">↕️ Sort</button>
+                                <button class="btn-roman" onclick="sellJunk()" title="Sells common, un-enhanced, unlocked gear">🪙 Sell Common Gear</button>
+                            </span>
                         </div>
                         <div class="inventory-grid" id="inventoryContainer"></div>
                         <div id="selectedItemPanel" class="info-box" style="margin-top:15px; display:none;"></div>
@@ -932,6 +996,12 @@
                 <!-- EXPEDITIONS TAB -->
                 <div id="tab-expeditions" class="tab-content">
                     <h2 class="tab-title">Expeditions across the Empire</h2>
+                    <div class="info-box" style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap; margin-bottom:12px;">
+                        <span class="muted">Each foe shows an estimated difficulty for your current gear. <strong>🔁 Battle series</strong> fights the same foe several times in a row and stops at the first defeat.</span>
+                        <label style="display:flex; align-items:center; gap:6px; font-size:12px;">Series length
+                            <select class="roman-select" id="seriesSize" onchange="setSeriesSize(this.value)" style="width:auto;"></select>
+                        </label>
+                    </div>
                     <div class="exp-grid" id="expeditionContainer"></div>
                 </div>
 
@@ -954,9 +1024,19 @@
                     <div class="exp-grid" id="dungeonContainer"></div>
                 </div>
 
+                <!-- LABORS OF HERCULES TAB -->
+                <div id="tab-labors" class="tab-content">
+                    <h2 class="tab-title">The Twelve Labors of Hercules</h2>
+                    <div class="labors-banner" id="laborsBanner"></div>
+                    <div class="info-box" id="laborsInfo"></div>
+                    <div class="labor-progress" id="laborsProgress"></div>
+                    <div class="exp-grid" id="laborsContainer"></div>
+                </div>
+
                 <!-- PANTHEON (QUESTS) TAB -->
                 <div id="tab-quests" class="tab-content">
                     <h2 class="tab-title">The Pantheon - Divine Tasks</h2>
+                    <div class="info-box daily-box" id="dailyContainer"></div>
                     <p style="font-size:13px; margin-bottom:15px;">The priests of Rome relay the wishes of the gods. Complete their tasks for gold, experience, and sometimes rubies. Abandoned tasks are replaced after a short wait.</p>
                     <div class="exp-grid" id="questContainer"></div>
                     <h3 class="section-title">🏛️ Temple of the Gods</h3>
@@ -981,8 +1061,8 @@
                     <div id="forgeStashInfo" class="info-box"></div>
                     <h3 style="font-family:'Cinzel',serif; color:var(--text-gold); margin-bottom:10px;">Forge Recipes</h3>
                     <div class="exp-grid" id="forgeRecipeContainer"></div>
-                    <h3 style="font-family:'Cinzel',serif; color:var(--text-gold); margin:25px 0 6px;">Enhance Gear</h3>
-                    <p class="muted" style="margin-bottom:10px;">Each enhancement (up to +5) raises an item's damage, armor, or attribute bonuses by about 10%.</p>
+                    <h3 style="font-family:'Cinzel',serif; color:var(--text-gold); margin:25px 0 6px;">Enhance &amp; Reforge Gear</h3>
+                    <p class="muted" style="margin-bottom:10px;">Each enhancement (up to +5) raises an item's damage, armor, or attribute bonuses by about 10%. Reforging rerolls an item's prefix and suffix (at least one is guaranteed); set pieces and Mythic treasures can't be reforged.</p>
                     <div class="monster-list" id="enhanceContainer"></div>
                 </div>
 
@@ -1017,6 +1097,7 @@
                         <button class="btn-roman" onclick="exportSave()">📥 Export Save File</button>
                         <button class="btn-roman" onclick="importSave()">📤 Import Save File</button>
                         <p class="muted" id="savePathInfo" style="word-break:break-all;"></p>
+                        <p class="muted"><strong>Keyboard:</strong> <span class="kbd">1</span>–<span class="kbd">9</span>, <span class="kbd">0</span> switch tabs · <span class="kbd">Space</span> skips a combat report · <span class="kbd">Esc</span> closes it.</p>
                         <p class="muted">Export a save file to back up your gladiator or move it to another computer. Saves exported from the earlier browser version, and savegame.json files from the old server version, can be imported too.</p>
                     </div>
                     <div style="margin-top:30px; border-top:1px solid #444; padding-top:15px;">
@@ -1026,6 +1107,8 @@
             </div>
         </div>
     </div>
+
+    <div id="itemTooltip"></div>
 
     <!-- COMBAT REPORT MODAL -->
     <div class="modal-overlay" id="combatModal" onclick="if (event.target === this) closeCombatModal()">
@@ -1934,6 +2017,90 @@
                 'Lamia': 'lamia', 'Hundred-Handed Warden': 'hundredhand', 'Hades, Lord of the Dead': 'hades'
             });
 
+            // --- portraits for the Labors of Hercules ------------------------------------------
+            const serpentHead = (x, y, s, rot, c, dark) => `<g transform="translate(${x} ${y}) rotate(${rot}) scale(${s})">
+                    <path d="M-7 2 C-8 -6 -4 -10 0 -10 C4 -10 8 -6 7 2 C5 6 -5 6 -7 2 Z" fill="${c}" stroke="${dark}" stroke-width="1"/>
+                    <path d="M-6 3 C-3 7 3 7 6 3 C3 5 -3 5 -6 3 Z" fill="#6b0f0f"/>
+                    <path d="M-3 4 L-2.4 7 L-1.6 4.4 M3 4 L2.4 7 L1.6 4.4" fill="#fff"/>
+                    <ellipse cx="-3" cy="-3" rx="1.6" ry="1.2" fill="#ffea00"/><ellipse cx="3" cy="-3" rx="1.6" ry="1.2" fill="#ffea00"/>
+                    <path d="M-3 -4 V-2 M3 -4 V-2" stroke="#111" stroke-width=".8"/></g>`;
+            Object.assign(portraits, {
+                hydra: `
+                    <circle cx="32" cy="36" r="28" fill="url(#g-glow-green)" opacity=".7"/>
+                    ${[[10, 26, -8], [20, 16, -4], [32, 12, 0], [44, 16, 4], [54, 26, 8]].map(([x, y]) => `<path d="M32 60 C${(32 + x) / 2} 48 ${x} ${y + 18} ${x} ${y + 4}" fill="none" stroke="#2e7d32" stroke-width="6.5" stroke-linecap="round"/><path d="M32 60 C${(32 + x) / 2} 48 ${x} ${y + 18} ${x} ${y + 4}" fill="none" stroke="#66bb6a" stroke-width="2" stroke-dasharray="2 3" stroke-linecap="round"/>`).join('')}
+                    ${[[10, 26, -18], [20, 16, -8], [44, 16, 8], [54, 26, 18], [32, 12, 0]].map(([x, y, r]) => serpentHead(x, y, x === 32 ? 1.05 : .82, r, '#43a047', '#1b5e20')).join('')}
+                    <path d="M14 64 C16 54 24 52 32 52 C40 52 48 54 50 64 Z" fill="#2e7d32" stroke="#1b5e20"/>
+                    <path d="M18 60 Q24 56 30 60 M34 60 Q40 56 46 60" fill="none" stroke="#1b5e20"/>`,
+                hind: `
+                    <circle cx="32" cy="10" r="26" fill="url(#g-aura-gold)"/>
+                    <path d="M18 24 C10 20 6 22 6 26 C10 28 16 28 21 27 Z M46 24 C54 20 58 22 58 26 C54 28 48 28 43 27 Z" fill="#b8742e" stroke="#5d3a14"/>
+                    <path d="M12 25 C14 25 17 26 19 26.5 M52 25 C50 25 47 26 45 26.5" stroke="#f3d7b0"/>
+                    <path d="M8 64 C12 52 22 48 32 48 C42 48 52 52 56 64 Z" fill="#a8672a"/>
+                    <path d="M20 26 C20 16 44 16 44 26 C44 36 40 46 36 54 C34 58 30 58 28 54 C24 46 20 36 20 26 Z" fill="#c98a45" stroke="#5d3a14" stroke-width="1.2"/>
+                    <path d="M28 46 C28 52 36 52 36 46 C34 48 30 48 28 46 Z" fill="#e8c9a0"/>
+                    <path d="M27 19 C25 12 22 7 17 3 M24 12 L18 11 M22 8 L20 2 M37 19 C39 12 42 7 47 3 M40 12 L46 11 M42 8 L44 2" fill="none" stroke="#5a4210" stroke-width="3.6" stroke-linecap="round"/>
+                    <path d="M27 19 C25 12 22 7 17 3 M24 12 L18 11 M22 8 L20 2 M37 19 C39 12 42 7 47 3 M40 12 L46 11 M42 8 L44 2" fill="none" stroke="url(#g-gold)" stroke-width="2.2" stroke-linecap="round"/>
+                    <path d="M27 32 Q32 28 37 32" fill="none" stroke="#5d3a14" stroke-width=".8"/>
+                    <ellipse cx="25.5" cy="29" rx="2.6" ry="3" fill="#2a1a0a"/><ellipse cx="38.5" cy="29" rx="2.6" ry="3" fill="#2a1a0a"/>
+                    <circle cx="24.8" cy="28" r=".9" fill="#fff"/><circle cx="37.8" cy="28" r=".9" fill="#fff"/>
+                    <ellipse cx="32" cy="53" rx="4" ry="3" fill="#2a1a0a"/>
+                    <path d="M46 8 A7 7 0 1 0 52 18 A5.5 5.5 0 1 1 46 8 Z" fill="#fff8e1" opacity=".85"/>`,
+                alpheus: bust({ skin: '#8fb3c4', body: '#1e5f8a', beard: '#4fc3f7', longBeard: true, calm: true, eyes: '#0d47a1',
+                    longHair: '#4fc3f7',
+                    head: `<path d="M20 26 C18 14 46 14 44 26 C40 20 24 20 20 26 Z" fill="#4fc3f7"/>${[22, 27, 32, 37, 42].map((x, i) => `<path d="M${x} 20 C${x - 2} 12 ${x + 1} 8 ${x + (i - 2)} 4" fill="none" stroke="#7cb342" stroke-width="1.8" stroke-linecap="round"/>`).join('')}`,
+                    bodyExtra: `<path d="M8 60 Q14 54 20 60 T32 60 T44 60 T56 60" fill="none" stroke="#b3e5fc" stroke-width="1.6"/>`,
+                    extra: `<path d="M22 44 Q26 48 22 52 M28 46 Q32 50 28 56 M36 46 Q32 50 36 56 M42 44 Q38 48 42 52" fill="none" stroke="#e1f5fe" stroke-width="1" opacity=".8"/>
+                        <path d="M48 44 C46 38 58 38 58 44 L56 52 H50 Z" fill="url(#g-bronze)" stroke="#4a2e10"/><path d="M50 50 C48 56 52 60 50 64 M54 50 C56 56 52 60 56 64" fill="none" stroke="#4fc3f7" stroke-width="2"/>` }),
+                mare: `
+                    <circle cx="32" cy="36" r="28" fill="url(#g-glow-fire)" opacity=".55"/>
+                    <path d="M40 8 C30 10 26 18 22 24 C18 30 12 38 10 46 C9 52 14 56 20 54 C24 52 26 48 30 46 C34 50 38 60 40 64 H62 C62 46 58 22 40 8 Z" fill="#1a1414" stroke="#000" stroke-width="1"/>
+                    <path d="M40 8 C46 4 52 6 56 12 C52 10 54 16 60 18 C54 18 56 24 62 28 C56 28 58 34 62 40 C56 38 56 44 60 50" fill="none" stroke="url(#g-fire)" stroke-width="5" stroke-linecap="round" stroke-linejoin="round"/>
+                    <path d="M40 8 L42 0 L45 9 Z" fill="#1a1414"/>
+                    <path d="M38 12 C30 16 26 22 22 28 C18 34 14 40 12 46" fill="none" stroke="#5a4a4a" stroke-width="1.4" opacity=".8"/>
+                    <path d="M30 46 C34 42 38 40 44 42" fill="none" stroke="#3a2e2e" stroke-width="1.2"/>
+                    <circle cx="25" cy="24" r="4.5" fill="#ff1744" opacity=".3"/><ellipse cx="25" cy="24" rx="2.4" ry="1.8" fill="#ff1744"/><circle cx="25.6" cy="23.6" r=".7" fill="#fff"/>
+                    <ellipse cx="14" cy="47" rx="1.6" ry="1.1" fill="#000"/>
+                    <path d="M10 50 C14 54 20 54 24 51 C20 52 16 52 12 50 Z" fill="#8b0000"/>
+                    <path d="M13 50.6 L14 53 L15 51 M17 51.2 L18 53.6 L19 51.4 M21 51 L21.6 53 L22.6 50.6" fill="#fff"/>
+                    <path d="M24 60 C22 62 20 64 20 64" stroke="#b71c1c" stroke-width="1.5"/>`,
+                amazon: bust({ skin: '#c98d5a', body: '#7a1f1f', longHair: '#1a1210', eyes: '#3e2723', calm: false,
+                    head: `<path d="M19 30 C17 12 47 12 45 30 C44 24 40 22 32 22 C24 22 20 24 19 30 Z" fill="url(#g-bronze)" stroke="#4a2e10"/><path d="M32 12 C28 4 36 0 40 6 C36 6 36 10 32 12 Z" fill="#b71c1c"/><path d="M22 24 H42" stroke="#4a2e10"/>`,
+                    bodyExtra: `<path d="M8 58 H56 V62 H8 Z" fill="url(#g-gold)" stroke="#5a4210"/><circle cx="32" cy="60" r="3.5" fill="url(#g-gem-red)" stroke="#5a4210"/><path d="M22 46 L10 64" stroke="url(#g-gold)" stroke-width="2"/>`,
+                    extra: `<path d="M2 64 C2 50 14 44 18 50 C14 52 12 58 14 64 Z" fill="url(#g-bronze)" stroke="#4a2e10"/><path d="M56 64 V6" stroke="url(#g-wood)" stroke-width="2.4"/><path d="M53 12 L56 2 L59 12 Z" fill="url(#g-steel)" stroke="#33383d"/>` }),
+                geryon: `
+                    <path d="M0 64 C2 48 14 42 32 42 C50 42 62 48 64 64 Z" fill="#6b3f16"/>
+                    <path d="M4 58 C14 50 24 48 32 50 C40 48 50 50 60 58" fill="none" stroke="url(#g-bronze)" stroke-width="3"/>
+                    ${[[14, 30, .72, '#b0715a'], [50, 30, .72, '#b0715a'], [32, 26, .85, '#c48b5e']].map(([x, y, s, skin]) => `<g transform="translate(${x} ${y}) scale(${s})">
+                        <ellipse cx="0" cy="2" rx="11" ry="13" fill="${skin}" stroke="#4a2e10" stroke-width="1"/>
+                        <path d="M-11 0 C-12 -16 12 -16 11 0 C8 -6 -8 -6 -11 0 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>
+                        <path d="M-2 -13 H2 V0 H-2 Z" fill="url(#g-bronze)" stroke="#4a2e10" stroke-width=".6"/>
+                        <path d="M0 -14 C-6 -22 6 -24 8 -16" fill="#b71c1c"/>
+                        <path d="M-6 -1 L-2 1 M6 -1 L2 1" stroke="#111" stroke-width="1.6" stroke-linecap="round"/>
+                        <circle cx="-4" cy="2" r="1.4" fill="#111"/><circle cx="4" cy="2" r="1.4" fill="#111"/>
+                        <path d="M-9 6 C-9 18 9 18 9 6 C6 10 -6 10 -9 6 Z" fill="#3b2410"/>
+                        <path d="M-3 9 Q0 8 3 9" stroke="#e6dac3" fill="none"/></g>`).join('')}`,
+                ladon: `
+                    <path d="M0 14 C14 18 22 10 34 16 C44 20 54 12 64 16" fill="none" stroke="#5d4037" stroke-width="3"/>
+                    ${[[8, 18], [22, 13], [46, 16], [58, 13]].map(([x, y]) => `<circle cx="${x}" cy="${y + 5}" r="4" fill="url(#g-gold)" stroke="#8a6410"/><path d="M${x} ${y + 1} l1 -2" stroke="#3d6b2a" stroke-width="1.4"/>`).join('')}
+                    <path d="M4 64 C4 50 14 44 20 46 C12 50 12 58 16 64 Z M60 64 C60 50 50 44 44 46 C52 50 52 58 48 64 Z" fill="#2e7d32" stroke="#1b5e20"/>
+                    <path d="M18 40 C18 22 46 22 46 40 C46 50 40 58 32 60 C24 58 18 50 18 40 Z" fill="#388e3c" stroke="#1b5e20" stroke-width="1.4"/>
+                    <path d="M22 26 L16 18 L24 22 Z M42 26 L48 18 L40 22 Z" fill="url(#g-gold)" stroke="#5a4210"/>
+                    <path d="M20 34 L14 32 M44 34 L50 32 M20 40 L13 42 M44 40 L51 42" stroke="#1b5e20" stroke-width="2" stroke-linecap="round"/>
+                    ${[[26, 30], [38, 30], [32, 26], [24, 44], [40, 44]].map(([x, y]) => `<path d="M${x - 2} ${y} l2 -2 l2 2" fill="none" stroke="#81c784" stroke-width=".8"/>`).join('')}
+                    <path d="M24 34 L30 36 M40 34 L34 36" stroke="#111" stroke-width="2" stroke-linecap="round"/>
+                    <ellipse cx="27" cy="37.5" rx="2.4" ry="1.8" fill="#ffea00"/><ellipse cx="37" cy="37.5" rx="2.4" ry="1.8" fill="#ffea00"/>
+                    <path d="M27 36.5 V38.5 M37 36.5 V38.5" stroke="#111"/>
+                    <path d="M25 50 C28 56 36 56 39 50 C36 52 28 52 25 50 Z" fill="#6b0f0f"/>
+                    <path d="M27 50.5 L28 54 L29 51 M35 51 L36 54 L37 50.5" fill="#fff"/>
+                    <path d="M31 55 L30 60 L32 58 L34 60 L33 55" fill="#e53935"/>`,
+            });
+            Object.assign(PORTRAIT_BY_NAME, {
+                'Lion of Nemea': 'nemean', 'Lernaean Hydra': 'hydra', 'Ceryneian Hind': 'hind', 'Erymanthian Boar': 'boar',
+                'Alpheus the River God': 'alpheus', 'Stymphalian Flock': 'stymphalian', 'Cretan Bull': 'aurochs',
+                'Mares of Diomedes': 'mare', 'Hippolyta, Amazon Queen': 'amazon', 'Geryon': 'geryon', 'Ladon': 'ladon',
+                'Cerberus Unchained': 'cerberus'
+            });
+
             function portrait(key, cls = 'art art-portrait') {
                 const inner = portraits[key] || portraits[PORTRAIT_BY_NAME[key]] || portraits.gladiator_1;
                 return svg(`<circle cx="32" cy="32" r="31" fill="url(#g-portrait-bg)"/>
@@ -2130,6 +2297,26 @@
                     ${Array.from({ length: 14 }, (_, i) => `<circle cx="${100 + R(i, 22) * 120}" cy="${50 + R(i, 23) * 36}" r="${.6 + R(i, 24)}" fill="#ffab40" opacity="${(.4 + R(i, 25) * .6).toFixed(2)}"/>`).join('')}`
             };
 
+            scenes.labors = `
+                <rect width="320" height="90" fill="url(#g-sky-sunset)"/>
+                <circle cx="230" cy="58" r="22" fill="#ffd59a" opacity=".85"/>
+                <path d="M0 70 L40 48 L80 60 L120 40 L170 58 L210 44 L260 60 L300 46 L320 54 V90 H0 Z" fill="#5a3b44" opacity=".75"/>
+                ${Array.from({ length: 12 }, (_, i) => `<rect x="${28 + i * 11}" y="30" width="5" height="28" fill="#e8d9b5" opacity=".9"/>`).join('')}
+                <path d="M24 30 H162 L93 16 Z" fill="#e8d9b5" opacity=".9"/><rect x="24" y="58" width="138" height="4" fill="#d6c59c"/>
+                <path d="M0 90 V74 Q60 64 140 72 L200 66 Q260 60 320 70 V90 Z" fill="#2a1a14"/>
+                <path d="M226 66 C222 54 234 50 238 60 L240 66 Z" fill="#2a1a14"/>
+                <circle cx="248" cy="34" r="40" fill="url(#g-aura-gold)" opacity=".6"/>
+                <g fill="#120a08">
+                    <circle cx="248" cy="30" r="5"/>
+                    <path d="M241 18 C244 10 254 10 257 18 C258 24 255 28 248 28 C241 28 238 24 241 18 Z"/>
+                    <path d="M238 34 C238 30 258 30 258 34 L262 50 L256 52 L254 44 L252 52 H244 L242 44 L240 52 L234 50 Z"/>
+                    <path d="M236 36 L226 18 L230 16 L240 34 Z"/><ellipse cx="226" cy="14" rx="5" ry="8" transform="rotate(-25 226 14)"/>
+                    <path d="M258 36 L266 46 L263 48 L256 40 Z"/>
+                    <path d="M244 52 L242 66 H247 L248 54 Z M252 52 L254 66 H249 L249 54 Z"/>
+                    <path d="M238 32 C230 40 232 52 236 58 C238 50 240 42 244 36 Z" fill="#6b4a1a"/>
+                </g>
+`;
+
             function scene(key, cls = 'art art-scene') {
                 return svg(scenes[key] || scenes.region_1, '0 0 320 90', cls).replace('<svg ', '<svg preserveAspectRatio="xMidYMid slice" ');
             }
@@ -2138,11 +2325,11 @@
             // Full-body player figure that changes with the equipped gear.
             function avatar(eq, cls = 'avatar-svg') {
                 const icon = slot => eq[slot] && eq[slot].IconSvg || '';
-                const rar = RARITY_ORDER => 0;
-                const best = ['Legendary', 'Epic'].find(r => Object.keys(eq).some(k => eq[k] && eq[k].Rarity === r));
+                const best = ['Mythic', 'Legendary', 'Epic'].find(r => Object.keys(eq).some(k => eq[k] && eq[k].Rarity === r));
                 const head = icon('Head'), chest = icon('Chest'), weapon = icon('Weapon'), shield = icon('Shield');
                 let out = '';
-                if (best) out += `<ellipse cx="50" cy="62" rx="46" ry="58" fill="url(#g-aura-${best === 'Legendary' ? 'gold' : 'purple'})"/>`;
+                if (best === 'Mythic') out += `<ellipse cx="50" cy="62" rx="48" ry="60" fill="url(#g-glow-fire)" opacity=".55"/>`;
+                else if (best) out += `<ellipse cx="50" cy="62" rx="46" ry="58" fill="url(#g-aura-${best === 'Legendary' ? 'gold' : 'purple'})"/>`;
                 // cape
                 out += `<path d="M34 48 L22 108 H78 L66 48 Z" fill="#6b0f0f"/>`;
                 // legs + feet / sandals
@@ -2158,6 +2345,7 @@
                 const torso = 'M33 48 H67 L69 72 H31 Z';
                 if (chest.startsWith('armor_1')) out += `<path d="${torso}" fill="url(#g-steel)" stroke="#2f3439"/><path d="M32 56 H68 M32 61 H68 M31.5 66 H68.5" stroke="#3d4349" stroke-width="1.4"/><path d="M28 48 C26 42 34 40 38 44 L36 52 Z M72 48 C74 42 66 40 62 44 L64 52 Z" fill="url(#g-steel)" stroke="#2f3439"/>`;
                 else if (chest.startsWith('armor_2')) out += `<path d="${torso}" fill="url(#g-steel)" stroke="#2f3439"/><path d="${torso}" fill="url(#p-mail)"/>`;
+                else if (chest.startsWith('armor_4')) out += `<path d="${torso}" fill="url(#g-bronze)" stroke="#4a2e10"/><path d="${torso}" fill="url(#p-scale)"/><path d="M28 48 C26 42 34 40 38 44 L36 52 Z M72 48 C74 42 66 40 62 44 L64 52 Z" fill="url(#g-bronze)" stroke="#4a2e10"/>`;
                 else if (chest.startsWith('armor_3')) out += `<path d="${torso}" fill="url(#g-bronze)" stroke="#4a2e10"/><path d="M38 55 Q44 59 50 56 Q56 59 62 55 M50 57 V70 M43 63 Q50 65 57 63" fill="none" stroke="#6b3f16"/>`;
                 else if (chest) out += `<path d="${torso}" fill="url(#g-leather)" stroke="#3b2410"/>`;
                 else out += `<path d="${torso}" fill="url(#g-red)"/><path d="M42 48 L50 56 L58 48" fill="none" stroke="#5c0a0a"/>`;
@@ -2167,6 +2355,9 @@
                 out += `<rect x="45" y="38" width="10" height="10" fill="${SKIN_DARK}"/><circle cx="50" cy="30" r="13" fill="${SKIN}"/>`;
                 out += `<circle cx="45.5" cy="30" r="1.5" fill="#1b1b1b"/><circle cx="54.5" cy="30" r="1.5" fill="#1b1b1b"/><path d="M46 36 Q50 38 54 36" fill="none" stroke="#7a4a2a" stroke-width="1.2"/>`;
                 if (!head) out += `<path d="M37 28 C37 14 63 14 63 28 C60 22 40 22 37 28 Z" fill="#2a1a0e"/>`;
+                else if (head.startsWith('helmet_5')) out += `<path d="M34 50 L37 22 C37 12 63 12 63 22 L66 50 L60 50 L58 30 H42 L40 50 Z" fill="url(#g-gold)" stroke="#5a4210"/><path d="M36 26 H64 M35.5 32 H41 M59 32 H64.5 M35 38 H40.5 M59.5 38 H65 M34.5 44 H40 M60 44 H65.5" stroke="#1e5fb3" stroke-width="2.2"/><path d="M50 10 C48 12 48 16 50 17 C52 16 52 12 50 10 Z" fill="#1e5fb3" stroke="#e0b030"/>`;
+                else if (head.startsWith('helmet_6')) out += `<path d="M36 26 L37 12 L42 20 L45 8 L50 17 L55 8 L58 20 L63 12 L64 26 Z" fill="#2a2f35" stroke="#0e1114" stroke-linejoin="round"/><rect x="36" y="24" width="28" height="5" fill="#1c2024"/><circle cx="50" cy="26.5" r="2" fill="url(#g-gem-green)"/><circle cx="45" cy="8" r="1.4" fill="#b2ff59"/><circle cx="55" cy="8" r="1.4" fill="#b2ff59"/>`;
+                else if (head.startsWith('helmet_4')) out += `<path d="M40 14 C38 6 50 2 56 6 C60 9 60 14 56 16 C54 12 46 10 44 16 Z" fill="url(#g-red)" stroke="#3d0707"/><path d="M37 32 C37 18 42 14 50 14 C58 14 63 18 63 32 V40 C63 44 58 46 50 46 C42 46 37 44 37 40 Z" fill="url(#g-bronze)" stroke="#4a2e10"/><path d="M30 33 C30 30 70 30 70 33 C70 36 30 36 30 33 Z" fill="url(#g-bronze)" stroke="#4a2e10"/><rect x="42" y="35" width="16" height="8" rx="2" fill="#15181b"/>${[44, 47, 50, 53, 56].map(x => `<circle cx="${x}" cy="37.5" r=".8" fill="#e0b030"/><circle cx="${x}" cy="40.5" r=".8" fill="#e0b030"/>`).join('')}`;
                 else if (head.startsWith('helmet_3')) out += `<path d="M37 32 C37 18 42 14 50 14 C58 14 63 18 63 32 V40 C63 44 58 46 50 46 C42 46 37 44 37 40 Z" fill="url(#g-steel)" stroke="#2f3439"/><path d="M31 31 C31 28 69 28 69 31 C69 34 31 34 31 31 Z" fill="url(#g-steel)" stroke="#2f3439"/><rect x="42" y="34" width="16" height="9" rx="2" fill="#15181b"/><path d="M45 34 V43 M48 34 V43 M51 34 V43 M54 34 V43 M42 38.5 H58" stroke="#b8bec5"/><path d="M46 15 C47 8 56 7 59 13 C55 11 50 12 46 15 Z" fill="url(#g-gold)"/>`;
                 else {
                     const steel = head.startsWith('helmet_2');
@@ -2178,6 +2369,10 @@
                 // weapon in the right hand (viewer's left)
                 const hand = 'translate(28 80)';
                 if (weapon.startsWith('weapon_4')) out += `<g transform="${hand}"><rect x="-1.2" y="-66" width="2.4" height="80" fill="url(#g-wood)"/><path d="M-6 -60 V-70 M6 -60 V-70 M0 -60 V-74 M-6 -60 H6" stroke="#c9ced4" stroke-width="2" stroke-linecap="round"/></g>`;
+                else if (weapon.startsWith('weapon_7')) out += `<g transform="${hand}"><rect x="-1.2" y="-70" width="2.4" height="84" fill="url(#g-wood)"/><path d="M0 -84 L3 -74 L0 -71 L-3 -74 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width=".6"/><rect x="-1.8" y="-71" width="3.6" height="4" fill="url(#g-bronze)"/></g>`;
+                else if (weapon.startsWith('weapon_8')) out += `<g transform="${hand}"><rect x="-1.5" y="-34" width="3" height="40" fill="url(#g-wood)"/><circle cx="0" cy="-38" r="7" fill="url(#g-steel)" stroke="#2f3439"/><path d="M0 -48 V-45 M-10 -38 H-7 M10 -38 H7 M-6.5 -44.5 L-4.5 -42.5 M6.5 -44.5 L4.5 -42.5" stroke="#dde1e5" stroke-width="2" stroke-linecap="round"/></g>`;
+                else if (weapon.startsWith('weapon_9')) out += `<g transform="${hand}"><rect x="-1.4" y="-48" width="2.8" height="54" fill="url(#g-wood)"/><path d="M1.5 -46 C8 -50 13 -46 13 -40 C13 -34 8 -30 1.5 -34 Z M-1.5 -46 C-8 -50 -13 -46 -13 -40 C-13 -34 -8 -30 -1.5 -34 Z" fill="url(#g-gold)" stroke="#5a4210" stroke-width=".8"/></g>`;
+                else if (weapon.startsWith('weapon_6')) out += `<g transform="${hand}"><path d="M-2.5 -4 C-3 -16 -5 -26 -1 -34 C2 -38 6 -38 7 -35 C2 -34 1 -28 1.5 -20 C2 -12 2.5 -8 2.5 -4 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width=".6"/><rect x="-6" y="-5" width="12" height="3" rx="1.5" fill="url(#g-gold)"/><rect x="-1.5" y="-2" width="3" height="7" fill="url(#g-wood)"/></g>`;
                 else if (weapon.startsWith('weapon_5')) out += `<g transform="${hand}"><rect x="-1.2" y="-64" width="2.4" height="78" fill="url(#g-wood)"/><path d="M1 -58 C10 -60 12 -52 12 -48 C12 -44 10 -38 1 -40 Z" fill="url(#g-steel)" stroke="#33383d" stroke-width=".6"/><path d="M0 -70 L2 -63 H-2 Z" fill="url(#g-steel)"/></g>`;
                 else if (weapon) {
                     const len = weapon.startsWith('weapon_3') ? 16 : weapon.startsWith('weapon_2') ? 32 : 24;
@@ -2187,6 +2382,7 @@
                 if (eq.Ring) out += `<circle cx="30" cy="81.5" r="1.4" fill="url(#g-gold)"/>`;
                 // shield on the left arm (viewer's right)
                 if (shield.startsWith('shield_2')) out += `<circle cx="76" cy="70" r="15" fill="url(#g-bronze)" stroke="#4a2e10"/><circle cx="76" cy="70" r="11" fill="url(#g-blue)"/><circle cx="76" cy="70" r="3.5" fill="url(#g-steel)"/>`;
+                else if (shield.startsWith('shield_4')) out += `<ellipse cx="76" cy="71" rx="12" ry="19" fill="url(#g-bronze)" stroke="#4a2e10"/><ellipse cx="76" cy="71" rx="9" ry="15.5" fill="#3d5a2e"/><path d="M76 57 C71 63 71 67 76 71 C81 75 81 79 76 85" fill="none" stroke="url(#g-gold)" stroke-width="1.8"/><circle cx="76" cy="71" r="3.2" fill="url(#g-steel)"/>`;
                 else if (shield.startsWith('shield_3')) out += `<circle cx="74" cy="72" r="10" fill="url(#g-steel)" stroke="#2f3439"/><circle cx="74" cy="72" r="3.5" fill="url(#g-gold)"/>`;
                 else if (shield) out += `<rect x="64" y="50" width="22" height="42" rx="4" fill="url(#g-red)" stroke="#e0b030" stroke-width="1.8"/><circle cx="75" cy="71" r="4" fill="url(#g-gold)"/><path d="M75 66 L73 58 M75 76 L77 84" stroke="#e0b030" stroke-width="1.5"/>`;
                 else out += `<circle cx="71.5" cy="80" r="4.5" fill="${eq.Gloves ? '#8a5a2c' : SKIN}"/>`;
@@ -2220,7 +2416,11 @@
                     ['legionary', { Head: it('Helmet', 'helmet_1'), Chest: it('Armor', 'armor_1'), Weapon: it('Weapon', 'weapon_1'), Shield: it('Shield', 'shield_1'), Shoes: it('Shoes', 'shoes_1') }],
                     ['centurion', { Head: it('Helmet', 'helmet_2'), Chest: it('Armor', 'armor_2'), Weapon: it('Weapon', 'weapon_2'), Shield: it('Shield', 'shield_2'), Gloves: it('Gloves', 'gloves_1'), Amulet: it('Amulet', 'amulet_1', 'Epic') }],
                     ['murmillo', { Head: it('Helmet', 'helmet_3', 'Legendary'), Chest: it('Armor', 'armor_3'), Weapon: it('Weapon', 'weapon_4'), Shield: it('Shield', 'shield_3'), Gloves: it('Gloves', 'gloves_1'), Shoes: it('Shoes', 'shoes_1'), Ring: it('Ring', 'ring_1') }],
-                    ['halberd', { Weapon: it('Weapon', 'weapon_5'), Chest: it('Armor', 'armor_2') }]
+                    ['halberd', { Weapon: it('Weapon', 'weapon_5'), Chest: it('Armor', 'armor_2') }],
+                    ['thracian', { Head: it('Helmet', 'helmet_4'), Chest: it('Armor', 'armor_4'), Weapon: it('Weapon', 'weapon_6'), Shield: it('Shield', 'shield_4'), Shoes: it('Shoes', 'shoes_2') }],
+                    ['pharaoh', { Head: it('Helmet', 'helmet_5', 'Epic'), Chest: it('Armor', 'armor_3'), Weapon: it('Weapon', 'weapon_7') }],
+                    ['hercules', { Head: it('Helmet', 'helmet_6', 'Mythic'), Chest: it('Armor', 'armor_4'), Weapon: it('Weapon', 'weapon_9', 'Mythic'), Shield: it('Shield', 'shield_2') }],
+                    ['vulcan', { Head: it('Helmet', 'helmet_2'), Chest: it('Armor', 'armor_1'), Weapon: it('Weapon', 'weapon_8') }]
                 ];
                 return sets.map(([label, eq]) => [label, avatar(eq, 'art')]);
             }
@@ -2327,6 +2527,21 @@
         // Buttons call these. Confirmations and name prompts happen here; everything else is Python's job.
 
         function startExpedition(li, mi) { playAudio('click'); call('start_expedition', li, mi); }
+        function startSeries(li, mi) { playAudio('click'); call('start_series', li, mi, seriesSize); }
+        function attemptLabor(i) { playAudio('click'); call('attempt_labor', i); }
+        function claimDaily() { playAudio('click'); call('claim_daily'); }
+        function toggleLock(i) { playAudio('click'); call('toggle_lock', i); }
+        function sortInventory() { playAudio('click'); selectedInventoryIndex = -1; call('sort_inventory'); }
+        function reforgeItem(loc, key) { playAudio('click'); call('reforge', loc, key); }
+
+        // Battle-series length is a per-player convenience, remembered in this browser only.
+        let seriesSize = 5;
+        try { seriesSize = Number(localStorage.getItem('aeterna.seriesSize')) || 5; } catch (e) { /* storage unavailable */ }
+        function setSeriesSize(n) {
+            seriesSize = Number(n);
+            try { localStorage.setItem('aeterna.seriesSize', String(seriesSize)); } catch (e) { /* ignore */ }
+            renderExpeditions();
+        }
         function challengeArena(idx) { playAudio('click'); call('challenge_arena', idx); }
         function enterDungeon(di) { playAudio('click'); call('enter_dungeon', di); }
         function restartDungeon(di) { playAudio('click'); call('restart_dungeon', di); }
@@ -2460,6 +2675,7 @@
                 if (type === 'click') tone(400, 200, now, 0.05, 0.15);
                 else if (type === 'hit') tone(150, 40, now, 0.15, 0.3, 'sawtooth');
                 else if (type === 'victory') [261.63, 329.63, 392.00, 523.25].forEach((f, i) => tone(f, null, now + i * 0.1, 0.2, 0.2));
+                else if (type === 'levelup') [392.00, 523.25, 659.25, 783.99, 1046.5].forEach((f, i) => tone(f, null, now + 0.45 + i * 0.09, 0.28, 0.18, 'triangle'));
             } catch (e) { /* audio is optional */ }
         }
 
@@ -2479,8 +2695,10 @@
         function notify(msg) {
             const box = document.getElementById('toastContainer');
             const el = document.createElement('div');
-            el.className = 'toast';
+            const laurel = String(msg).startsWith('🏅');
+            el.className = 'toast' + (laurel ? ' toast-gold' : '');
             el.textContent = msg;
+            if (laurel) playAudio('levelup');
             box.appendChild(el);
             while (box.children.length > 4) box.firstChild.remove();
             setTimeout(() => el.remove(), 4500);
@@ -2507,6 +2725,46 @@
                     </div>
                 </div>`;
         }
+
+        function threatHtml(t) {
+            if (!t) return '';
+            return `<span class="threat threat-${esc(t.label)}" title="Estimated win chance at full health: about ${t.win}%">${esc(t.label)}</span>`;
+        }
+
+        // Hovering an inventory or equipment slot shows the item's details.
+        function tooltipItem(el) {
+            const p = view && view.state.Player;
+            if (!p || !el) return null;
+            if (el.dataset.inv !== undefined) {
+                const i = Number(el.dataset.inv);
+                return p.Inventory[i] ? { item: p.Inventory[i], cmp: view.inventory[i] && view.inventory[i].comparison } : null;
+            }
+            if (el.dataset.slot && p.Equipment[el.dataset.slot]) return { item: p.Equipment[el.dataset.slot], cmp: null };
+            return null;
+        }
+        function positionTooltip(tip, e) {
+            const pad = 16, w = tip.offsetWidth, h = tip.offsetHeight;
+            let x = e.clientX + pad, y = e.clientY + pad;
+            if (x + w > window.innerWidth - 8) x = e.clientX - w - pad;
+            if (y + h > window.innerHeight - 8) y = Math.max(8, window.innerHeight - h - 8);
+            tip.style.left = Math.max(8, x) + 'px';
+            tip.style.top = y + 'px';
+        }
+        document.addEventListener('mouseover', e => {
+            const tip = document.getElementById('itemTooltip');
+            const el = e.target.closest && e.target.closest('[data-inv], .equip-slot[data-slot]');
+            const found = tooltipItem(el);
+            if (!found) { tip.style.display = 'none'; return; }
+            tip.innerHTML = itemDetailsHtml(found.item) + (found.cmp ? itemComparisonHtml(found.cmp) : '') +
+                (found.item.Locked ? '<div class="muted" style="margin-top:6px;">🔒 Locked: it cannot be sold or smelted.</div>' : '');
+            tip.style.display = 'block';
+            positionTooltip(tip, e);
+        });
+        document.addEventListener('mousemove', e => {
+            const tip = document.getElementById('itemTooltip');
+            if (tip.style.display === 'block') positionTooltip(tip, e);
+        });
+        function hideTooltip() { document.getElementById('itemTooltip').style.display = 'none'; }
 
         function effectLines(effects) {
             return Object.keys(effects || {}).filter(k => view.effectText[k] && effects[k])
@@ -2554,7 +2812,7 @@
                 if (item) {
                     el.className = `equip-slot rarity-${item.Rarity}`;
                     el.innerHTML = getIcon(item.IconSvg);
-                    el.title = `${displayName(item)} (click to unequip)`;
+                    el.title = 'Click to unequip';
                 } else {
                     el.className = 'equip-slot empty';
                     el.innerHTML = '';
@@ -2649,7 +2907,10 @@
         }
 
         function inventorySlotHtml(item, i) {
-            return `<div class="inv-slot rarity-${esc(item.Rarity)} ${selectedInventoryIndex === i ? 'selected' : ''}" title="${esc(displayName(item))}" onclick="selectInventoryItem(${i})">${getIcon(item.IconSvg)}</div>`;
+            const badges = (item.Locked ? '<span class="slot-badge lock">🔒</span>' : '') +
+                (item.SetId ? '<span class="slot-badge set">🧩</span>' : '') +
+                (item.Upgrade ? `<span class="slot-badge upg">+${item.Upgrade}</span>` : '');
+            return `<div class="inv-slot rarity-${esc(item.Rarity)} ${selectedInventoryIndex === i ? 'selected' : ''}" data-inv="${i}" onclick="selectInventoryItem(${i})">${getIcon(item.IconSvg)}${badges}</div>`;
         }
 
         function renderInventory() {
@@ -2679,8 +2940,11 @@
             html += `<div class="btn-row" style="margin-top:10px;">`;
             if (item.Type === 'Potion') html += `<button class="btn-roman btn-gold" onclick="usePotion(${i})">Drink Potion</button>`;
             else if (info.isEquipment) html += `<button class="btn-roman btn-gold" onclick="equipItem(${i})">Equip</button>`;
-            html += `<button class="btn-roman" onclick="sellItem(${i})">Sell (${info.sellPrice} Gold)</button>`;
-            if (item.Type !== 'Potion') html += `<button class="btn-roman" onclick="smeltItem(${i})">Smelt</button>`;
+            html += `<button class="btn-roman" onclick="toggleLock(${i})" title="Locked items can't be sold or smelted">${item.Locked ? '🔓 Unlock' : '🔒 Lock'}</button>`;
+            if (!item.Locked) {
+                html += `<button class="btn-roman" onclick="sellItem(${i})">Sell (${info.sellPrice} Gold)</button>`;
+                if (item.Type !== 'Potion') html += `<button class="btn-roman" onclick="smeltItem(${i})">Smelt</button>`;
+            }
             html += `</div>`;
             panel.innerHTML = html;
             panel.style.display = 'block';
@@ -2710,10 +2974,16 @@
         }
 
         function renderExpeditions() {
+            const sizeSelect = document.getElementById('seriesSize');
+            if (!view.seriesSizes.includes(seriesSize)) seriesSize = view.seriesSizes[Math.floor(view.seriesSizes.length / 2)];
+            sizeSelect.innerHTML = view.seriesSizes.map(n => `<option value="${n}" ${n === seriesSize ? 'selected' : ''}>${n} fights</option>`).join('');
             document.getElementById('expeditionContainer').innerHTML = view.expeditions.map((loc, li) => {
                 const monsters = loc.monsters.map((m, mi) => `<div class="monster-row">
-                        <div class="portrait-row">${ART.portrait(m.Name)}<div><strong>${esc(m.Name)}</strong><br><span style="font-size:11px; color:var(--text-accent);">LVL ${m.Level} · ${m.MaxHP} HP</span></div></div>
-                        <button class="btn-roman" onclick="startExpedition(${li}, ${mi})" ${loc.locked ? 'disabled' : ''}>Attack ⚔️</button>
+                        <div class="portrait-row">${ART.portrait(m.Name)}<div><strong>${esc(m.Name)}</strong>${loc.locked ? '' : threatHtml(m.threat)}<br><span style="font-size:11px; color:var(--text-accent);">LVL ${m.Level} · ${m.MaxHP} HP</span></div></div>
+                        <span class="btn-row-tight">
+                            <button class="btn-roman" onclick="startExpedition(${li}, ${mi})" ${loc.locked ? 'disabled' : ''}>Attack ⚔️</button>
+                            <button class="btn-roman btn-series" onclick="startSeries(${li}, ${mi})" ${loc.locked ? 'disabled' : ''} title="Battle series: fight ${esc(m.Name)} up to ${seriesSize} times (${seriesSize * loc.EnergyCost} energy)">🔁×${seriesSize}</button>
+                        </span>
                     </div>`).join('');
                 return `<div class="exp-card ${loc.locked ? 'locked' : ''}">
                     <div class="scene-banner">${ART.scene('region_' + loc.Id)}</div>
@@ -2740,7 +3010,7 @@
                 return `<div class="monster-row">
                     <div class="portrait-row">${ART.portrait(r.IconSvg)}<span>
                         <span style="font-family:'Cinzel',serif; color:var(--text-accent); font-weight:bold;">#${r.Rank}</span> -
-                        <strong>${esc(r.Name)}</strong> <span style="font-size:11px;">(LVL ${r.Level})</span>
+                        <strong>${esc(r.Name)}</strong> <span style="font-size:11px;">(LVL ${r.Level})</span>${threatHtml(r.threat)}
                         ${r.better ? '<span class="muted"> · win to take this rank</span>' : ''}
                     </span></div>
                     <button class="btn-roman btn-gold" onclick="challengeArena(${r.idx})" ${cooling ? 'disabled' : ''}>Challenge ⚔️</button>
@@ -2754,6 +3024,60 @@
                     ${w.soldOut ? '<div class="muted">Sold out</div>'
                                 : `<button class="btn-roman btn-gold" onclick="buyHonor('${w.key}')" ${honor < w.cost ? 'disabled' : ''}>Buy (${fmt(w.cost)} Honor)</button>`}
                 </div>`).join('');
+        }
+
+        function renderLabors() {
+            const L = view.labors;
+            const banner = document.getElementById('laborsBanner');
+            if (!banner.firstChild) banner.innerHTML = ART.scene('labors');
+            document.getElementById('laborsInfo').innerHTML = `Eurystheus sets you the twelve Labors of Hercules, to be done in order.
+                Each attempt costs <strong>${L.energy} energy</strong>; the beasts never grow stronger, so returning at a higher level makes them easier.
+                Every Labor grants a <strong>permanent boon</strong>. Complete all twelve to receive the <span class="rt-Mythic">${esc(L.finalReward)}</span> (${esc(L.finalEffects.join(', '))}).`;
+            document.getElementById('laborsProgress').innerHTML = L.list.map(l =>
+                `<span class="labor-pip ${l.done ? 'done' : ''}" title="${esc(l.Title)}${l.done ? ' (complete)' : ''}">${l.Number}</span>`).join('') +
+                `<span class="muted" style="align-self:center; margin-left:6px;">${L.done} / ${L.list.length} complete</span>`;
+            const energy = view.state.Player.CurrentEnergy;
+            document.getElementById('laborsContainer').innerHTML = L.list.map((l, i) => {
+                let action;
+                if (l.done) action = '<div style="color:var(--text-gold);">🏆 Completed</div>';
+                else if (!l.next) action = '<div class="muted">Complete the earlier Labors first.</div>';
+                else if (l.levelLocked) action = `<div class="muted">Requires level ${l.ReqLevel}.</div>`;
+                else action = `<button class="btn-roman btn-gold" onclick="attemptLabor(${i})" ${energy < L.energy ? 'disabled' : ''}>Attempt the Labor (${L.energy} Energy) 🦁</button>`;
+                const locked = !l.done && (!l.next || l.levelLocked);
+                return `<div class="exp-card labor-card ${l.done ? 'done' : ''} ${l.next && !l.levelLocked ? 'next' : ''} ${locked ? 'locked' : ''}">
+                    <div><span class="labor-num">Labor ${l.Number}</span> · <span class="muted">Req. level ${l.ReqLevel}</span></div>
+                    <h3 style="color:var(--text-accent); font-family:'Cinzel',serif;">${esc(l.Title)}</h3>
+                    <div class="portrait-row">${ART.portrait(l.monster.Name)}<div><strong>${esc(l.monster.Name)}</strong>${l.done || locked ? '' : threatHtml(l.threat)}<br>
+                        <span style="font-size:11px; color:var(--text-accent);">LVL ${l.monster.Level} · ${fmt(l.monster.MaxHP)} HP</span></div></div>
+                    <div class="labor-story">${esc(l.Story)}</div>
+                    <div style="font-size:12px;">Boon: <span class="effect-line">✦ ${esc(l.boon.join(', '))}</span></div>
+                    <div style="font-size:12px;">Reward: ${fmt(l.Gold)} Gold, ${l.Rubies} 💎</div>
+                    ${action}
+                </div>`;
+            }).join('');
+            document.querySelector('.nav-tab[data-tab="labors"]').innerText =
+                L.list.some(l => l.next && !l.levelLocked) ? '🦁 Labors ⚔' : '🦁 Labors';
+        }
+
+        function renderDaily() {
+            const d = view.daily;
+            const cycle = d.rewards.length;
+            // Position in the 7-day cycle of the next claim (when ready) or of today's claim.
+            const pos = d.ready ? (d.day - 1) % cycle + 1 : (d.streak - 1) % cycle + 1;
+            const tiles = d.rewards.map(r => {
+                const cls = r.Day < pos || (!d.ready && r.Day === pos) ? 'claimed' : (d.ready && r.Day === pos ? 'today' : '');
+                const detail = r.gold ? `${fmt(r.gold)} gold` : esc(r.Text);
+                return `<div class="daily-day ${cls}" title="${esc(r.Text)}"><span class="icon">${r.Icon}</span><strong>Day ${r.Day}</strong><br>${detail}</div>`;
+            }).join('');
+            document.getElementById('dailyContainer').innerHTML = `
+                <div style="display:flex; justify-content:space-between; align-items:center; gap:10px; flex-wrap:wrap;">
+                    <span><strong style="color:var(--text-gold); font-family:'Cinzel',serif;">📜 Imperial Decree</strong>
+                        <span class="muted"> · Claim a gift every day; missing a day restarts the cycle.${d.streak > 0 ? ` Current streak: <strong>${d.streak}</strong> day${d.streak === 1 ? '' : 's'}.` : ''}</span></span>
+                    ${d.ready ? `<button class="btn-roman btn-gold" onclick="claimDaily()">Claim Day ${pos} Gift 🎁</button>` : '<span class="muted">Come back tomorrow for the next gift.</span>'}
+                </div>
+                <div class="daily-days">${tiles}</div>`;
+            document.getElementById('sidebarDaily').innerHTML = d.ready
+                ? `<button class="btn-mini" style="margin-top:6px;" onclick="switchTab('quests')">📜 Daily gift ready!</button>` : '';
         }
 
         function renderTemple() {
@@ -2777,7 +3101,7 @@
                 } else {
                     const m = d.monster;
                     body = `<div style="font-size:12px; color:var(--text-accent);">Floor ${d.floor} / ${d.floors}: ${esc(d.stageName)}</div>
-                        <div class="monster-row"><div class="portrait-row ${d.isBoss ? 'portrait-lg' : ''}">${ART.portrait(m.Name)}<div><strong>${esc(m.Name)}</strong>${d.isBoss ? ' 👑' : ''}<br><span style="font-size:11px; color:var(--text-accent);">LVL ${m.Level} · ${m.MaxHP} HP</span></div></div></div>
+                        <div class="monster-row"><div class="portrait-row ${d.isBoss ? 'portrait-lg' : ''}">${ART.portrait(m.Name)}<div><strong>${esc(m.Name)}</strong>${d.isBoss ? ' 👑' : ''}${d.locked ? '' : threatHtml(m.threat)}<br><span style="font-size:11px; color:var(--text-accent);">LVL ${m.Level} · ${m.MaxHP} HP</span></div></div></div>
                         <button class="btn-roman btn-gold" onclick="enterDungeon(${di})" ${d.locked ? 'disabled' : ''}>Enter Floor (${d.energy} Energy) ⚔️</button>`;
                 }
                 return `<div class="exp-card ${d.locked ? 'locked' : ''}">
@@ -2824,8 +3148,10 @@
                         <h4 class="rt-${r.ResultRarity}">${esc(r.Name)}</h4>
                         <div class="muted">${r.ResultRarity} ${r.ResultType} · Req. level ${r.ReqLevel}</div>
                     </div></div>
-                    <div style="font-size:12px;">Cost: ${r.ReqIron} Iron, ${r.ReqBronze} Bronze, ${r.ReqRuby} Ruby, ${r.ReqLeather} Leather</div>
-                    <button class="btn-roman btn-gold" onclick="craftRecipe(${i})" ${r.locked ? 'disabled' : ''}>Craft Gear 🔨</button>
+                    <div style="font-size:12px;">Cost: ${['Iron', 'Bronze', 'Ruby', 'Leather'].map(m =>
+                        `<span style="${r.missing.includes(m) ? 'color:#ff5252;' : ''}">${r['Req' + m]} ${m}</span>`).join(', ')}</div>
+                    <button class="btn-roman btn-gold" onclick="craftRecipe(${i})" ${r.locked || r.missing.length ? 'disabled' : ''}
+                        title="${r.locked ? `Requires level ${r.ReqLevel}` : r.missing.length ? `Not enough ${esc(r.missing.join(', '))}` : ''}">Craft Gear 🔨</button>
                 </div>`).join('');
 
             document.getElementById('enhanceContainer').innerHTML = view.enhance.length ? view.enhance.map(t => {
@@ -2838,9 +3164,14 @@
                     action = `<span class="muted" style="text-align:right;">${esc(cost)}</span>` +
                         `<button class="btn-roman btn-gold" onclick="enhanceItem(${t.loc}, ${t.key})" ${t.affordable ? '' : 'disabled'} title="${esc(cost)}">Enhance to +${t.next}</button>`;
                 }
+                if (t.reforgeCost) {
+                    const rc = t.reforgeCost;
+                    const rtext = `${rc.Gold} Gold, ${rc.Bronze} Bronze, ${rc.Ruby} Ruby`;
+                    action += `<button class="btn-roman" onclick="reforgeItem(${t.loc}, ${t.key})" ${t.reforgeAffordable ? '' : 'disabled'} title="Reroll prefix and suffix: ${esc(rtext)}">⚒️ Reforge</button>`;
+                }
                 return `<div class="monster-row">
-                    <div><span class="rt-${esc(t.item.Rarity)}" style="font-weight:bold;">${esc(displayName(t.item))}</span> <span class="muted">(${t.where})</span></div>
-                    <div style="display:flex; gap:10px; align-items:center;">${action}</div>
+                    <div><span class="rt-${esc(t.item.Rarity)}" style="font-weight:bold;" data-forge="${t.loc}-${t.key}">${esc(displayName(t.item))}</span> <span class="muted">(${t.where})</span></div>
+                    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap; justify-content:flex-end;">${action}</div>
                 </div>`;
             }).join('') : `<div class="muted">You have no gear to enhance.</div>`;
         }
@@ -2928,7 +3259,8 @@
                     </div>
                 </div>`;
             }).join('');
-            document.querySelector('.nav-tab[data-tab="quests"]').innerText = view.questsReady ? `🏺 Pantheon (${view.questsReady}!)` : '🏺 Pantheon';
+            const ready = view.questsReady + (view.daily.ready ? 1 : 0);
+            document.querySelector('.nav-tab[data-tab="quests"]').innerText = ready ? `🏺 Pantheon (${ready}!)` : '🏺 Pantheon';
         }
 
         // Countdowns run locally between updates from Python. Only text is updated here (never buttons),
@@ -2981,7 +3313,9 @@
             renderWork();
             renderGuild();
             renderQuests();
+            renderDaily();
             renderTemple();
+            renderLabors();
             renderSettings();
             renderAudioButton();
             Object.keys(SUBTAB_RENDER).forEach(id => { if (isSubtabVisible(id)) SUBTAB_RENDER[id](); });
@@ -3023,6 +3357,8 @@
 
         function showCombatModal(r) {
             stopCombatAnimation();
+            hideTooltip();
+            if (r.Series) { showSeriesReport(r); return; }
             document.getElementById('modalCombatTitle').innerText = r.Title;
             const banner = document.getElementById('modalCombatResultBanner');
             banner.innerText = 'THE FIGHT IS ON…';
@@ -3062,19 +3398,50 @@
             banner.innerText = r.IsVictory ? 'VICTORY!' : 'DEFEAT';
             banner.className = 'combat-result-banner ' + (r.IsVictory ? 'victory-bg' : 'defeat-bg');
 
+            showRewards(r, r.IsVictory);
+        }
+
+        function showRewards(r, won) {
             const after = pendingView || view;
             const rewards = [];
-            if (r.IsVictory) rewards.push(`+${r.XPGained} XP, +${r.GoldGained} Gold` + (r.RubiesGained ? `, +${r.RubiesGained} 💎` : ''));
-            else rewards.push('No rewards. Rest to recover your health before the next fight.');
-            if (r.LevelsGained) rewards.push(`⭐ Level up! You are now level ${after.state.Player.Level}.`);
+            if (r.XPGained || r.GoldGained) rewards.push(`+${fmt(r.XPGained)} XP, +${fmt(r.GoldGained)} Gold` + (r.RubiesGained ? `, +${r.RubiesGained} 💎` : ''));
+            else if (!won) rewards.push('No rewards. Rest to recover your health before the next fight.');
             r.Loot.forEach(item => rewards.push(`🎁 Loot: <span class="rt-${esc(item.Rarity)}">${esc(displayName(item))}</span>`));
             r.Notes.forEach(n => rewards.push(esc(n)));
             const box = document.getElementById('modalRewards');
-            box.innerHTML = rewards.join('<br>');
+            box.innerHTML = (r.LevelsGained ? `<div class="levelup-burst">⭐ LEVEL UP! You are now level ${after.state.Player.Level} ⭐</div>` : '') + rewards.join('<br>');
             box.style.display = '';
             document.querySelector('#combatModal .modal-body').scrollTop = 0;
-            playAudio(r.IsVictory ? 'victory' : 'hit');
+            playAudio(won ? 'victory' : 'hit');
+            if (r.LevelsGained) playAudio('levelup');
             flushPendingView();
+        }
+
+        // A battle series arrives as one combined report: a line per fight, no turn-by-turn log.
+        function showSeriesReport(r) {
+            const fights = r.Fights.length;
+            document.getElementById('modalCombatTitle').innerText = r.Title;
+            const banner = document.getElementById('modalCombatResultBanner');
+            banner.innerText = `${r.Wins} / ${fights} VICTORIES`;
+            banner.className = 'combat-result-banner ' + (r.IsVictory ? 'victory-bg' : 'defeat-bg');
+            document.getElementById('modalFighter1Name').innerText = r.PlayerName;
+            document.getElementById('modalFighter2Name').innerText = `${r.EnemyName} ×${fights}`;
+            document.getElementById('modalPortrait1').innerHTML = ART.avatar(view.state.Player.Equipment);
+            document.getElementById('modalPortrait2').innerHTML = ART.portrait(r.EnemyArt);
+            document.getElementById('modalHp1').innerText = `${r.PlayerEndHP}/${r.PlayerMaxHP}`;
+            document.getElementById('modalHpFill1').style.width = `${clamp(r.PlayerEndHP / r.PlayerMaxHP * 100, 0, 100)}%`;
+            document.getElementById('modalHp2').innerText = `${r.Wins} slain`;
+            document.getElementById('modalHpFill2').style.width = r.IsVictory ? '0%' : '100%';
+            document.getElementById('btnSkipCombat').style.display = 'none';
+            const lines = r.Fights.map((f, i) => `<div class="series-line ${f.IsVictory ? '' : 'lost'}">
+                    <span>${f.IsVictory ? '⚔️' : '☠️'} Fight ${i + 1}: ${f.IsVictory ? 'victory' : 'defeat'} in ${f.Turns} round${f.Turns === 1 ? '' : 's'} <span class="muted">(−${f.HPLost} HP)</span></span>
+                    <span>${f.IsVictory ? `+${fmt(f.Gold)} gold, +${fmt(f.XP)} XP` : ''}${f.Loot.length ? ' 🎁' : ''}</span>
+                </div>`);
+            if (r.StopReason && fights < r.Planned) lines.push(`<div class="muted" style="margin-top:6px;">Series stopped after ${fights} of ${r.Planned}: ${esc(r.StopReason)}</div>`);
+            else if (r.StopReason) lines.push(`<div class="muted" style="margin-top:6px;">${esc(r.StopReason)}</div>`);
+            document.getElementById('modalCombatLog').innerHTML = lines.join('');
+            document.getElementById('combatModal').classList.add('open');
+            showRewards(r, r.Wins > 0);
         }
 
         function closeCombatModal() {
@@ -3087,7 +3454,23 @@
 
         // ------------------------------------------------------------ startup
 
-        document.addEventListener('keydown', e => { if (e.key === 'Escape') closeCombatModal(); });
+        document.addEventListener('keydown', e => {
+            if (e.key === 'Escape') { closeCombatModal(); return; }
+            const typing = e.target && /^(INPUT|SELECT|TEXTAREA)$/.test(e.target.tagName);
+            if (typing || e.ctrlKey || e.metaKey || e.altKey) return;
+            const modalOpen = document.getElementById('combatModal').classList.contains('open');
+            if (modalOpen && (e.key === ' ' || e.key === 'Enter')) {
+                e.preventDefault();
+                if (combatAnim) finishCombatAnimation(); else closeCombatModal();
+                return;
+            }
+            if (modalOpen || !/^[0-9]$/.test(e.key)) return;
+            const tabs = document.querySelectorAll('#navTabs .nav-tab');
+            const tab = tabs[e.key === '0' ? 9 : Number(e.key) - 1];
+            if (tab) switchTab(tab.dataset.tab);
+        });
+        // Number-key hints on the tab buttons.
+        document.querySelectorAll('#navTabs .nav-tab').forEach((btn, i) => { if (i < 10) btn.title = `Shortcut: ${(i + 1) % 10}`; });
         document.getElementById('brandLogo').innerHTML = ART.logo();
 
         let started = false;

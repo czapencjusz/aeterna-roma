@@ -93,6 +93,12 @@ class Api:
     def challenge_arena(self, ladder_index):
         return self._run(self._game.challenge_arena, ladder_index)
 
+    def start_series(self, location_index, monster_index, count):
+        return self._run(self._game.start_series, location_index, monster_index, count)
+
+    def attempt_labor(self, labor_index):
+        return self._run(self._game.attempt_labor, labor_index)
+
     def enter_dungeon(self, dungeon_index):
         return self._run(self._game.enter_dungeon, dungeon_index)
 
@@ -125,6 +131,15 @@ class Api:
 
     def sell_junk(self):
         return self._run(self._game.sell_junk)
+
+    def toggle_lock(self, inventory_index):
+        return self._run(self._game.toggle_lock, inventory_index)
+
+    def sort_inventory(self):
+        return self._run(self._game.sort_inventory)
+
+    def reforge(self, location, key):
+        return self._run(self._game.reforge, location, key)
 
     def smelt(self, inventory_index):
         return self._run(self._game.smelt, inventory_index)
@@ -166,6 +181,9 @@ class Api:
 
     def buy_honor(self, key):
         return self._run(self._game.buy_honor, key)
+
+    def claim_daily(self):
+        return self._run(self._game.claim_daily)
 
     def ruby_refill_energy(self):
         return self._run(self._game.ruby_refill_energy)

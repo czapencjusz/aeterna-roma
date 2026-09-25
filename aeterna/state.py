@@ -10,7 +10,7 @@ import re
 
 from .data import (ACHIEVEMENTS, ALCHEMIST_ITEMS, ARENA_COOLDOWN_MS, ARENA_MILESTONES, ARENA_NAMES, ATTRIBUTES,
                    BESTIARY, BLESSINGS, COMBAT_SPEEDS, DUNGEONS, GUILD_BUILDING_MAX, GUILD_BUILDINGS, HONOR_SHOP,
-                   LADDER_SIZE, LOCATIONS, QUEST_ABANDON_WAIT_MS, QUEST_KINDS, QUEST_SLOTS, SAVE_VERSION, SLOT_FOR_TYPE,
+                   LABORS, LADDER_SIZE, LOCATIONS, QUEST_ABANDON_WAIT_MS, QUEST_KINDS, QUEST_SLOTS, SAVE_VERSION, SLOT_FOR_TYPE,
                    SLOTS, STAT_KEYS, THEMES, VENDOR_DEFS, VENDOR_STOCK_SIZE, WORK_OPTIONS)
 from .items import blank_item, generate_item, make_potion, normalize_item
 from .rules import guild_level_from_buildings, recalc_stats, work_rates, xp_to_next
@@ -27,6 +27,7 @@ def new_player():
         'BaseConstitution': 5, 'BaseCharisma': 5, 'BaseIntelligence': 5,
         'CurrentHP': 0, 'MaxHP': 0, 'CurrentEnergy': 24, 'MaxEnergy': 24,
         'Equipment': {slot: None for slot in SLOTS}, 'Inventory': [], 'InventoryCapacity': 24,
+        'Labors': [],  # ids of completed Labors of Hercules (their boons are permanent effects)
     }
 
 
@@ -117,6 +118,7 @@ def new_game_state(now):
         'HonorShop': {key: 0 for key in HONOR_SHOP},  # how many of each Honor-shop ware were bought
         'Achievements': [],  # ids of unlocked achievements
         'Bestiary': {},  # creature name -> times defeated
+        'Daily': {'LastDay': -1, 'Streak': 0},  # Imperial Decree: last claimed day number and streak length
         'Settings': {'ThemeMode': 'DarkImperial', 'AudioMuted': False, 'CombatSpeed': 'Fast'},
     }
     for slot in state['QuestSlots']:
@@ -217,6 +219,14 @@ def _normalize_player(state, raw_player):
     player['MaxEnergy'] = max(1, to_int(rp.get('MaxEnergy'), player['MaxEnergy']))
     player['CurrentEnergy'] = to_int(rp.get('CurrentEnergy'), player['MaxEnergy'])
     player['InventoryCapacity'] = clamp(to_int(rp.get('InventoryCapacity'), player['InventoryCapacity']), 1, 100)
+    if isinstance(rp.get('Labors'), list):
+        # Labors are done in order, so keep the completed prefix of the list.
+        done = []
+        for labor in LABORS:
+            if labor['Id'] not in rp['Labors']:
+                break
+            done.append(labor['Id'])
+        player['Labors'] = done
 
     player['Inventory'] = []
     raw_equipment = rp.get('Equipment') if isinstance(rp.get('Equipment'), dict) else {}
@@ -393,4 +403,8 @@ def normalize_state(raw, now):
     if isinstance(raw.get('Bestiary'), dict):
         state['Bestiary'] = {name: max(0, to_int(raw['Bestiary'].get(name), 0)) for name in BESTIARY
                              if to_int(raw['Bestiary'].get(name), 0) > 0}
+    # Imperial Decree (added in save version 5)
+    daily = raw.get('Daily')
+    if isinstance(daily, dict):
+        state['Daily'] = {'LastDay': to_int(daily.get('LastDay'), -1), 'Streak': max(0, to_int(daily.get('Streak'), 0))}
     return state

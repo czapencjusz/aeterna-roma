@@ -263,6 +263,11 @@ ACHIEVEMENTS = [
     _ach('mythic', 'Treasure of the Gods', 'Find a Mythic item', 'UniquesFound', 1, 3),
     _ach('bestiary_half', 'Naturalist', 'Defeat half of all creature types', 'BestiaryPct', 50, 3),
     _ach('bestiary_all', 'Pliny the Elder', 'Defeat every creature type', 'BestiaryPct', 100, 10),
+    _ach('labor_1', 'In the Footsteps of Hercules', 'Complete a Labor of Hercules', 'Labors', 1, 2),
+    _ach('labor_6', 'Half a Hero', 'Complete six Labors of Hercules', 'Labors', 6, 5),
+    _ach('labor_12', 'Heir of Hercules', 'Complete all twelve Labors of Hercules', 'Labors', 12, 15),
+    _ach('daily_7', 'Creature of Habit', 'Answer the Imperial Decree 7 days in a row', 'BestDailyStreak', 7, 3),
+    _ach('series_10', 'Relentless', 'Win a battle series of 10 fights without a loss', 'BestSeries', 10, 3),
 ]
 
 
@@ -460,14 +465,73 @@ ARENA_NAMES = [
     'Titus', 'Vespian', 'Trajan', 'Marcus Antonius', 'Spartacus',
 ]
 
+def _labor(id_, number, title, level, monster, boon, story, gold, rubies):
+    return {'Id': id_, 'Number': number, 'Title': title, 'ReqLevel': level, 'Monster': monster, 'Boon': boon,
+            'Story': story, 'Gold': gold, 'Rubies': rubies}
+
+
+# The Twelve Labors of Hercules: one-off boss challenges, done in order. Each grants a permanent boon
+# (added to the gladiator's special effects). The monsters do not scale, so out-levelling them helps.
+LABOR_ENERGY_COST = 4
+LABORS = [
+    _labor('labor1', 'I', 'The Nemean Lion', 6, _gen('L1', 'Lion of Nemea', 7, hp=2.59, dmg=1.81, armor=2.0),
+           {'ArmorPct': 5}, 'Its golden hide turns every blade. Strangle it and wear its pelt.', 600, 1),
+    _labor('labor2', 'II', 'The Lernaean Hydra', 9, _gen('L2', 'Lernaean Hydra', 10, hp=2.38, dmg=1.19),
+           {'RegenPct': 20}, 'Cut off one head and two grow back. Burn the stumps.', 1100, 1),
+    _labor('labor3', 'III', 'The Ceryneian Hind', 12, _gen('L3', 'Ceryneian Hind', 13, hp=1.43, dmg=1.1, dex=1.3, agi=1.8),
+           {'CritBonus': 2}, "Artemis' golden-horned hind outruns arrows. Hunt it for a year if you must.", 1800, 1),
+    _labor('labor4', 'IV', 'The Erymanthian Boar', 15, _gen('L4', 'Erymanthian Boar', 16, hp=2.24, dmg=1.52, agi=0.7),
+           {'HPPct': 5}, 'Drive the great boar into the snowfields and take it alive.', 2600, 2),
+    _labor('labor5', 'V', 'The Augean Stables', 18, _gen('L5', 'Alpheus the River God', 19, hp=1.65, dmg=1.03, armor=1.3),
+           {'GoldPct': 10}, 'King Augeas will pay a tenth of his herds if you divert a river through his stables.', 3500, 2),
+    _labor('labor6', 'VI', 'The Stymphalian Birds', 21, _gen('L6', 'Stymphalian Flock', 22, hp=1.39, dmg=1.09, dex=1.3, agi=1.5),
+           {'DamagePct': 4}, 'Rattle the bronze krotala of Athena and shoot the man-eating birds out of the sky.', 4500, 2),
+    _labor('labor7', 'VII', 'The Cretan Bull', 24, _gen('L7', 'Cretan Bull', 25, hp=2.03, dmg=1.43, agi=0.6),
+           {'BlockBonus': 3}, "Poseidon's white bull is ravaging Crete. Wrestle it to the ground.", 5600, 2),
+    _labor('labor8', 'VIII', 'The Mares of Diomedes', 27, _gen('L8', 'Mares of Diomedes', 28, hp=1.57, dmg=1.31, dex=1.2),
+           {'LifeSteal': 2}, 'The Thracian king feeds his horses on human flesh. Tame them.', 6800, 3),
+    _labor('labor9', 'IX', 'The Girdle of Hippolyta', 30, _gen('L9', 'Hippolyta, Amazon Queen', 31, hp=1.32, dmg=1.13, dex=1.4, agi=1.4),
+           {'XPPct': 10}, 'Bring back the war-belt of the Amazon queen, a gift from Ares himself.', 8000, 3),
+    _labor('labor10', 'X', 'The Cattle of Geryon', 33, _gen('L10', 'Geryon', 34, hp=1.6, dmg=1.06, armor=1.3, agi=0.7),
+           {'ArmorPct': 5}, 'At the edge of the world, the three-bodied giant guards his red cattle.', 9600, 3),
+    _labor('labor11', 'XI', 'The Apples of the Hesperides', 36, _gen('L11', 'Ladon', 37, hp=1.36, dmg=0.94, armor=1.4),
+           {'HPPct': 5}, 'The hundred-headed dragon coils around the tree of golden apples.', 11500, 4),
+    _labor('labor12', 'XII', 'The Capture of Cerberus', 40, _gen('L12', 'Cerberus Unchained', 41, hp=1.36, dmg=0.93, armor=1.3),
+           {'DamagePct': 6}, 'Descend to the Underworld and carry its three-headed guardian into the light, unarmed.', 15000, 5),
+]
+LABORS_COMPLETE_REWARD = {'Name': 'Club of Hercules', 'Type': 'Weapon', 'IconSvg': 'weapon_9',
+                          'Effects': {'DamagePct': 12, 'CritBonus': 4, 'LifeSteal': 4}}
+
+# Battle series: fight the same expedition monster several times in a row.
+SERIES_SIZES = [3, 5, 10]
+
+# The Imperial Decree: a daily reward with a 7-day cycle. Missing a day restarts the cycle.
+DAILY_REWARDS = [
+    {'Day': 1, 'Icon': '🪙', 'Text': 'A purse of gold', 'Gold': 3},
+    {'Day': 2, 'Icon': '⚡', 'Text': 'Full energy and gold', 'Gold': 2, 'Energy': True},
+    {'Day': 3, 'Icon': '⛏️', 'Text': 'Forge materials', 'Materials': {'IronStash': 6, 'BronzeStash': 5, 'LeatherStash': 6}},
+    {'Day': 4, 'Icon': '💰', 'Text': 'A heavy purse of gold', 'Gold': 5},
+    {'Day': 5, 'Icon': '💎', 'Text': 'A ruby and raw rubies for the forge', 'Rubies': 1,
+     'Materials': {'RubyStash': 3}},
+    {'Day': 6, 'Icon': '🎁', 'Text': 'A Rare piece of gear', 'Item': 'Rare'},
+    {'Day': 7, 'Icon': '👑', 'Text': "The Emperor's gift: 3 rubies and an Epic piece of gear", 'Rubies': 3, 'Item': 'Epic'},
+]
+
+# Reforging rerolls an item's prefix and suffix.
+def reforge_cost(level):
+    return {'Gold': 60 + 20 * level, 'Bronze': 3, 'Ruby': 1}
+
+
 STAT_KEYS = ['FightsWon', 'FightsLost', 'MonstersSlain', 'ArenaWins', 'ArenaLosses', 'DungeonFloorsCleared',
              'DungeonsConquered', 'GoldEarned', 'ItemsLooted', 'ItemsCrafted', 'ItemsEnhanced', 'QuestsCompleted',
-             'RubiesEarned', 'SetPiecesFound', 'UniquesFound', 'BlessingsReceived', 'HonorSpent']
+             'RubiesEarned', 'SetPiecesFound', 'UniquesFound', 'BlessingsReceived', 'HonorSpent',
+             'ItemsReforged', 'DailyClaims', 'BestDailyStreak', 'BestSeries']
 
 QUEST_KINDS = ['expedition', 'monster', 'arena', 'dungeon']
 
-SAVE_VERSION = 4
+SAVE_VERSION = 5
 
 # Every creature that can be fought, for the Bestiary (in area order).
 BESTIARY = ([m['Name'] for loc in sorted(LOCATIONS, key=lambda l: l['ReqLevel']) for m in loc['Monsters']]
-            + [st['Monster']['Name'] for d in DUNGEONS for st in d['Stages']])
+            + [st['Monster']['Name'] for d in DUNGEONS for st in d['Stages']]
+            + [labor['Monster']['Name'] for labor in LABORS])

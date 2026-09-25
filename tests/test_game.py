@@ -689,7 +689,8 @@ class ProgressionTests(unittest.TestCase):
         self.assertLess(xp_to_next(50), 1_000_000)  # late levels stay reachable
 
     def test_bestiary_covers_every_monster(self):
-        names = {m['Name'] for l in LOCATIONS for m in l['Monsters']} | {s['Monster']['Name'] for d in DUNGEONS for s in d['Stages']}
+        names = ({m['Name'] for l in LOCATIONS for m in l['Monsters']} | {s['Monster']['Name'] for d in DUNGEONS for s in d['Stages']}
+                 | {labor['Monster']['Name'] for labor in data.LABORS})
         self.assertEqual(names, set(data.BESTIARY))
 
     def test_version_3_save_migrates(self):
@@ -711,6 +712,257 @@ class ProgressionTests(unittest.TestCase):
             for monster in location['Monsters']:
                 rate = balance.win_rate(monster, location['ReqLevel'], location['ReqLevel'], 30)
                 self.assertGreater(rate, 0.4, '%s in %s' % (monster['Name'], location['Name']))
+
+
+DAY_MS = 86_400_000
+
+
+class LaborTests(unittest.TestCase):
+    def test_labors_in_order_with_permanent_boons(self):
+        from aeterna.rules import all_effects
+        game, _ = make_game()
+        make_strong(game)
+        p = game.player
+        p['Level'] = 5
+        self.assertIsNone(game.attempt_labor(0))  # level 6 needed
+        from aeterna.rules import xp_to_next
+        p['Level'], p['MaxXP'] = 50, xp_to_next(50)
+        self.assertIsNone(game.attempt_labor(1))  # must start with the first
+        self.assertIn('in order', game.take_notices()[-1])
+        rubies = p['Rubies']
+        p['CurrentEnergy'] = p['MaxEnergy']
+        result = game.attempt_labor(0)
+        self.assertTrue(result['IsVictory'])
+        self.assertEqual(p['Labors'], ['labor1'])
+        self.assertEqual(p['CurrentEnergy'], p['MaxEnergy'] - data.LABOR_ENERGY_COST)
+        self.assertGreaterEqual(p['Rubies'], rubies + data.LABORS[0]['Rubies'])
+        self.assertEqual(all_effects(game.state).get('ArmorPct'), 5)
+        self.assertIsNone(game.attempt_labor(0))  # can't repeat
+        self.assertIn('labor_1', [a['Id'] for a in game.check_achievements()])
+
+    def test_all_labors_grant_the_club(self):
+        game, _ = make_game()
+        make_strong(game)
+        game.player['Level'] = 50
+        for i in range(len(data.LABORS)):
+            game.player['CurrentHP'] = game.player['MaxHP']
+            game.player['CurrentEnergy'] = game.player['MaxEnergy']
+            self.assertTrue(game.attempt_labor(i)['IsVictory'])
+        self.assertIsNone(game.next_labor_index())
+        club = [i for i in game.player['Inventory'] if i['Name'] == data.LABORS_COMPLETE_REWARD['Name']]
+        self.assertEqual(len(club), 1)
+        self.assertEqual(club[0]['Rarity'], 'Mythic')
+
+    def test_labor_boons_are_capped_and_stack(self):
+        from aeterna.rules import labor_effects
+        player = {'Labors': [labor['Id'] for labor in data.LABORS]}
+        effects = labor_effects(player)
+        self.assertEqual(effects['DamagePct'], 10)
+        self.assertEqual(effects['HPPct'], 10)
+
+    def test_labors_are_tough_but_fair(self):
+        from aeterna import balance
+        util.rng.seed(4)
+        for labor in data.LABORS[::3]:
+            at_entry = balance.labor_win_rate(labor, labor['ReqLevel'], 60)
+            later = balance.labor_win_rate(labor, labor['ReqLevel'] + 6, 60)
+            self.assertTrue(0.2 < at_entry < 0.8, (labor['Title'], at_entry))
+            self.assertGreater(later, at_entry)
+
+
+class SeriesTests(unittest.TestCase):
+    def test_series_fights_until_done(self):
+        game, _ = make_game()
+        make_strong(game)
+        game.player['CurrentEnergy'] = 20
+        report = game.start_series(0, 0, 5)
+        self.assertTrue(report['Series'])
+        self.assertEqual((report['Wins'], len(report['Fights'])), (5, 5))
+        self.assertEqual(game.player['CurrentEnergy'], 15)
+        self.assertEqual(report['GoldGained'], sum(f['Gold'] for f in report['Fights']))
+        self.assertEqual(game.state['Stats']['BestSeries'], 5)
+
+    def test_series_stops_when_energy_runs_out(self):
+        game, _ = make_game()
+        make_strong(game)
+        game.player['CurrentEnergy'] = 2
+        report = game.start_series(0, 0, 5)
+        self.assertEqual(len(report['Fights']), 2)
+        self.assertIn('energy', report['StopReason'])
+
+    def test_series_stops_at_first_defeat(self):
+        game, _ = make_game()
+        game.player['Level'] = 3
+        game.player['CurrentEnergy'] = 20
+        report = game.start_series(1, 2, 10)  # a Mountain Troll is too much for a fresh gladiator
+        self.assertFalse(report['IsVictory'])
+        self.assertFalse(report['Fights'][-1]['IsVictory'])
+        self.assertTrue(all(f['IsVictory'] for f in report['Fights'][:-1]))
+
+    def test_series_rejects_bad_sizes(self):
+        game, _ = make_game()
+        self.assertIsNone(game.start_series(0, 0, 7))
+        self.assertIsNone(game.start_series(0, 0, 'x'))
+
+
+class DailyTests(unittest.TestCase):
+    def test_streak_and_rewards(self):
+        game, clock = make_game()
+        p = game.player
+        gold = p['Gold']
+        game.claim_daily()
+        self.assertEqual(p['Gold'], gold + 120)
+        game.claim_daily()  # only once a day
+        self.assertEqual(p['Gold'], gold + 120)
+        for day in range(2, 8):
+            clock.now += DAY_MS
+            game.claim_daily()
+            self.assertEqual(game.state['Daily']['Streak'], day)
+        self.assertTrue(any(i['Rarity'] == 'Epic' for i in p['Inventory']))  # day 7
+        self.assertEqual(game.state['Stats']['BestDailyStreak'], 7)
+        self.assertIn('daily_7', [a['Id'] for a in game.check_achievements()])
+
+    def test_missing_a_day_restarts(self):
+        game, clock = make_game()
+        game.claim_daily()
+        clock.now += DAY_MS
+        game.claim_daily()
+        clock.now += 3 * DAY_MS
+        self.assertEqual(game.daily_status(), (True, 1))
+        game.claim_daily()
+        self.assertEqual(game.state['Daily']['Streak'], 1)
+
+    def test_tick_announces_a_new_day(self):
+        game, clock = make_game()
+        game.claim_daily()
+        self.assertEqual(game.tick(), 'none')
+        clock.now += DAY_MS
+        self.assertEqual(game.tick(), 'all')
+
+
+class ForgeAndBagTests(unittest.TestCase):
+    def _base_stats(self, item):
+        """Stats with the current affixes' bonuses taken out."""
+        from aeterna.items import _affix_amount
+        stats = {a: item[a] for a in data.ATTRIBUTES}
+        for names, field in ((PREFIXES, 'Prefix'), (SUFFIXES, 'Suffix')):
+            affix = next((a for a in names if a['Name'] == item[field]), None)
+            for stat, weight in (affix['Stats'].items() if affix else ()):
+                stats[stat] -= weight * _affix_amount(item)
+        return stats
+
+    def test_reforge_rerolls_affixes_without_touching_base_stats(self):
+        game, _ = make_game(9)
+        p, s = game.player, game.state
+        item = generate_item(8, 'Amulet', 'Epic')
+        p['Inventory'].append(item)
+        base = self._base_stats(item)
+        p['Gold'], s['RubyStash'], s['BronzeStash'] = 10 ** 6, 100, 100
+        for _ in range(30):
+            game.reforge(1, len(p['Inventory']) - 1)
+            self.assertTrue(item['Prefix'] or item['Suffix'])
+            self.assertEqual(self._base_stats(item), base)
+        self.assertEqual(s['Stats']['ItemsReforged'], 30)
+        self.assertEqual(s['RubyStash'], 70)
+
+    def test_reforge_refuses_sets_mythics_and_poor_smiths(self):
+        from aeterna.items import make_set_piece, make_unique
+        game, _ = make_game()
+        p = game.player
+        p['Gold'] = 10 ** 6
+        game.state['RubyStash'] = 50
+        for item in (make_set_piece('legion', 5), make_unique('Scylla', 5)):
+            p['Inventory'].append(item)
+            before = dict(item)
+            game.reforge(1, len(p['Inventory']) - 1)
+            self.assertEqual(item, before)
+        p['Inventory'].append(generate_item(5, 'Ring', 'Rare'))
+        p['Gold'] = 0
+        game.reforge(1, len(p['Inventory']) - 1)
+        self.assertEqual(game.state['Stats']['ItemsReforged'], 0)
+
+    def test_no_repeated_words_in_names(self):
+        util.rng.seed(3)
+        for _ in range(400):
+            item = generate_item(5, 'Amulet')
+            words = display_name(item).lower().split()
+            self.assertEqual(words.count('imperial'), 1 if 'imperial' in words else 0)
+
+    def test_locked_items_are_protected(self):
+        game, _ = make_game()
+        p = game.player
+        p['Inventory'] = [generate_item(1, 'Ring', 'Common')]
+        game.toggle_lock(0)
+        gold = p['Gold']
+        game.sell(0)
+        game.smelt(0)
+        game.sell_junk()
+        self.assertEqual((len(p['Inventory']), p['Gold']), (1, gold))
+        game.toggle_lock(0)
+        game.sell(0)
+        self.assertEqual(p['Inventory'], [])
+
+    def test_sort_inventory(self):
+        game, _ = make_game()
+        p = game.player
+        p['Inventory'] = [make_potion({'Name': 'P', 'HealAmount': 5}), generate_item(1, 'Ring', 'Common'),
+                          generate_item(3, 'Weapon', 'Rare'), generate_item(1, 'Weapon', 'Legendary')]
+        game.sort_inventory()
+        self.assertEqual([(i['Type'], i['Rarity']) for i in p['Inventory']],
+                         [('Weapon', 'Legendary'), ('Weapon', 'Rare'), ('Ring', 'Common'), ('Potion', 'Common')])
+
+
+class ThreatTests(unittest.TestCase):
+    def test_estimate_tracks_simulated_fights(self):
+        from aeterna import balance, combat
+        util.rng.seed(8)
+        errors = []
+        for location in LOCATIONS[::2]:
+            monster = location['Monsters'][-1]
+            for offset in (0, 4):
+                level = location['ReqLevel'] + offset
+                game = balance.typical_game(level)
+                enemy = combat.monster_combatant(combat.scale_monster(monster, level, location['ReqLevel']))
+                estimate = combat.win_estimate(game.state, enemy)
+                wins = sum(combat.run_fight(copy.deepcopy(game.state), 't', dict(enemy))['IsVictory'] for _ in range(80))
+                errors.append(abs(estimate - wins / 80))
+        self.assertLess(sum(errors) / len(errors), 0.12)
+
+    def test_labels(self):
+        from aeterna import combat
+        game, _ = make_game()
+        weak = combat.monster_combatant(LOCATIONS[0]['Monsters'][0])
+        strong = combat.monster_combatant(data.LABORS[-1]['Monster'])
+        self.assertIn(combat.threat(game.state, weak)['label'], ('Trivial', 'Easy'))
+        self.assertEqual(combat.threat(game.state, strong)['label'], 'Deadly')
+
+
+class MigrationV5Tests(unittest.TestCase):
+    def test_version_4_save_migrates(self):
+        game, _ = make_game()
+        raw = json.loads(json.dumps(game.state))
+        raw.pop('Daily')
+        raw['Player'].pop('Labors')
+        raw['SaveVersion'] = 4
+        state = normalize_state(raw, START)
+        self.assertEqual((state['Player']['Labors'], state['Daily']), ([], {'LastDay': -1, 'Streak': 0}))
+        self.assertFalse(state['Player']['Inventory'][0]['Locked'])
+
+    def test_labor_list_keeps_only_the_completed_prefix(self):
+        game, _ = make_game()
+        raw = json.loads(json.dumps(game.state))
+        raw['Player']['Labors'] = ['labor1', 'labor3', 'bogus']
+        raw['Player']['Inventory'][0]['Locked'] = True
+        state = normalize_state(raw, START)
+        self.assertEqual(state['Player']['Labors'], ['labor1'])
+        self.assertTrue(state['Player']['Inventory'][0]['Locked'])
+
+    def test_level_up_keeps_extra_energy(self):
+        game, _ = make_game()
+        p = game.player
+        p['CurrentEnergy'] = p['MaxEnergy']
+        game.gain_xp(p['MaxXP'])
+        self.assertEqual(p['CurrentEnergy'], p['MaxEnergy'])
 
 
 class ContentTests(unittest.TestCase):

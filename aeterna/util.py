@@ -1,5 +1,6 @@
 """Small helpers shared by the game modules."""
 
+import datetime
 import math
 import random
 import time
@@ -32,6 +33,11 @@ def uid():
 
 def now_ms():
     return int(time.time() * 1000)
+
+
+def day_number(ms):
+    """The local calendar day of a timestamp in ms, as a day count (for daily rewards)."""
+    return datetime.date.fromtimestamp(ms / 1000).toordinal()
 
 
 def is_number(value):

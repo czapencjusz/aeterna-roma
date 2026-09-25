@@ -5,11 +5,12 @@ raw state plus all derived numbers (damage, costs, scaled monster levels, ...).
 """
 
 from . import combat
-from .data import (ACHIEVEMENTS, ARENA_COOLDOWN_MS, ATTRIBUTES, BESTIARY, BLESSINGS, COMBAT_SPEEDS, DUNGEONS,
-                   EFFECTS, ENERGY_REGEN_PER_MIN, GUILD_BUILDING_MAX, GUILD_BUILDINGS, GUILD_COST, GUILD_DONATIONS,
-                   HONOR_SHOP, LADDER_SIZE, LOCATIONS, MAX_ENHANCE, RECIPES, RUBY_COST, SETS, SHIELD_BLOCK_BONUS,
-                   SLOT_FOR_TYPE, SLOTS, THEMES, UNIQUES, VENDOR_DEFS, WORK_OPTIONS, blessing_cost)
-from .engine import dungeon_energy_cost
+from .data import (ACHIEVEMENTS, ARENA_COOLDOWN_MS, ATTRIBUTES, BESTIARY, BLESSINGS, COMBAT_SPEEDS, DAILY_REWARDS,
+                   DUNGEONS, EFFECTS, ENERGY_REGEN_PER_MIN, GUILD_BUILDING_MAX, GUILD_BUILDINGS, GUILD_COST,
+                   GUILD_DONATIONS, HONOR_SHOP, LABOR_ENERGY_COST, LABORS, LABORS_COMPLETE_REWARD, LADDER_SIZE,
+                   LOCATIONS, MAX_ENHANCE, RECIPES, RUBY_COST, SERIES_SIZES, SETS, SHIELD_BLOCK_BONUS, SLOT_FOR_TYPE,
+                   SLOTS, THEMES, UNIQUES, VENDOR_DEFS, WORK_OPTIONS, blessing_cost, reforge_cost)
+from .engine import daily_gold, dungeon_energy_cost
 from .items import is_equipment, sell_price
 from .rules import (all_effects, arena_title, describe_effects, equip_bonus, guild_bonus_level, guild_building_cost,
                     guild_effect, has_shield, hp_regen_per_min, max_damage, min_damage, min_fight_hp, set_counts,
@@ -114,6 +115,11 @@ def build_view(game, save_path='', seq=0):
         'title': arena_title(p['ArenaRank']), 'minFightHP': min_fight_hp(p),
     }
 
+    pc = combat.player_combatant(s)
+
+    def rate(enemy):
+        return combat.threat(s, enemy, pc)
+
     inventory = [{'sellPrice': sell_price(item), 'isEquipment': is_equipment(item), 'comparison': _comparison(p, item)}
                  for item in p['Inventory']]
 
@@ -122,7 +128,8 @@ def build_view(game, save_path='', seq=0):
         monsters = []
         for monster in location['Monsters']:
             scaled = combat.scale_monster(monster, p['Level'], location['ReqLevel'])
-            monsters.append({'Name': monster['Name'], 'Level': scaled['Level'], 'MaxHP': scaled['MaxHP']})
+            monsters.append({'Name': monster['Name'], 'Level': scaled['Level'], 'MaxHP': scaled['MaxHP'],
+                             'threat': rate(combat.monster_combatant(scaled))})
         expeditions.append({'Id': location['Id'], 'Name': location['Name'], 'Description': location['Description'],
                             'ReqLevel': location['ReqLevel'], 'EnergyCost': location['EnergyCost'],
                             'locked': p['Level'] < location['ReqLevel'], 'monsters': monsters,
@@ -138,21 +145,25 @@ def build_view(game, save_path='', seq=0):
                          'completed': progress['IsCompleted'], 'conquests': progress['Conquests'],
                          'floor': progress['CurrentStage'], 'floors': len(dungeon['Stages']),
                          'stageName': stage['Name'], 'isBoss': stage['IsBoss'],
-                         'monster': {'Name': scaled['Name'], 'Level': scaled['Level'], 'MaxHP': scaled['MaxHP']},
+                         'monster': {'Name': scaled['Name'], 'Level': scaled['Level'], 'MaxHP': scaled['MaxHP'],
+                                     'threat': rate(combat.monster_combatant(scaled))},
                          'energy': dungeon_energy_cost(dungeon),
                          'sets': [SETS[k]['Name'] for k in dungeon.get('Sets', [])],
                          'treasure': UNIQUES.get(dungeon['Stages'][-1]['Monster']['Name'], {}).get('Name', '')})
 
     arena_rows = [{'player': True, 'Rank': p['ArenaRank']}]
     for idx, opponent in enumerate(s['ArenaLadder']):
+        rival = combat.arena_opponent_stats(opponent, p)
         arena_rows.append({'player': False, 'idx': idx, 'Name': opponent['Name'], 'Rank': opponent['Rank'],
-                           'IconSvg': opponent['IconSvg'], 'Level': combat.arena_opponent_stats(opponent, p)['Level'],
-                           'better': opponent['Rank'] < p['ArenaRank']})
+                           'IconSvg': opponent['IconSvg'], 'Level': rival['Level'],
+                           'better': opponent['Rank'] < p['ArenaRank'], 'threat': rate(combat.arena_combatant(rival))})
     arena_rows.sort(key=lambda row: row['Rank'])
 
     vendors = {key: {'Name': d['Name'], 'Label': d['Label'], 'restocks': bool(d['Stock'])} for key, d in VENDOR_DEFS.items()}
 
-    recipes = [dict(r, locked=p['Level'] < r['ReqLevel']) for r in RECIPES]
+    stash = {'Iron': s['IronStash'], 'Bronze': s['BronzeStash'], 'Ruby': s['RubyStash'], 'Leather': s['LeatherStash']}
+    recipes = [dict(r, locked=p['Level'] < r['ReqLevel'],
+                    missing=[m for m in stash if stash[m] < r['Req' + m]]) for r in RECIPES]
 
     enhance = []
     targets = [(item, 0, i, 'Equipped') for i, item in enumerate(p['Equipment'][slot] for slot in SLOTS) if item]
@@ -160,9 +171,13 @@ def build_view(game, save_path='', seq=0):
     for item, location, key, where in targets:
         maxed = item['Upgrade'] >= MAX_ENHANCE
         cost = None if maxed else game.enhance_cost(item)
+        reforge = reforge_cost(item['LevelRequirement']) if game.can_reforge(item) else None
         enhance.append({'item': item, 'where': where, 'loc': location,
                         'key': key, 'maxed': maxed, 'next': item['Upgrade'] + 1, 'cost': cost,
-                        'affordable': bool(cost) and game.can_afford_enhance(cost)})
+                        'affordable': bool(cost) and game.can_afford_enhance(cost),
+                        'reforgeCost': reforge,
+                        'reforgeAffordable': bool(reforge) and p['Gold'] >= reforge['Gold']
+                        and s['BronzeStash'] >= reforge['Bronze'] and s['RubyStash'] >= reforge['Ruby']})
 
     work = s['ActiveWork']
     work_view = {
@@ -194,6 +209,22 @@ def build_view(game, save_path='', seq=0):
                        'gold': quest['RewardGold'], 'xp': int(quest['RewardXP'] * xp_mult),
                        'rubies': quest['RewardRubies']})
 
+    next_labor = game.next_labor_index()
+    labors = []
+    for i, labor in enumerate(LABORS):
+        monster = labor['Monster']
+        labors.append({'Number': labor['Number'], 'Title': labor['Title'], 'Story': labor['Story'],
+                       'ReqLevel': labor['ReqLevel'], 'Gold': labor['Gold'], 'Rubies': labor['Rubies'],
+                       'boon': describe_effects(labor['Boon']), 'done': labor['Id'] in p['Labors'],
+                       'next': i == next_labor, 'levelLocked': p['Level'] < labor['ReqLevel'],
+                       'monster': {'Name': monster['Name'], 'Level': monster['Level'], 'MaxHP': monster['MaxHP']},
+                       'threat': rate(combat.monster_combatant(monster))})
+
+    can_claim, streak_day = game.daily_status()
+    daily = {'ready': can_claim, 'day': streak_day, 'streak': s['Daily']['Streak'] if not can_claim else streak_day - 1,
+             'rewards': [{'Day': r['Day'], 'Icon': r['Icon'], 'Text': r['Text'],
+                          'gold': daily_gold(p['Level'], r['Gold']) if r.get('Gold') else 0} for r in DAILY_REWARDS]}
+
     bestiary_areas = {}
     for location in LOCATIONS:
         for monster in location['Monsters']:
@@ -201,6 +232,8 @@ def build_view(game, save_path='', seq=0):
     for dungeon in DUNGEONS:
         for stage in dungeon['Stages']:
             bestiary_areas[stage['Monster']['Name']] = dungeon['Name'] + (' (boss)' if stage['IsBoss'] else '')
+    for labor in LABORS:
+        bestiary_areas[labor['Monster']['Name']] = 'Labor %s of Hercules' % labor['Number']
     bestiary = [{'name': name, 'area': bestiary_areas[name], 'kills': s['Bestiary'].get(name, 0)} for name in BESTIARY]
 
     achievements = []
@@ -234,6 +267,11 @@ def build_view(game, save_path='', seq=0):
         'seq': seq,
         'now': now,
         'bestiary': bestiary,
+        'labors': {'list': labors, 'energy': LABOR_ENERGY_COST, 'done': len(p['Labors']),
+                   'finalReward': LABORS_COMPLETE_REWARD['Name'],
+                   'finalEffects': describe_effects(LABORS_COMPLETE_REWARD['Effects'])},
+        'daily': daily,
+        'seriesSizes': SERIES_SIZES,
         'achievements': achievements,
         'temple': temple,
         'honorShop': honor_shop,

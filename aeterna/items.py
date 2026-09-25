@@ -14,8 +14,9 @@ ITEM_TEMPLATE = {
     'SmeltIron': 0, 'SmeltBronze': 0, 'SmeltRuby': 0, 'SmeltLeather': 0,
     'SetId': '',     # gear set this item belongs to (see data.SETS), '' for none
     'Effects': {},   # special effects of Mythic items (see data.EFFECTS)
+    'Locked': False,  # locked items can't be sold or smelted
 }
-ITEM_NUMERIC_FIELDS = [k for k, v in ITEM_TEMPLATE.items() if isinstance(v, int)]
+ITEM_NUMERIC_FIELDS = [k for k, v in ITEM_TEMPLATE.items() if isinstance(v, int) and not isinstance(v, bool)]
 
 
 def blank_item():
@@ -49,6 +50,12 @@ def _apply_affix(item, affix, level, mult):
     amount = 1 + level // 4 + (mult - 1)
     for stat, weight in affix['Stats'].items():
         item[stat] += weight * amount
+
+
+def _affix_choices(affixes, item):
+    """Affixes that don't repeat a word of the item's name (no "Imperial Imperial Amulet")."""
+    words = set(item['Name'].lower().split())
+    return [a for a in affixes if not words & set(a['Name'].lower().split()) - {'of'}] or affixes
 
 
 def roll_rarity():
@@ -109,11 +116,11 @@ def generate_item(level, item_type=None, rarity=None):
     item['Name'] = base_name
     item['IconSvg'] = ICON_BY_NAME.get(base_name, item['IconSvg'])
     if roll() < AFFIX_CHANCE:
-        prefix = pick(PREFIXES)
+        prefix = pick(_affix_choices(PREFIXES, item))
         item['Prefix'] = prefix['Name']
         _apply_affix(item, prefix, level, mult)
     if roll() < AFFIX_CHANCE:
-        suffix = pick(SUFFIXES)
+        suffix = pick(_affix_choices(SUFFIXES, item))
         item['Suffix'] = suffix['Name']
         _apply_affix(item, suffix, level, mult)
 
@@ -136,12 +143,40 @@ def make_set_piece(set_id, level, item_type=None):
     return item
 
 
-def make_unique(boss_name, level):
-    """A boss's Mythic treasure: Mythic-strength stats plus its special effects."""
-    unique = UNIQUES[boss_name]
-    item = generate_item(level, unique['Type'], 'Mythic')
-    item.update(Name=unique['Name'], Prefix='', Suffix='', IconSvg=unique['IconSvg'], Effects=dict(unique['Effects']))
+def make_mythic(definition, level):
+    """A Mythic item ({'Name', 'Type', 'IconSvg', 'Effects'}): Mythic-strength stats plus special effects."""
+    item = generate_item(level, definition['Type'], 'Mythic')
+    item.update(Name=definition['Name'], Prefix='', Suffix='', IconSvg=definition['IconSvg'],
+                Effects=dict(definition['Effects']))
     return item
+
+
+def make_unique(boss_name, level):
+    """A dungeon boss's Mythic treasure."""
+    return make_mythic(UNIQUES[boss_name], level)
+
+
+def _affix_amount(item):
+    return 1 + item['LevelRequirement'] // 4 + RARITIES.index(item['Rarity'])
+
+
+def reroll_affixes(item):
+    """Removes an item's prefix and suffix bonuses and rolls new ones. At least one is guaranteed."""
+    for names, field in ((PREFIXES, 'Prefix'), (SUFFIXES, 'Suffix')):
+        affix = next((a for a in names if a['Name'] == item[field]), None)
+        if affix:
+            for stat, weight in affix['Stats'].items():
+                item[stat] = max(0, item[stat] - weight * _affix_amount(item))
+        item[field] = ''
+    rolls = [roll() < AFFIX_CHANCE, roll() < AFFIX_CHANCE]
+    if not any(rolls):
+        rolls[rand_int(0, 1)] = True
+    for wanted, names, field in zip(rolls, (PREFIXES, SUFFIXES), ('Prefix', 'Suffix')):
+        if wanted:
+            affix = pick(_affix_choices(names, item))
+            item[field] = affix['Name']
+            for stat, weight in affix['Stats'].items():
+                item[stat] += weight * _affix_amount(item)
 
 
 def _enum_value(value, names):
@@ -168,6 +203,7 @@ def normalize_item(raw):
     item['LevelRequirement'] = max(1, item['LevelRequirement'])
     item['Upgrade'] = clamp(item['Upgrade'], 0, MAX_ENHANCE)
     item['SetId'] = raw.get('SetId') if raw.get('SetId') in SETS else ''
+    item['Locked'] = raw.get('Locked') is True
     raw_effects = raw.get('Effects') if isinstance(raw.get('Effects'), dict) else {}
     item['Effects'] = {key: clamp(to_int(value, 0), 0, EFFECT_CAPS.get(key, 100))
                        for key, value in raw_effects.items() if key in EFFECTS and to_int(value, 0) > 0}
