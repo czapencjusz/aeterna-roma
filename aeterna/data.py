@@ -102,16 +102,17 @@ ALCHEMIST_ITEMS = [
 # Random loot / merchant item names for each item type.
 BASE_NAMES = {
     'Weapon': ['Gladius', 'Spatha', 'Pugio Dagger', 'Trident', 'Halberd', 'Centurion Sword', 'Sica', 'Falcata', 'Pilum',
-               'Mace'],
-    'Helmet': ['Galea Helmet', 'Centurion Crest', 'Legionary Helm', 'Gladiator Mask', 'Thracian Helm', 'Montefortino Helm'],
+               'Mace', 'Dolabra Axe', 'Flanged Mace', 'Spiked Club'],
+    'Helmet': ['Galea Helmet', 'Centurion Crest', 'Legionary Helm', 'Gladiator Mask', 'Thracian Helm', 'Montefortino Helm',
+               'Corinthian Helm', 'Praetorian Helm', 'Visored Helm'],
     'Armor': ['Lorica Segmentata', 'Lorica Hamata', 'Gladiator Cuirass', 'Bronze Breastplate', 'Lorica Squamata',
-              'Linothorax'],
+              'Linothorax', 'Muscle Cuirass', 'Lamellar Cuirass'],
     'Shield': ['Scutum Shield', 'Parma Round Shield', 'Tower Shield', 'Gladiator Buckler', 'Hoplite Aspis',
-               'Dacian Oval Shield'],
-    'Ring': ['Signet Ring', 'Iron Legion Ring', 'Serpent Ring'],
-    'Amulet': ['Imperial Amulet', 'Bulla Pendant', 'Golden Torc'],
-    'Gloves': ['Leather Gauntlets', 'Manica Arm Guard'],
-    'Shoes': ['Caligae Sandals', 'Bronze Greaves'],
+               'Dacian Oval Shield', 'Spiked Buckler'],
+    'Ring': ['Signet Ring', 'Iron Legion Ring', 'Serpent Ring', 'Jeweled Ring'],
+    'Amulet': ['Imperial Amulet', 'Bulla Pendant', 'Golden Torc', 'Emerald Necklace'],
+    'Gloves': ['Leather Gauntlets', 'Manica Arm Guard', 'Mailed Gauntlet'],
+    'Shoes': ['Caligae Sandals', 'Bronze Greaves', 'Legionary Boots', 'Armored Caligae'],
 }
 
 # Item name -> matching icon, so a "Trident" looks like a trident.
@@ -132,6 +133,19 @@ ICON_BY_NAME = {
     'Leather Gauntlets': 'gloves_1', 'Manica Arm Guard': 'gloves_2',
     'Caligae Sandals': 'shoes_1', 'Bronze Greaves': 'shoes_2', 'Greaves of Achilles': 'shoes_2',
 }
+# Icons from game-icons.net (CC BY 3.0, see CREDITS.md), painted in the game's style by the interface.
+ICON_BY_NAME.update({
+    'Centurion Sword': 'gi_broadsword', 'Dolabra Axe': 'gi_battle_axe', 'Flanged Mace': 'gi_flanged_mace',
+    'Falcata': 'gi_glaive', 'Spiked Club': 'gi_spiked_mace',
+    'Legionary Helm': 'gi_crested_helmet', 'Montefortino Helm': 'gi_light_helm', 'Corinthian Helm': 'gi_spartan_helmet',
+    'Praetorian Helm': 'gi_centurion_helmet', 'Visored Helm': 'gi_visored_helm',
+    'Bronze Breastplate': 'gi_breastplate', 'Muscle Cuirass': 'gi_abdominal_armor', 'Lamellar Cuirass': 'gi_lamellar',
+    'Linothorax': 'gi_leather_armor',
+    'Tower Shield': 'gi_bordered_shield', 'Hoplite Aspis': 'gi_round_shield', 'Spiked Buckler': 'gi_spiked_shield',
+    'Iron Legion Ring': 'gi_ring', 'Jeweled Ring': 'gi_diamond_ring',
+    'Bulla Pendant': 'gi_gem_pendant', 'Emerald Necklace': 'gi_emerald_necklace',
+    'Mailed Gauntlet': 'gi_gauntlet', 'Legionary Boots': 'gi_leather_boot', 'Armored Caligae': 'gi_metal_boot',
+})
 
 # --- Special effects ------------------------------------------------------------
 # Gear sets, Mythic items and temple blessings grant these effects (all whole numbers):

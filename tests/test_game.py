@@ -93,6 +93,24 @@ class ItemTests(unittest.TestCase):
             if item['Name'] == 'Halberd':
                 self.assertEqual(item['IconSvg'], 'weapon_5')
 
+    def test_licensed_icons_are_embedded_and_credited(self):
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        with open(os.path.join(root, 'aeterna', 'ui', 'index.html'), encoding='utf-8') as f:
+            page = f.read()
+        with open(os.path.join(root, 'CREDITS.md'), encoding='utf-8') as f:
+            credits = f.read()
+        block = page[page.index('const LICENSED_ICONS = '):]
+        embedded = json.loads(block[len('const LICENSED_ICONS = '):block.index(';\n')])
+        used = {icon for icon in data.ICON_BY_NAME.values() if icon.startswith('gi_')}
+        self.assertTrue(used)
+        self.assertLessEqual(used, set(embedded))
+        for name, icon in data.ICON_BY_NAME.items():
+            if icon.startswith('gi_'):
+                self.assertIn('| %s |' % name, credits)
+        for names in data.BASE_NAMES.values():
+            for name in names:
+                self.assertIn(name, data.ICON_BY_NAME)
+
     def test_display_name_and_sell_price(self):
         item = make_potion({'Name': 'Test', 'Price': 21})
         self.assertEqual(display_name(item), 'Test')

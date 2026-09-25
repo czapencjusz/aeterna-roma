@@ -1,5 +1,6 @@
-# Czapo presents, a steaming bowl of "It should probably maybe work?". It's a single player "clone" of Gladiatus, the browser game. It's in a proof of concept stage and the code is indeed written with the help of an AI agent.
 # Aeterna Roma - Hero of Rome
+
+*Czapo presents a steaming bowl of "It should probably maybe work?": a gladiator's rise from the arena sands to the gates of Olympus. It's a proof of concept, and the code is written with the help of an AI agent.*
 
 An offline, single-player ancient Roman RPG written in Python. The game runs entirely on your computer in its own window: no web server, no background process, no open network ports.
 
@@ -29,7 +30,7 @@ An offline, single-player ancient Roman RPG written in Python. The game runs ent
 - **Balanced progression**: monster strength, the XP curve and rewards were tuned with a built-in simulator (`python -m aeterna.balance`) so every region is winnable when it unlocks and stays worthwhile as you level. The same simulator fits the difficulty ratings to thousands of simulated fights (`python -m aeterna.balance --calibrate`).
 - **Rubies**: earned from dungeon bosses (mostly on the first conquest), Pantheon tasks, and arena milestones. Spend them to refill energy, skip the arena cooldown, or bring in new merchant wares.
 - **Animated combat reports**: fights play out line by line with live HP bars (Instant, Fast, or Normal speed).
-- **Hand-drawn vector art**: icons for every kind of gear, portraits for all 64 monsters and the 4 gladiator styles, scene banners for every region, dungeon and the Labors, and a player figure that changes with the gear you equip.
+- **Vector art**: icons for every kind of gear (hand-drawn, plus some openly licensed game-icons.net icons painted to match), portraits for all 64 monsters and the 4 gladiator styles, scene banners for every region, dungeon and the Labors, and a player figure that changes with the gear you equip.
 - **5 Custom Visual Themes**: Dark Imperial, Roman Parchment, Colosseum Crimson, Legion Emerald, and Tyrian Purple.
 
 ## Playing
@@ -70,6 +71,10 @@ Run `build.bat` on Windows. It installs PyInstaller and packs Python, the game a
   - *Browser version* (`game.html`): its progress lived in the browser's storage, which the Python version can't read. Open that version one last time, use **Settings → Export Save File**, then **Import Save File** here. If you no longer have it, download `game.html` from commit [`4df4255`](https://github.com/czapencjusz/aeterna-roma/blob/4df4255/game.html).
   - *Original C# version*: import its `savegame.json` (it sits next to the old `AeternaRoma.exe`).
 
+## Credits
+
+All art is hand-drawn SVG made for this game, except some item icons from [game-icons.net](https://game-icons.net) by Lorc, Delapouite and Willdabeast, used under [CC BY 3.0](https://creativecommons.org/licenses/by/3.0/) and recoloured in the game's style. [CREDITS.md](CREDITS.md) lists every icon and its author. To change the imported icons, edit `tools/import_game_icons.py` and run it against a clone of the [game-icons repository](https://github.com/game-icons/icons).
+
 ## Project layout
 
 ```
@@ -86,6 +91,8 @@ aeterna/
   storage.py           Save files, save location, single-instance lock
   api.py               Bridge between the window and the game
   ui/index.html        The interface: layout, styles, SVG art, and a thin script that draws what Python sends
+tools/
+  import_game_icons.py Imports the game-icons.net item icons and writes CREDITS.md
 tests/
   test_game.py         Rule tests:       python -m unittest discover -s tests
   e2e/ui_test.js       Interface test (needs Node.js + Playwright):   node tests/e2e/ui_test.js
