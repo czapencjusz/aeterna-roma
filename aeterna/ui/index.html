@@ -526,7 +526,10 @@
         .bag-grid .bag-item { position: absolute; width: auto; height: auto; margin: 0; box-sizing: border-box; border-radius: 4px; cursor: grab;
                               display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(20,14,10,.85); }
         .bag-grid .bag-item:hover { transform: none; filter: brightness(1.15); }
-        .bag-item .art-item, .doll-slot .art-item { width: 100%; height: 100%; }
+        /* Item icons fill a centred box sized to their block (beats the older fixed .inv-slot size). */
+        .icon-box { display: flex; align-items: center; justify-content: center; flex-shrink: 0; pointer-events: none; }
+        .bag-grid .bag-item .icon-box .art-item, .doll .doll-slot .icon-box .art-item, .drag-ghost .icon-box .art-item,
+        .icon-box .art-item { width: 100%; height: 100%; display: block; }
         .icon-tall { display: flex; align-items: center; justify-content: center; transform: rotate(-45deg); flex-shrink: 0; }
         .icon-tall .art-item { width: 100%; height: 100%; }
         .bag-item.overflow { outline: 2px dashed #ff5252; }
@@ -2997,7 +3000,8 @@
 
         const CELL = 46; // px per bag cell (matches --cell in the CSS)
         // Weapons with broad heads are drawn smaller so they fit their one-cell-wide space.
-        const TALL_SCALE = { gi_battle_axe: 0.62, weapon_9: 0.62, weapon_8: 0.8, gi_spiked_mace: 0.85, weapon_4: 0.85 };
+        // An upright icon's diagonal runs the full height, so the box is scaled to fit it (about 1/sqrt(2)).
+        const TALL_SCALE = { gi_battle_axe: 0.5, weapon_9: 0.52, weapon_8: 0.64, gi_spiked_mace: 0.68, weapon_4: 0.68 };
 
         function itemSize(item) { return view.bag.sizes[item.Type] || [1, 1]; }
 
@@ -3005,11 +3009,11 @@
         function itemIconHtml(item, w, h) {
             [w, h] = w ? [w, h] : itemSize(item);
             if (item.Type === 'Weapon' && h > w) {
-                const px = h * CELL * (TALL_SCALE[item.IconSvg] || 0.95);
-                return `<div class="icon-tall" style="width:${px}px; height:${px}px;">${getIcon(item.IconSvg)}</div>`;
+                const px = h * CELL * (TALL_SCALE[item.IconSvg] || 0.72);
+                return `<div class="icon-box icon-tall" style="width:${px}px; height:${px}px;">${getIcon(item.IconSvg)}</div>`;
             }
-            const px = Math.min(w, h) * CELL - 6;
-            return `<div style="width:${px}px; height:${px}px;">${getIcon(item.IconSvg)}</div>`;
+            const px = Math.min(w, h) * CELL - (Math.min(w, h) > 1 ? 10 : 4);
+            return `<div class="icon-box" style="width:${px}px; height:${px}px;">${getIcon(item.IconSvg)}</div>`;
         }
 
         function inventorySlotHtml(item, i, x, y, overflow) {
