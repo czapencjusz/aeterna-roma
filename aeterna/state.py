@@ -12,6 +12,7 @@ from .data import (ACHIEVEMENTS, ALCHEMIST_ITEMS, ARENA_COOLDOWN_MS, ARENA_MILES
                    BESTIARY, BLESSINGS, COMBAT_SPEEDS, DUNGEONS, GUILD_BUILDING_MAX, GUILD_BUILDINGS, HONOR_SHOP,
                    LABORS, LADDER_SIZE, LOCATIONS, QUEST_ABANDON_WAIT_MS, QUEST_KINDS, QUEST_SLOTS, SAVE_VERSION, SLOT_FOR_TYPE,
                    SLOTS, STAT_KEYS, THEMES, VENDOR_DEFS, VENDOR_STOCK_SIZE, WORK_OPTIONS)
+from . import bag
 from .items import blank_item, generate_item, make_potion, normalize_item
 from .rules import guild_level_from_buildings, recalc_stats, work_rates, xp_to_next
 from .util import clamp, is_number, pick, rand_int, roll, text, to_int, uid
@@ -96,6 +97,7 @@ def new_game_state(now):
     player['Equipment']['Chest'] = dict(blank_item(), Name='Tunic of Rome', Type='Armor', Armor=10, Price=45,
                                         IconSvg='armor_1', SmeltIron=1, SmeltBronze=1, SmeltLeather=2)
     player['Inventory'].append(make_potion({'Name': 'Health Potion', 'HealAmount': 50, 'Price': 20, 'IconSvg': 'potion_red'}))
+    bag.settle(player)
     recalc_stats(player)
     player['CurrentHP'] = player['MaxHP']
 
@@ -242,6 +244,7 @@ def _normalize_player(state, raw_player):
     if isinstance(rp.get('Inventory'), list):
         player['Inventory'].extend(item for item in map(normalize_item, rp['Inventory']) if item)
 
+    bag.settle(player)  # older saves have no bag positions; newer ones keep their arrangement
     recalc_stats(player)
     player['CurrentHP'] = to_int(rp.get('CurrentHP'), player['MaxHP'])
     recalc_stats(player)

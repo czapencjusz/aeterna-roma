@@ -4,12 +4,12 @@ Python owns every rule, so the UI never recalculates anything: it receives the
 raw state plus all derived numbers (damage, costs, scaled monster levels, ...).
 """
 
-from . import combat
+from . import bag, combat
 from .data import (ACHIEVEMENTS, ARENA_COOLDOWN_MS, ATTRIBUTES, BESTIARY, BLESSINGS, COMBAT_SPEEDS, DAILY_REWARDS,
                    DUNGEONS, EFFECTS, ENERGY_REGEN_PER_MIN, GUILD_BUILDING_MAX, GUILD_BUILDINGS, GUILD_COST,
                    GUILD_DONATIONS, HONOR_SHOP, LABOR_ENERGY_COST, LABORS, LABORS_COMPLETE_REWARD, LADDER_SIZE,
                    LOCATIONS, MAX_ENHANCE, RECIPES, RUBY_COST, SERIES_SIZES, SETS, SHIELD_BLOCK_BONUS, SLOT_FOR_TYPE,
-                   SLOTS, THEMES, UNIQUES, VENDOR_DEFS, WORK_OPTIONS, blessing_cost, reforge_cost)
+                   SLOTS, THEMES, UNIQUES, VENDOR_DEFS, WORK_OPTIONS, ITEM_SIZES, blessing_cost, reforge_cost)
 from .engine import daily_gold, dungeon_energy_cost
 from .items import is_equipment, sell_price
 from .rules import (all_effects, arena_title, describe_effects, equip_bonus, guild_bonus_level, guild_building_cost,
@@ -272,6 +272,8 @@ def build_view(game, save_path='', seq=0):
                    'finalEffects': describe_effects(LABORS_COMPLETE_REWARD['Effects'])},
         'daily': daily,
         'seriesSizes': SERIES_SIZES,
+        'bag': {'cols': bag.dims(p)[0], 'rows': bag.dims(p)[1], 'sizes': ITEM_SIZES, 'overflow': bag.overflow(p),
+                'slots': {slot: item_type for item_type, slot in SLOT_FOR_TYPE.items()}},
         'achievements': achievements,
         'temple': temple,
         'honorShop': honor_shop,

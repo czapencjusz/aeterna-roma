@@ -15,6 +15,7 @@ ITEM_TEMPLATE = {
     'SetId': '',     # gear set this item belongs to (see data.SETS), '' for none
     'Effects': {},   # special effects of Mythic items (see data.EFFECTS)
     'Locked': False,  # locked items can't be sold or smelted
+    'Pos': None,      # top-left cell [x, y] in the bag grid (see bag.py); None when equipped or not placed
 }
 ITEM_NUMERIC_FIELDS = [k for k, v in ITEM_TEMPLATE.items() if isinstance(v, int) and not isinstance(v, bool)]
 
@@ -204,6 +205,9 @@ def normalize_item(raw):
     item['Upgrade'] = clamp(item['Upgrade'], 0, MAX_ENHANCE)
     item['SetId'] = raw.get('SetId') if raw.get('SetId') in SETS else ''
     item['Locked'] = raw.get('Locked') is True
+    pos = raw.get('Pos')
+    item['Pos'] = [pos[0], pos[1]] if (isinstance(pos, list) and len(pos) == 2
+                                      and all(isinstance(v, int) and not isinstance(v, bool) for v in pos)) else None
     raw_effects = raw.get('Effects') if isinstance(raw.get('Effects'), dict) else {}
     item['Effects'] = {key: clamp(to_int(value, 0), 0, EFFECT_CAPS.get(key, 100))
                        for key, value in raw_effects.items() if key in EFFECTS and to_int(value, 0) > 0}

@@ -34,6 +34,8 @@ class Api:
 
     def _respond(self, result=None, save=True):
         game = self._game
+        from . import bag
+        bag.settle(game.player)  # items added directly (old saves, tests) get a place in the bag
         if save:
             self._save()
         notices = self._startup_notices + game.take_notices()
@@ -116,8 +118,11 @@ class Api:
     def use_potion(self, inventory_index):
         return self._run(self._game.use_potion, inventory_index)
 
-    def unequip(self, slot):
-        return self._run(self._game.unequip, slot)
+    def unequip(self, slot, x=None, y=None):
+        return self._run(self._game.unequip, slot, x, y)
+
+    def move_item(self, inventory_index, x, y):
+        return self._run(self._game.move_item, inventory_index, x, y)
 
     def sell(self, inventory_index):
         return self._run(self._game.sell, inventory_index)
@@ -150,8 +155,8 @@ class Api:
     def enhance(self, location, key):
         return self._run(self._game.enhance, location, key)
 
-    def buy(self, vendor_key, item_index):
-        return self._run(self._game.buy, vendor_key, item_index)
+    def buy(self, vendor_key, item_index, x=None, y=None):
+        return self._run(self._game.buy, vendor_key, item_index, x, y)
 
     # --- work, guild, quests, rubies ----------------------------------------------------------
 

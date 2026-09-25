@@ -237,14 +237,26 @@ def blessing_cost(level):
 
 # Honor shop: Honor from arena wins buys permanent upgrades and treasures.
 HONOR_SHOP = {
-    'satchel': {'Name': 'Larger Satchel', 'Icon': '🎒', 'Desc': '+4 inventory slots', 'Max': 6, 'Base': 150, 'Step': 125},
+    'satchel': {'Name': 'Larger Satchel', 'Icon': '🎒', 'Desc': 'One more row in your bag', 'Max': 6, 'Base': 150, 'Step': 125},
     'favor': {'Name': "Emperor's Favor", 'Icon': '👑', 'Desc': '+1 to all six attributes, permanently', 'Max': 10,
               'Base': 200, 'Step': 150},
     'tribute': {'Name': "Gladiator's Tribute", 'Icon': '🎁', 'Desc': 'A random Murmillo of Capua set piece at your level',
                 'Max': None, 'Base': 300, 'Step': 0},
     'ruby': {'Name': 'Imperial Ruby', 'Icon': '💎', 'Desc': 'Trade Honor for a ruby', 'Max': None, 'Base': 120, 'Step': 0},
 }
-SATCHEL_SLOTS = 4
+SATCHEL_SLOTS = 4  # each Larger Satchel adds this much capacity (one row of the bag)
+
+# The bag is a grid. Items take up space by type (width, height in cells).
+BAG_COLS = 8
+ITEM_SIZES = {
+    'Weapon': (1, 3), 'Armor': (2, 3), 'Helmet': (2, 2), 'Shield': (2, 2), 'Gloves': (2, 2), 'Shoes': (2, 2),
+    'Ring': (1, 1), 'Amulet': (1, 1), 'Potion': (1, 1), 'Material': (1, 1),
+}
+
+
+def bag_rows(capacity):
+    """Rows in the bag for an InventoryCapacity (24 -> 9 rows; each satchel adds a row)."""
+    return max(3, min(30, capacity // SATCHEL_SLOTS + 3))
 
 
 def _ach(id_, name, desc, stat, goal, rubies):
@@ -543,7 +555,7 @@ STAT_KEYS = ['FightsWon', 'FightsLost', 'MonstersSlain', 'ArenaWins', 'ArenaLoss
 
 QUEST_KINDS = ['expedition', 'monster', 'arena', 'dungeon']
 
-SAVE_VERSION = 5
+SAVE_VERSION = 6
 
 # Every creature that can be fought, for the Bestiary (in area order).
 BESTIARY = ([m['Name'] for loc in sorted(LOCATIONS, key=lambda l: l['ReqLevel']) for m in loc['Monsters']]

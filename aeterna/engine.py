@@ -7,7 +7,7 @@ unchanged. Fights return a combat-result dict for the combat report.
 
 import math
 
-from . import combat
+from . import bag, combat
 from .data import (ACHIEVEMENTS, ARENA_COOLDOWN_MS, ARENA_MILESTONES, ARENA_SET_DROP_CHANCE, ATTRIBUTES, BESTIARY,
                    BLESSINGS, COMBAT_SPEEDS, DAILY_REWARDS, DUNGEON_ENERGY_COST, DUNGEONS, ENERGY_REGEN_PER_MIN,
                    EQUIP_TYPES, GUILD_BUILDING_MAX, GUILD_BUILDINGS, GUILD_COST, GUILD_DONATIONS, HONOR_SHOP,
@@ -204,10 +204,9 @@ class Game:
     def give_loot(self, result, item):
         """Puts a found item in the bag (or notes that there was no room)."""
         p, stats = self.player, self.state['Stats']
-        if len(p['Inventory']) >= p['InventoryCapacity']:
-            result['Notes'].append('You found %s, but your inventory is full.' % display_name(item))
+        if not bag.add(p, item):
+            result['Notes'].append('You found %s, but there is no room in your bag.' % display_name(item))
             return False
-        p['Inventory'].append(item)
         result['Loot'].append(item)
         stats['ItemsLooted'] += 1
         if item.get('SetId'):
@@ -550,9 +549,15 @@ class Game:
         if p['Level'] < item['LevelRequirement']:
             self.notify('You must be level %d to equip this.' % item['LevelRequirement'])
             return
+        bag.settle(p)
+        old_pos = item['Pos']
         del p['Inventory'][idx]
-        if p['Equipment'][slot]:
-            p['Inventory'].append(p['Equipment'][slot])
+        worn = p['Equipment'][slot]
+        if worn and not bag.add(p, worn, old_pos):
+            p['Inventory'].insert(idx, item)  # no room for the swapped-out item: undo
+            self.notify('There is no room in your bag for your %s.' % display_name(worn))
+            return
+        item['Pos'] = None
         p['Equipment'][slot] = item
         recalc_stats(p)
 
@@ -574,16 +579,31 @@ class Game:
         if item['EnergyAmount'] > 0:
             p['CurrentEnergy'] = min(p['MaxEnergy'], p['CurrentEnergy'] + item['EnergyAmount'])
 
-    def unequip(self, slot):
+    def unequip(self, slot, x=None, y=None):
+        """Takes off the item in `slot`, into bag cell (x, y) when given and free, else the first free spot."""
         p = self.player
         if slot not in SLOTS or not p['Equipment'][slot]:
             return
-        if len(p['Inventory']) >= p['InventoryCapacity']:
-            self.notify('Your inventory is full.')
+        pos = [to_int(x, -1), to_int(y, -1)] if x is not None and y is not None else None
+        if not bag.add(p, p['Equipment'][slot], pos):
+            self.notify('There is no room in your bag.')
             return
-        p['Inventory'].append(p['Equipment'][slot])
         p['Equipment'][slot] = None
         recalc_stats(p)
+
+    def move_item(self, inventory_index, x, y):
+        """Moves a bag item so its top-left corner is at cell (x, y)."""
+        p = self.player
+        idx = _index(inventory_index, p['Inventory'])
+        if idx is None:
+            return
+        bag.settle(p)
+        item = p['Inventory'][idx]
+        x, y = to_int(x, -1), to_int(y, -1)
+        if bag.fits_at(p, item, x, y, ignore=item):
+            item['Pos'] = [x, y]
+        else:
+            self.notify("%s doesn't fit there." % display_name(item))
 
     def _unlocked_item(self, inventory_index):
         """Inventory index of an item that may be sold or smelted, or None (with a message if locked)."""
@@ -612,6 +632,7 @@ class Game:
                     -item['LevelRequirement'], -item['Upgrade'], display_name(item),
                     -(item['HealAmount'] + item['EnergyAmount']))
         self.player['Inventory'].sort(key=key)
+        bag.repack(self.player)
 
     def sell(self, inventory_index):
         p = self.player
@@ -667,8 +688,8 @@ class Game:
                 or s['RubyStash'] < recipe['ReqRuby'] or s['LeatherStash'] < recipe['ReqLeather']):
             self.notify('Not enough materials. Smelt unwanted gear to gather more.')
             return
-        if len(p['Inventory']) >= p['InventoryCapacity']:
-            self.notify('Your inventory is full.')
+        if not bag.can_add(p, {'Type': recipe['ResultType']}):
+            self.notify('There is no room in your bag for a new %s.' % recipe['ResultType'].lower())
             return
         s['IronStash'] -= recipe['ReqIron']
         s['BronzeStash'] -= recipe['ReqBronze']
@@ -676,7 +697,7 @@ class Game:
         s['LeatherStash'] -= recipe['ReqLeather']
         item = generate_item(p['Level'], recipe['ResultType'], recipe['ResultRarity'])
         item.update(Name=recipe['Name'], Prefix='', Suffix='', IconSvg=recipe['IconSvg'])
-        p['Inventory'].append(item)
+        bag.add(p, item)
         s['Stats']['ItemsCrafted'] += 1
         self.notify('🔨 Forged %s!' % item['Name'])
 
@@ -770,7 +791,7 @@ class Game:
 
     # ---------------------------------------------------------------- merchants
 
-    def buy(self, vendor_key, item_index):
+    def buy(self, vendor_key, item_index, x=None, y=None):
         definition = VENDOR_DEFS.get(vendor_key)
         if not definition:
             return
@@ -783,16 +804,15 @@ class Game:
         if p['Gold'] < item['Price']:
             self.notify('You need %d gold.' % item['Price'])
             return
-        if len(p['Inventory']) >= p['InventoryCapacity']:
-            self.notify('Your inventory is full.')
+        pos = [to_int(x, -1), to_int(y, -1)] if x is not None and y is not None else None
+        bought = item if definition['Stock'] else dict(item, Id=uid())  # the apothecary never runs out of potions
+        if not bag.add(p, bought, pos):
+            self.notify('There is no room in your bag.')
             return
         p['Gold'] -= item['Price']
         if definition['Stock']:
             del vendor['Items'][idx]
-            p['Inventory'].append(item)
             vendor['Items'].append(generate_item(p['Level'], pick(definition['Stock'])))
-        else:
-            p['Inventory'].append(dict(item, Id=uid()))  # the apothecary never runs out of potions
 
     # ----------------------------------------------------------------- villa work
 
@@ -925,8 +945,9 @@ class Game:
         if p['Honor'] < cost:
             self.notify('%s costs %d Honor. Win arena bouts to earn more.' % (ware['Name'], cost))
             return
-        if key == 'tribute' and len(p['Inventory']) >= p['InventoryCapacity']:
-            self.notify('Your inventory is full.')
+        tribute = make_set_piece('murmillo', p['Level']) if key == 'tribute' else None
+        if tribute and not bag.can_add(p, tribute):
+            self.notify('There is no room in your bag.')
             return
         p['Honor'] -= cost
         s['Stats']['HonorSpent'] += cost
@@ -938,10 +959,9 @@ class Game:
                 p['Base' + attr] += 1
             recalc_stats(p)
         elif key == 'tribute':
-            item = make_set_piece('murmillo', p['Level'])
-            p['Inventory'].append(item)
+            bag.add(p, tribute)
             s['Stats']['SetPiecesFound'] += 1
-            self.notify('🎁 The sponsor of the games sends you: %s' % display_name(item))
+            self.notify('🎁 The sponsor of the games sends you: %s' % display_name(tribute))
         elif key == 'ruby':
             self.add_rubies(1)
         if key != 'tribute':
@@ -998,8 +1018,9 @@ class Game:
             return
         s, p = self.state, self.player
         reward = DAILY_REWARDS[(streak - 1) % len(DAILY_REWARDS)]
-        if reward.get('Item') and len(p['Inventory']) >= p['InventoryCapacity']:
-            self.notify("Make room in your inventory first: today's decree includes a piece of gear.")
+        gift = generate_item(p['Level'], rarity=reward['Item']) if reward.get('Item') else None
+        if gift and not bag.can_add(p, gift):
+            self.notify("Make room in your bag first: today's decree includes a piece of gear.")
             return
         s['Daily'] = {'LastDay': day_number(self.clock()), 'Streak': streak}
         s['Stats']['DailyClaims'] += 1
@@ -1020,10 +1041,9 @@ class Game:
         if reward.get('Rubies'):
             self.add_rubies(reward['Rubies'])
             parts.append(rubies_text(reward['Rubies']))
-        if reward.get('Item'):
-            item = generate_item(p['Level'], rarity=reward['Item'])
-            p['Inventory'].append(item)
-            parts.append(display_name(item))
+        if gift:
+            bag.add(p, gift)
+            parts.append(display_name(gift))
         self.notify('📜 Imperial Decree, day %d: %s.' % (streak, ', '.join(parts)))
 
     # ------------------------------------------------------------------ ruby shop

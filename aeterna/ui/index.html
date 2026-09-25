@@ -505,6 +505,50 @@
         @keyframes levelup-pop { from { transform: scale(.6); opacity: 0; } 70% { transform: scale(1.08); } to { transform: scale(1); opacity: 1; } }
         .series-line { display: flex; justify-content: space-between; gap: 10px; padding: 5px 8px; border-left: 3px solid #4caf50; margin-bottom: 4px; background: rgba(255,255,255,.03); font-size: 13px; }
         .series-line.lost { border-left-color: #f44336; }
+        /* Paper doll and grid bag (cell size must match CELL in the script) */
+        :root { --cell: 46px; }
+        .gear-layout { display: flex; gap: 24px; flex-wrap: wrap; align-items: flex-start; margin-bottom: 6px; }
+        .gear-heading { font-family: 'Cinzel', serif; color: var(--text-gold); margin-bottom: 8px; }
+        .doll { position: relative; display: grid; grid-template-columns: repeat(5, var(--cell)); grid-template-rows: repeat(7, var(--cell));
+                padding: 8px; border: 1px solid var(--border-gold); border-radius: 8px;
+                background: radial-gradient(circle at 50% 45%, rgba(197,160,89,.14), rgba(0,0,0,.55) 70%); }
+        .doll-figure { position: absolute; inset: 8px; display: flex; align-items: center; justify-content: center; opacity: .22; pointer-events: none; }
+        .doll-figure svg { height: 100%; width: auto; }
+        .doll-slot { position: relative; margin: 2px; border: 1px dashed rgba(197,160,89,.55); border-radius: 5px; background: rgba(0,0,0,.45);
+                     display: flex; align-items: center; justify-content: center; cursor: grab; overflow: hidden; }
+        .doll-slot.empty { cursor: default; }
+        .doll-slot.empty::after { content: attr(data-slot); font-size: 9px; color: #777; text-transform: uppercase; letter-spacing: .5px; }
+        .doll-slot:not(.empty) { border-style: solid; }
+        .bag-grid { position: relative; border: 1px solid var(--border-gold); border-radius: 6px; box-sizing: content-box;
+                    background-color: rgba(0,0,0,.45);
+                    background-image: linear-gradient(rgba(197,160,89,.16) 1px, transparent 1px), linear-gradient(90deg, rgba(197,160,89,.16) 1px, transparent 1px);
+                    background-size: var(--cell) var(--cell); background-repeat: repeat; }
+        .bag-grid .bag-item { position: absolute; width: auto; height: auto; margin: 0; box-sizing: border-box; border-radius: 4px; cursor: grab;
+                              display: flex; align-items: center; justify-content: center; overflow: hidden; background: rgba(20,14,10,.85); }
+        .bag-grid .bag-item:hover { transform: none; filter: brightness(1.15); }
+        .bag-item .art-item, .doll-slot .art-item { width: 100%; height: 100%; }
+        .icon-tall { display: flex; align-items: center; justify-content: center; transform: rotate(-45deg); flex-shrink: 0; }
+        .icon-tall .art-item { width: 100%; height: 100%; }
+        .bag-item.overflow { outline: 2px dashed #ff5252; }
+        .bag-overflow-label { position: absolute; left: 0; font-size: 11px; color: #ff8a80; }
+        .bag-hint { font-size: 11px; margin-top: 6px; max-width: 380px; }
+        .btn-small { padding: 4px 10px; font-size: 12px; }
+        .shop-layout { display: flex; gap: 18px; align-items: flex-start; flex-wrap: wrap; }
+        .shop-layout .merchant-grid { flex: 1; min-width: 300px; }
+        .shop-bag-box { position: sticky; top: 10px; }
+        .shop-card { cursor: grab; }
+        /* dragging */
+        body.dragging, body.dragging * { cursor: grabbing !important; user-select: none; }
+        .drag-ghost { position: fixed; z-index: 4000; pointer-events: none; opacity: .85; border-radius: 4px;
+                      display: flex; align-items: center; justify-content: center; overflow: hidden;
+                      background: rgba(20,14,10,.8); border: 2px solid var(--text-gold); box-shadow: 0 8px 22px rgba(0,0,0,.6); }
+        .drag-source { opacity: .35; }
+        .drop-hint { position: absolute; pointer-events: none; border-radius: 4px; z-index: 5; }
+        .drop-ok { background: rgba(102,187,106,.28); outline: 2px solid #66bb6a; }
+        .drop-bad { background: rgba(255,82,82,.25); outline: 2px solid #ff5252; }
+        .doll-slot.drop-ok, .doll-slot.drop-bad { border-style: solid; }
+        .shop-drop.drop-ok { outline: 2px dashed #ffd700; outline-offset: 4px; border-radius: 6px; }
+
         .toast.toast-gold { border-color: #ffd700; box-shadow: 0 0 14px rgba(255,215,0,.45); color: #ffe082; }
         .kbd { display: inline-block; padding: 0 5px; border: 1px solid #777; border-radius: 3px; font-family: monospace; font-size: 11px; }
 
@@ -877,18 +921,6 @@
                 <div class="stat-bar-label"><span>Arena Rank</span><span id="statRank">#10</span></div>
             </div>
 
-            <!-- EQUIPMENT SLOTS -->
-            <div style="font-family:'Cinzel',serif; font-size:12px; color:var(--text-gold); text-align:center; margin-top:5px;">EQUIPPED GEAR <span class="muted">(click to unequip)</span></div>
-            <div class="equipment-grid">
-                <div class="equip-slot empty" data-slot="Head" id="slot-Head" onclick="unequipSlot('Head')"></div>
-                <div class="equip-slot empty" data-slot="Chest" id="slot-Chest" onclick="unequipSlot('Chest')"></div>
-                <div class="equip-slot empty" data-slot="Gloves" id="slot-Gloves" onclick="unequipSlot('Gloves')"></div>
-                <div class="equip-slot empty" data-slot="Shoes" id="slot-Shoes" onclick="unequipSlot('Shoes')"></div>
-                <div class="equip-slot empty" data-slot="Weapon" id="slot-Weapon" onclick="unequipSlot('Weapon')"></div>
-                <div class="equip-slot empty" data-slot="Shield" id="slot-Shield" onclick="unequipSlot('Shield')"></div>
-                <div class="equip-slot empty" data-slot="Ring" id="slot-Ring" onclick="unequipSlot('Ring')"></div>
-                <div class="equip-slot empty" data-slot="Amulet" id="slot-Amulet" onclick="unequipSlot('Amulet')"></div>
-            </div>
         </div>
 
         <!-- MAIN PANEL -->
@@ -922,6 +954,34 @@
 
                     <div id="ovSubtab-base">
                         <h2 class="tab-title">Gladiator Overview</h2>
+                        <div class="gear-layout">
+                            <div class="doll-box">
+                                <h4 class="gear-heading">Equipped</h4>
+                                <div class="doll" id="dollContainer">
+                                    <div class="doll-figure" id="dollFigure"></div>
+                                    <div class="doll-slot empty" data-slot="Head" id="slot-Head" data-drag="slot" style="grid-column:2 / span 2; grid-row:1 / span 2;"></div>
+                                    <div class="doll-slot empty" data-slot="Amulet" id="slot-Amulet" data-drag="slot" style="grid-column:4 / span 1; grid-row:1 / span 1;"></div>
+                                    <div class="doll-slot empty" data-slot="Weapon" id="slot-Weapon" data-drag="slot" style="grid-column:1 / span 1; grid-row:3 / span 3;"></div>
+                                    <div class="doll-slot empty" data-slot="Chest" id="slot-Chest" data-drag="slot" style="grid-column:2 / span 2; grid-row:3 / span 3;"></div>
+                                    <div class="doll-slot empty" data-slot="Shield" id="slot-Shield" data-drag="slot" style="grid-column:4 / span 2; grid-row:3 / span 2;"></div>
+                                    <div class="doll-slot empty" data-slot="Gloves" id="slot-Gloves" data-drag="slot" style="grid-column:4 / span 2; grid-row:5 / span 2;"></div>
+                                    <div class="doll-slot empty" data-slot="Ring" id="slot-Ring" data-drag="slot" style="grid-column:1 / span 1; grid-row:6 / span 1;"></div>
+                                    <div class="doll-slot empty" data-slot="Shoes" id="slot-Shoes" data-drag="slot" style="grid-column:2 / span 2; grid-row:6 / span 2;"></div>
+                                </div>
+                            </div>
+                            <div class="bag-box">
+                                <div class="gear-heading" style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+                                    <h4 style="margin:0;">Bag <span class="muted" id="invCount"></span></h4>
+                                    <span class="btn-row-tight">
+                                        <button class="btn-roman btn-small" onclick="sortInventory()" title="Order by slot, rarity and level, and pack tightly">↕️ Sort</button>
+                                        <button class="btn-roman btn-small" onclick="sellJunk()" title="Sells common, un-enhanced, unlocked gear">🪙 Sell Common</button>
+                                    </span>
+                                </div>
+                                <div class="bag-grid" id="inventoryContainer"></div>
+                                <p class="muted bag-hint">Drag items onto your gladiator to equip them, or around the bag to arrange them. Double-click to equip or drink.</p>
+                            </div>
+                        </div>
+                        <div id="selectedItemPanel" class="info-box" style="margin:10px 0 20px; display:none;"></div>
                         <div class="overview-grid">
                             <div>
                                 <h4 style="color:var(--text-accent); margin-bottom:10px;">Core Attributes</h4>
@@ -944,15 +1004,6 @@
                             </div>
                         </div>
 
-                        <div style="display:flex; justify-content:space-between; align-items:center; margin-top:25px; gap:10px; flex-wrap:wrap;">
-                            <h3 style="font-family:'Cinzel',serif; color:var(--text-gold);">Inventory Items <span class="muted" id="invCount"></span></h3>
-                            <span class="btn-row-tight">
-                                <button class="btn-roman" onclick="sortInventory()" title="Order by slot, rarity and level">↕️ Sort</button>
-                                <button class="btn-roman" onclick="sellJunk()" title="Sells common, un-enhanced, unlocked gear">🪙 Sell Common Gear</button>
-                            </span>
-                        </div>
-                        <div class="inventory-grid" id="inventoryContainer"></div>
-                        <div id="selectedItemPanel" class="info-box" style="margin-top:15px; display:none;"></div>
                     </div>
 
                     <div id="ovSubtab-hidden" style="display:none;">
@@ -1053,7 +1104,14 @@
                         <span id="vendorInfo"></span>
                         <button class="btn-mini" id="btnRestock" onclick="rubyRestockVendor()">💎 1 New wares</button>
                     </div>
-                    <div class="merchant-grid" id="merchantContainer"></div>
+                    <div class="shop-layout">
+                        <div class="merchant-grid shop-drop" id="merchantContainer"></div>
+                        <div class="bag-box shop-bag-box">
+                            <h4 class="gear-heading">Your Bag</h4>
+                            <div class="bag-grid" id="shopBag"></div>
+                            <p class="muted bag-hint">Drag wares into your bag to buy them, and drag your items onto the merchant's stall to sell.</p>
+                        </div>
+                    </div>
                 </div>
 
                 <!-- FORGE TAB -->
@@ -2674,7 +2732,9 @@
         function selectInventoryItem(i) {
             playAudio('click');
             selectedInventoryIndex = i;
-            renderInventory();
+            // Update the highlight in place: re-drawing the bag would swallow a double-click.
+            document.querySelectorAll('[data-inv]').forEach(el => el.classList.toggle('selected', Number(el.dataset.inv) === i));
+            renderSelectedItem();
         }
 
         // --------------------------------------------------- audio, theme, toasts
@@ -2779,7 +2839,8 @@
         }
         document.addEventListener('mouseover', e => {
             const tip = document.getElementById('itemTooltip');
-            const el = e.target.closest && e.target.closest('[data-inv], .equip-slot[data-slot]');
+            if (drag) return;
+            const el = e.target.closest && e.target.closest('[data-inv], .doll-slot[data-slot]');
             const found = tooltipItem(el);
             if (!found) { tip.style.display = 'none'; return; }
             tip.innerHTML = itemDetailsHtml(found.item) + (found.cmp ? itemComparisonHtml(found.cmp) : '') +
@@ -2833,15 +2894,16 @@
         function renderEquipment() {
             const p = view.state.Player;
             document.getElementById('avatarContainer').innerHTML = ART.avatar(p.Equipment);
+            document.getElementById('dollFigure').innerHTML = ART.avatar(p.Equipment, 'art');
             SLOTS.forEach(slot => {
                 const el = document.getElementById(`slot-${slot}`);
                 const item = p.Equipment[slot];
                 if (item) {
-                    el.className = `equip-slot rarity-${item.Rarity}`;
-                    el.innerHTML = getIcon(item.IconSvg);
-                    el.title = 'Click to unequip';
+                    el.className = `doll-slot rarity-${item.Rarity}`;
+                    el.innerHTML = itemIconHtml(item);
+                    el.title = '';
                 } else {
-                    el.className = 'equip-slot empty';
+                    el.className = 'doll-slot empty';
                     el.innerHTML = '';
                     el.title = slot;
                 }
@@ -2933,23 +2995,54 @@
                 </div>`).join('');
         }
 
-        function inventorySlotHtml(item, i) {
+        const CELL = 46; // px per bag cell (matches --cell in the CSS)
+        // Weapons with broad heads are drawn smaller so they fit their one-cell-wide space.
+        const TALL_SCALE = { gi_battle_axe: 0.62, weapon_9: 0.62, weapon_8: 0.8, gi_spiked_mace: 0.85, weapon_4: 0.85 };
+
+        function itemSize(item) { return view.bag.sizes[item.Type] || [1, 1]; }
+
+        // An item's icon for a w x h cell box. Long weapons stand upright in their 1x3 space.
+        function itemIconHtml(item, w, h) {
+            [w, h] = w ? [w, h] : itemSize(item);
+            if (item.Type === 'Weapon' && h > w) {
+                const px = h * CELL * (TALL_SCALE[item.IconSvg] || 0.95);
+                return `<div class="icon-tall" style="width:${px}px; height:${px}px;">${getIcon(item.IconSvg)}</div>`;
+            }
+            const px = Math.min(w, h) * CELL - 6;
+            return `<div style="width:${px}px; height:${px}px;">${getIcon(item.IconSvg)}</div>`;
+        }
+
+        function inventorySlotHtml(item, i, x, y, overflow) {
+            const [w, h] = overflow ? [1, 1] : itemSize(item);
             const badges = (item.Locked ? '<span class="slot-badge lock">🔒</span>' : '') +
                 (item.SetId ? '<span class="slot-badge set">🧩</span>' : '') +
                 (item.Upgrade ? `<span class="slot-badge upg">+${item.Upgrade}</span>` : '');
-            return `<div class="inv-slot rarity-${esc(item.Rarity)} ${selectedInventoryIndex === i ? 'selected' : ''}" data-inv="${i}" onclick="selectInventoryItem(${i})">${getIcon(item.IconSvg)}${badges}</div>`;
+            const style = `left:${x * CELL}px; top:${y * CELL}px; width:${w * CELL}px; height:${h * CELL}px;`;
+            return `<div class="inv-slot bag-item rarity-${esc(item.Rarity)} ${overflow ? 'overflow' : ''} ${selectedInventoryIndex === i ? 'selected' : ''}" data-inv="${i}" data-drag="bag" style="${style}">${itemIconHtml(item, w, h)}${badges}</div>`;
+        }
+
+        // Draws the bag grid into `el` (the Gladiator tab and the Merchants tab each have one).
+        function renderBag(el) {
+            const p = view.state.Player;
+            const { cols, rows, overflow } = view.bag;
+            let html = '';
+            p.Inventory.forEach((item, i) => {
+                if (item.Pos) html += inventorySlotHtml(item, i, item.Pos[0], item.Pos[1], false);
+                else html += inventorySlotHtml(item, i, overflow.indexOf(i), rows + 0.5, true);
+            });
+            if (overflow.length) html += `<div class="bag-overflow-label" style="top:${rows * CELL + 2}px;">No room in the bag for these: sell them or make space.</div>`;
+            el.style.width = `${cols * CELL}px`;
+            el.style.height = `${rows * CELL}px`;
+            el.style.marginBottom = overflow.length ? `${CELL * 1.6}px` : '0';
+            el.innerHTML = html;
         }
 
         function renderInventory() {
             const p = view.state.Player;
-            let html = '';
-            for (let i = 0; i < p.InventoryCapacity; i++) {
-                html += p.Inventory[i] ? inventorySlotHtml(p.Inventory[i], i) : `<div class="inv-slot empty-slot"></div>`;
-            }
-            // Items beyond capacity (possible with imported saves) stay visible so they can be sold.
-            for (let i = p.InventoryCapacity; i < p.Inventory.length; i++) html += inventorySlotHtml(p.Inventory[i], i);
-            document.getElementById('inventoryContainer').innerHTML = html;
-            document.getElementById('invCount').innerText = `(${p.Inventory.length}/${p.InventoryCapacity})`;
+            renderBag(document.getElementById('inventoryContainer'));
+            renderBag(document.getElementById('shopBag'));
+            const used = p.Inventory.filter(it => it.Pos).reduce((n, it) => n + itemSize(it)[0] * itemSize(it)[1], 0);
+            document.getElementById('invCount').innerText = `(${p.Inventory.length} items · ${used}/${view.bag.cols * view.bag.rows} spaces)`;
             renderSelectedItem();
         }
 
@@ -3157,7 +3250,7 @@
             restock.disabled = view.state.Player.Rubies < view.rubyCosts.restock;
 
             const gold = view.state.Player.Gold;
-            document.getElementById('merchantContainer').innerHTML = view.state.Vendors[currentVendor].Items.map((item, idx) => `<div class="exp-card">
+            document.getElementById('merchantContainer').innerHTML = view.state.Vendors[currentVendor].Items.map((item, idx) => `<div class="exp-card shop-card" data-drag="shop" data-vendor="${currentVendor}" data-index="${idx}" title="Drag into your bag to buy">
                     ${itemDetailsHtml(item)}
                     <button class="btn-roman btn-gold" onclick="buyItem('${currentVendor}', ${idx})" ${gold < item.Price ? 'disabled' : ''}>Buy (${item.Price} Gold)</button>
                 </div>`).join('');
@@ -3478,6 +3571,172 @@
             document.getElementById('combatModal').classList.remove('open');
             if (wasPlaying) flushPendingView(); // closed mid-report: show the real state now
         }
+
+        // ------------------------------------------------------------ drag and drop
+        // Items can be dragged from the bag, the paper doll and the merchant's stall. The page only
+        // shows where an item would land; Python checks every move and has the final say.
+
+        let drag = null;
+
+        function dragItem(d) {
+            const p = view.state.Player;
+            if (d.kind === 'bag') return p.Inventory[d.index];
+            if (d.kind === 'slot') return p.Equipment[d.slot];
+            if (d.kind === 'shop') return view.state.Vendors[d.vendor].Items[d.index];
+            return null;
+        }
+
+        // Client-side preview of Python's fit check (bag.fits_at).
+        function bagFits(item, x, y, ignoreIndex) {
+            const [w, h] = itemSize(item);
+            if (x < 0 || y < 0 || x + w > view.bag.cols || y + h > view.bag.rows) return false;
+            return !view.state.Player.Inventory.some((other, i) => {
+                if (i === ignoreIndex || !other.Pos) return false;
+                const [ow, oh] = itemSize(other);
+                return x < other.Pos[0] + ow && other.Pos[0] < x + w && y < other.Pos[1] + oh && other.Pos[1] < y + h;
+            });
+        }
+
+        function clearDropHints() {
+            document.querySelectorAll('.drop-hint').forEach(el => el.remove());
+            document.querySelectorAll('.drop-ok, .drop-bad').forEach(el => el.classList.remove('drop-ok', 'drop-bad'));
+        }
+
+        // What is under the pointer: a bag cell, a doll slot, the merchant's stall, or nothing.
+        function dropTarget(e) {
+            const under = document.elementFromPoint(e.clientX, e.clientY);
+            if (!under) return null;
+            const slotEl = under.closest('.doll-slot');
+            if (slotEl) return { kind: 'slot', el: slotEl, slot: slotEl.dataset.slot };
+            const bagEl = under.closest('.bag-grid');
+            if (bagEl) {
+                const r = bagEl.getBoundingClientRect();
+                const [w, h] = itemSize(drag.item);
+                // The grabbed point of the item follows the pointer; snap its top-left corner to a cell.
+                const x = Math.round((e.clientX - r.left - drag.grabX) / CELL);
+                const y = Math.round((e.clientY - r.top - drag.grabY) / CELL);
+                return { kind: 'bag', el: bagEl, x: clamp(x, 0, view.bag.cols - w), y: clamp(y, 0, view.bag.rows - h) };
+            }
+            const shopEl = under.closest('.shop-drop');
+            if (shopEl) return { kind: 'shop', el: shopEl };
+            return null;
+        }
+
+        function targetAllowed(t) {
+            if (!t) return false;
+            const item = drag.item;
+            if (t.kind === 'slot') return drag.kind === 'bag' && view.bag.slots[t.slot] === item.Type;
+            if (t.kind === 'bag') return bagFits(item, t.x, t.y, drag.kind === 'bag' ? drag.index : -1);
+            if (t.kind === 'shop') return drag.kind === 'bag' && !item.Locked && !!document.getElementById('tab-merchants').classList.contains('active');
+            return false;
+        }
+
+        function showDropHint(t) {
+            clearDropHints();
+            if (!t) return;
+            const ok = targetAllowed(t);
+            if (t.kind === 'bag') {
+                const [w, h] = itemSize(drag.item);
+                const hint = document.createElement('div');
+                hint.className = 'drop-hint ' + (ok ? 'drop-ok' : 'drop-bad');
+                Object.assign(hint.style, { left: `${t.x * CELL}px`, top: `${t.y * CELL}px`, width: `${w * CELL}px`, height: `${h * CELL}px` });
+                t.el.appendChild(hint);
+            } else {
+                t.el.classList.add(ok ? 'drop-ok' : 'drop-bad');
+            }
+        }
+
+        function startDrag(e) {
+            const el = drag.el;
+            const [w, h] = itemSize(drag.item);
+            const r = el.getBoundingClientRect();
+            // Where inside the item the pointer grabbed it, in bag-scale pixels.
+            drag.grabX = clamp((e.clientX - r.left) / r.width, 0, 0.999) * w * CELL;
+            drag.grabY = clamp((e.clientY - r.top) / r.height, 0, 0.999) * h * CELL;
+            const ghost = document.createElement('div');
+            ghost.className = `drag-ghost rarity-${drag.item.Rarity}`;
+            Object.assign(ghost.style, { width: `${w * CELL}px`, height: `${h * CELL}px` });
+            ghost.innerHTML = itemIconHtml(drag.item, w, h);
+            document.body.appendChild(ghost);
+            drag.ghost = ghost;
+            drag.started = true;
+            el.classList.add('drag-source');
+            document.body.classList.add('dragging');
+            hideTooltip();
+        }
+
+        function endDrag() {
+            if (!drag) return;
+            if (drag.ghost) drag.ghost.remove();
+            if (drag.el) drag.el.classList.remove('drag-source');
+            document.body.classList.remove('dragging');
+            clearDropHints();
+            drag = null;
+        }
+
+        function performDrop(t) {
+            const d = drag;
+            if (!targetAllowed(t)) return;
+            playAudio('click');
+            if (t.kind === 'slot') { selectedInventoryIndex = -1; call('equip', d.index); }
+            else if (t.kind === 'bag' && d.kind === 'bag') call('move_item', d.index, t.x, t.y);
+            else if (t.kind === 'bag' && d.kind === 'slot') call('unequip', d.slot, t.x, t.y);
+            else if (t.kind === 'bag' && d.kind === 'shop') call('buy', d.vendor, d.index, t.x, t.y);
+            else if (t.kind === 'shop') sellItem(d.index);
+        }
+
+        document.addEventListener('pointerdown', e => {
+            if (e.button !== 0 || !view) return;
+            const el = e.target.closest('[data-drag]');
+            if (!el || (el.dataset.drag === 'slot' && el.classList.contains('empty'))) return;
+            const d = { kind: el.dataset.drag, el, startX: e.clientX, startY: e.clientY, started: false };
+            if (d.kind === 'bag') d.index = Number(el.dataset.inv);
+            if (d.kind === 'slot') d.slot = el.dataset.slot;
+            if (d.kind === 'shop') { d.vendor = el.dataset.vendor; d.index = Number(el.dataset.index); }
+            d.item = dragItem(d);
+            if (!d.item) return;
+            drag = d;
+            if (e.target.closest('button')) drag = null; // buttons inside shop cards still work as buttons
+        });
+
+        document.addEventListener('pointermove', e => {
+            if (!drag) return;
+            if (!drag.started) {
+                if (Math.hypot(e.clientX - drag.startX, e.clientY - drag.startY) < 5) return;
+                startDrag(e);
+            }
+            e.preventDefault();
+            drag.ghost.style.left = `${e.clientX - drag.grabX}px`;
+            drag.ghost.style.top = `${e.clientY - drag.grabY}px`;
+            showDropHint(dropTarget(e));
+        });
+
+        document.addEventListener('pointerup', e => {
+            if (!drag) return;
+            if (drag.started) {
+                const t = dropTarget(e);
+                performDrop(t);
+            } else if (drag.kind === 'bag') {
+                selectInventoryItem(drag.index);
+            }
+            endDrag();
+        });
+        window.addEventListener('blur', endDrag);
+
+        // Double-click: equip or drink from the bag, take off from the doll.
+        document.addEventListener('dblclick', e => {
+            const el = e.target.closest('[data-drag]');
+            if (!el || !view) return;
+            if (el.dataset.drag === 'bag') {
+                const i = Number(el.dataset.inv);
+                const item = view.state.Player.Inventory[i];
+                if (!item) return;
+                if (item.Type === 'Potion') usePotion(i);
+                else if (view.inventory[i].isEquipment) equipItem(i);
+            } else if (el.dataset.drag === 'slot' && !el.classList.contains('empty')) {
+                unequipSlot(el.dataset.slot);
+            }
+        });
 
         // ------------------------------------------------------------ startup
 

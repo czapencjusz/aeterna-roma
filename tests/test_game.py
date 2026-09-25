@@ -983,6 +983,107 @@ class MigrationV5Tests(unittest.TestCase):
         self.assertEqual(p['CurrentEnergy'], p['MaxEnergy'])
 
 
+class BagTests(unittest.TestCase):
+    def _game(self):
+        game, _ = make_game()
+        game.player['Inventory'] = []
+        return game
+
+    def test_items_take_space_by_type(self):
+        from aeterna import bag
+        game = self._game()
+        p = game.player
+        self.assertEqual(bag.dims(p), (data.BAG_COLS, 9))
+        armor = generate_item(1, 'Armor', 'Common')
+        self.assertTrue(bag.add(p, armor))
+        self.assertEqual(armor['Pos'], [0, 0])
+        ring = generate_item(1, 'Ring', 'Common')
+        bag.add(p, ring)
+        self.assertEqual(ring['Pos'], [2, 0])  # next to the 2x3 armor
+        self.assertFalse(bag.fits_at(p, generate_item(1, 'Shield', 'Common'), 1, 1))  # overlaps the armor
+        self.assertFalse(bag.fits_at(p, generate_item(1, 'Weapon', 'Common'), 0, 7))  # 1x3 runs off the bottom
+
+    def test_a_full_bag_refuses_loot(self):
+        from aeterna import bag
+        game = self._game()
+        p = game.player
+        while bag.add(p, generate_item(1, 'Armor', 'Common')):
+            pass
+        self.assertEqual(len(p['Inventory']), 12)  # four 2x3 pieces per 8x3 band, three bands in 9 rows
+        result = {'Loot': [], 'Notes': []}
+        while bag.can_add(p, {'Type': 'Ring'}):
+            bag.add(p, generate_item(1, 'Ring', 'Common'))
+        self.assertFalse(game.give_loot(result, generate_item(1, 'Ring', 'Common')))
+        self.assertIn('no room', result['Notes'][0])
+
+    def test_move_equip_and_unequip_to_a_cell(self):
+        game = self._game()
+        p = game.player
+        helm = generate_item(1, 'Helmet', 'Rare')
+        game.state['Player']['Inventory'].append(helm)
+        game.move_item(0, 6, 7)
+        self.assertEqual(helm['Pos'], [6, 7])
+        game.move_item(0, 7, 7)  # would stick out of the bag
+        self.assertEqual(helm['Pos'], [6, 7])
+        game.equip(0)
+        self.assertIs(p['Equipment']['Head'], helm)
+        self.assertIsNone(helm['Pos'])
+        game.unequip('Head', 2, 3)
+        self.assertEqual(helm['Pos'], [2, 3])
+
+    def test_swapping_gear_puts_the_old_piece_where_the_new_one_was(self):
+        game = self._game()
+        p = game.player
+        worn = p['Equipment']['Weapon']
+        sword = generate_item(1, 'Weapon', 'Rare')
+        p['Inventory'].append(sword)
+        game.move_item(0, 5, 2)
+        game.equip(0)
+        self.assertIs(p['Equipment']['Weapon'], sword)
+        self.assertEqual(worn['Pos'], [5, 2])
+
+    def test_buy_into_a_chosen_cell(self):
+        game = self._game()
+        p = game.player
+        p['Gold'] = 10 ** 6
+        game.buy('Alchemist', 0, 7, 8)
+        self.assertEqual(p['Inventory'][-1]['Pos'], [7, 8])
+        game.buy('Alchemist', 0, 7, 8)  # taken: goes to the first free cell instead
+        self.assertEqual(p['Inventory'][-1]['Pos'], [0, 0])
+
+    def test_sort_packs_the_bag(self):
+        from aeterna import bag
+        game = self._game()
+        p = game.player
+        for t, x, y in (('Ring', 7, 8), ('Armor', 4, 5), ('Weapon', 0, 6)):
+            item = generate_item(1, t, 'Common')
+            item['Pos'] = [x, y]
+            p['Inventory'].append(item)
+        game.sort_inventory()
+        self.assertEqual([(i['Type'], i['Pos']) for i in p['Inventory']], [('Weapon', [0, 0]), ('Armor', [1, 0]), ('Ring', [3, 0])])
+        self.assertEqual(bag.overflow(p), [])
+
+    def test_old_saves_get_positions_and_overflow_is_kept(self):
+        from aeterna import bag
+        game, _ = make_game()
+        raw = json.loads(json.dumps(game.state))
+        raw['Player']['Inventory'] = [dict(generate_item(1, 'Armor', 'Common'), Pos=None) for _ in range(14)]
+        state = normalize_state(raw, START)
+        inv = state['Player']['Inventory']
+        self.assertEqual(len(inv), 14)
+        self.assertEqual(sum(1 for i in inv if i['Pos']), 12)
+        self.assertEqual(len(bag.overflow(state['Player'])), 2)
+
+    def test_satchel_adds_a_row(self):
+        from aeterna import bag
+        game = self._game()
+        p = game.player
+        p['Honor'] = 10 ** 6
+        rows = bag.dims(p)[1]
+        game.buy_honor('satchel')
+        self.assertEqual(bag.dims(p)[1], rows + 1)
+
+
 class ContentTests(unittest.TestCase):
     def test_every_recipe_and_dungeon_is_reachable(self):
         for recipe in RECIPES:

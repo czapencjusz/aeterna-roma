@@ -16,14 +16,14 @@ An offline, single-player ancient Roman RPG written in Python. The game runs ent
 
 - **Dynamic Level Scaling**: Colosseum Arena ladder opponents and Expedition/Dungeon monsters scale their stats, HP, damage, and rewards to match the player's level.
 - **12 Interactive Tabs**:
-  - Overview / Character Sheet: attributes, inventory with gear comparison, hidden combat stats, a Chronicle of lifetime statistics, gear sets, a Bestiary of every foe you have slain, and 28 Laurels (achievements) that pay rubies. Inventory items show tooltips on hover, can be locked against selling, and sorted with one click
+  - Overview / Character Sheet: attributes, inventory with gear comparison, hidden combat stats, a Chronicle of lifetime statistics, gear sets, a Bestiary of every foe you have slain, and 28 Laurels (achievements) that pay rubies. The bag is a grid where items take up space by type (a weapon 1×3, armor 2×3, a helmet 2×2, a ring 1×1): drag items onto the paper doll to equip them, back into the bag to take them off, or around the bag to arrange them, and double-click to equip or drink. Items show tooltips on hover, can be locked against selling, and are packed tightly by the Sort button
   - Attribute Training
   - Expeditions: 12 regions, from the Suburbs of Rome and the Port of Ostia to Britannia, the Parthian Steppe, the Gates of Avernus and the Slopes of Olympus. Every foe shows a difficulty rating (Trivial to Deadly) for your current gear, and a **battle series** fights the same foe 3, 5 or 10 times in a row with one combined report
   - Colosseum Arena: 21-place ranking ladder, titles, ruby rewards for reaching the top 5, 3 and 1, a 5-minute cooldown between bouts, and an Honor exchange (bigger satchel, the Emperor's Favor, Murmillo set pieces, rubies)
   - Dungeons: 6 multi-floor dungeons, down to the Depths of Tartarus, whose bosses guard Mythic treasures; replayable after you conquer them
   - Labors of Hercules: twelve legendary one-off challenges, from the Nemean Lion to the capture of Cerberus, done in order. Each grants a permanent boon, and finishing all twelve earns the Mythic Club of Hercules
   - Pantheon: the **Imperial Decree** (a daily gift on a 7-day cycle that rewards a login streak), 3 divine tasks at a time (win expeditions, hunt a specific monster, win arena bouts, clear dungeon floors) for gold, XP and rubies, plus a Temple where a gold offering buys a blessing of Mars, Minerva, Juno, Mercury or Apollo for the next few fights
-  - Roman Forum Merchants (Weaponsmith, Armorer, General Merchant, Apothecary): they buy your items back for half their value
+  - Roman Forum Merchants (Weaponsmith, Armorer, General Merchant, Apothecary): drag wares into your bag to buy them and drag your items onto the stall to sell them for half their value
   - The Forge: smelting, 16 crafting recipes, gear enhancement up to +5, and reforging to reroll an item's prefix and suffix
   - Patrician Villa Work: timed shifts that pay out even while the game is closed
   - Gladiator Guild: a shared gold vault plus Training Grounds, Library, and Villa buildings with real bonuses
@@ -86,6 +86,7 @@ aeterna_roma.py        Launcher: opens the game window (python aeterna_roma.py -
 aeterna/
   data.py              Game content and tuning numbers (monsters, regions, recipes, sets, blessings, ...)
   items.py             Item generation, names, prices, save-file cleanup for items
+  bag.py               The grid bag: item sizes, placement, moving and packing
   rules.py             Gladiator stat formulas and guild bonuses
   combat.py            Combat formulas and the fight loop
   state.py             New games, Pantheon quests, loading any save format

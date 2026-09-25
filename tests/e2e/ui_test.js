@@ -56,6 +56,22 @@ function pyCall(method, args) {
     const get = p => pyCall('test_get', [p]);
     const refresh = () => page.evaluate(() => call('get_view'));
     const text = sel => page.textContent(sel);
+    // Drags with the mouse from the centre of `fromSel` to the point (x, y) or the centre of `toSel`.
+    const dragTo = async (fromSel, to) => {
+        const a = await page.locator(fromSel).boundingBox();
+        await page.mouse.move(a.x + a.width / 2, a.y + a.height / 2);
+        await page.mouse.down();
+        await page.mouse.move(a.x + a.width / 2 + 8, a.y + a.height / 2 + 8, { steps: 3 });
+        let x = to.x, y = to.y;
+        if (to.sel) { const b = await page.locator(to.sel).boundingBox(); x = b.x + b.width / 2; y = b.y + b.height / 2; }
+        await page.mouse.move(x, y, { steps: 8 });
+        await page.mouse.up();
+    };
+    // The screen point at the centre of bag cell (cx, cy) for an item of w x h cells grabbed in its middle.
+    const bagPoint = async (sel, cx, cy, w, h) => {
+        const b = await page.locator(sel).boundingBox();
+        return { x: b.x + 1 + (cx + w / 2) * 46, y: b.y + 1 + (cy + h / 2) * 46 };
+    };
     const shot = async name => { if (SHOTS) await page.screenshot({ path: path.join(SHOTS, name) }); };
 
     await page.goto(PAGE);
@@ -94,6 +110,14 @@ function pyCall(method, args) {
     await page.click('#merchantContainer .exp-card:nth-child(1) button');
     await page.waitForFunction(() => view.state.Player.Inventory.length === 2);
     check(await text('#resGold') === '235', 'buying a potion goes through Python');
+    await page.click('#vendorButtons button:has-text("Apothecary")');
+    await dragTo('#merchantContainer .exp-card:nth-child(1)', await bagPoint('#shopBag', 7, 8, 1, 1));
+    await page.waitForFunction(() => view.state.Player.Inventory.some(i => i.Pos && i.Pos[0] === 7 && i.Pos[1] === 8));
+    check(await text('#resGold') === '220', 'dragging wares into the bag buys them at that spot');
+    const potionAt = (await get(['Player', 'Inventory'])).findIndex(i => i.Pos && i.Pos[0] === 7 && i.Pos[1] === 8);
+    await dragTo(`#shopBag .inv-slot:nth-child(${potionAt + 1})`, { sel: '#merchantContainer' });
+    await page.waitForFunction(() => view.state.Player.Inventory.length === 2);
+    check(await text('#resGold') === '227', "dragging an item onto the merchant's stall sells it");
 
     // Expedition -> combat report
     await page.click('.nav-tab[data-tab="expeditions"]');
@@ -228,11 +252,22 @@ function pyCall(method, args) {
     const helmIndex = (await get(['Player', 'Inventory'])).length - 1;
     await page.click(`#inventoryContainer .inv-slot:nth-child(${helmIndex + 1})`);
     check(/Head slot is empty/.test(await text('#selectedItemPanel')), 'item panel compares with equipped gear');
-    await page.click('#selectedItemPanel button:has-text("Equip")');
+    await dragTo(`#inventoryContainer .inv-slot:nth-child(${helmIndex + 1})`, { sel: '#slot-Head' });
     await page.waitForFunction(() => view.state.Player.Equipment.Head !== null);
-    check(!(await page.$('#slot-Head.empty')), 'equipping shows the helmet in its slot');
-    await page.click('#slot-Head');
+    check(!(await page.$('#slot-Head.empty')), 'dragging a helmet onto the doll equips it');
+    await dragTo('#slot-Head', await bagPoint('#inventoryContainer', 6, 7, 2, 2));
     await page.waitForFunction(() => view.state.Player.Equipment.Head === null);
+    const helm = (await get(['Player', 'Inventory'])).find(i => i.Type === 'Helmet');
+    check(JSON.stringify(helm.Pos) === '[6,7]', 'dragging from the doll drops the helmet where it was let go ' + JSON.stringify(helm.Pos));
+    const helmAt = (await get(['Player', 'Inventory'])).findIndex(i => i.Type === 'Helmet');
+    await dragTo(`#inventoryContainer .inv-slot:nth-child(${helmAt + 1})`, await bagPoint('#inventoryContainer', 3, 4, 2, 2));
+    await page.waitForFunction(i => JSON.stringify(view.state.Player.Inventory[i].Pos) === '[3,4]', helmAt);
+    check(true, 'items can be rearranged in the bag');
+    await page.dblclick(`#inventoryContainer .inv-slot:nth-child(${helmAt + 1})`);
+    await page.waitForFunction(() => view.state.Player.Equipment.Head !== null);
+    await page.dblclick('#slot-Head');
+    await page.waitForFunction(() => view.state.Player.Equipment.Head === null);
+    check(true, 'double-click equips and unequips');
     const invBefore = (await get(['Player', 'Inventory'])).length;
     await page.click(`#inventoryContainer .inv-slot:nth-child(${invBefore})`);
     await page.click('#selectedItemPanel button:has-text("Sell")');
@@ -274,7 +309,7 @@ function pyCall(method, args) {
     await pyCall('test_add_item', [1, 'Ring', 'Common']);
     await refresh();
     dialogAnswers.push(true);
-    await page.click('button:has-text("Sell Common Gear")');
+    await page.click('button:has-text("Sell Common")');
     await page.waitForFunction(() => !view.state.Player.Inventory.some(i => i.Type === 'Ring' && i.Rarity === 'Common'));
     check(true, 'sell common gear asks, then sells');
 
