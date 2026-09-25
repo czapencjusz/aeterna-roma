@@ -4,9 +4,13 @@
 
 An offline, single-player ancient Roman RPG written in Python. The game runs entirely on your computer in its own window: no web server, no background process, no open network ports.
 
-![Expeditions screen](docs/screenshot-expeditions.png)
+![Character sheet with inventory and an item tooltip](docs/screenshot-gladiator.png)
 
-![Colosseum arena ladder](docs/screenshot-arena.png)
+![Expeditions with difficulty ratings and battle series](docs/screenshot-expeditions.png)
+
+![The Labors of Hercules](docs/screenshot-labors.png)
+
+![A battle series report](docs/screenshot-battle-series.png)
 
 ## Features
 
